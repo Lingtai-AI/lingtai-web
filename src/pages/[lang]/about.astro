@@ -13,8 +13,9 @@ const tr = t(lang as Lang);
 
 <BaseLayout title={tr.nav.about} lang={lang as Lang}>
   <main class="about">
-    <h1>{tr.nav.about}</h1>
-    <p class="placeholder">Coming soon.</p>
+    <h1>{tr.about.heading}</h1>
+    <div class="divider"></div>
+    <p class="bio serif">{tr.about.bio}</p>
   </main>
 </BaseLayout>
 
@@ -25,10 +26,20 @@ const tr = t(lang as Lang);
     padding: 0 24px;
   }
   h1 {
-    font-size: 24px;
-    margin-bottom: 24px;
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: var(--text);
   }
-  .placeholder {
-    color: var(--text-faint);
+  .divider {
+    width: 36px;
+    height: 1px;
+    background: var(--accent);
+    margin: 16px 0;
+  }
+  .bio {
+    font-size: 16px;
+    line-height: 1.9;
+    color: var(--text-dim);
   }
 </style>

@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BrailleBackground from '../../components/BrailleBackground.astro';
 import InstallCommand from '../../components/InstallCommand.astro';
+import NetworkCanvas from '../../components/NetworkCanvas.astro';
 import { t, isValidLang, languages, type Lang } from '../../i18n/translations';
 
 export function getStaticPaths() {
@@ -34,7 +35,16 @@ const tr = t(lang as Lang);
       <span class="dot">·</span>
       <a href="https://www.npmjs.com/package/lingtai">npm</a>
     </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <svg width="20" height="32" viewBox="0 0 20 32" fill="none">
+        <rect x="1" y="1" width="18" height="30" rx="9" stroke="var(--text-faint)" stroke-width="1"/>
+        <circle class="scroll-dot" cx="10" cy="10" r="2" fill="var(--text-faint)"/>
+      </svg>
+    </div>
   </main>
+
+  <NetworkCanvas line1a={tr.network.line1a} line1b={tr.network.line1b} line2={tr.network.line2} />
 </BaseLayout>
 
 <style>
@@ -53,7 +63,7 @@ const tr = t(lang as Lang);
     font-size: 48px;
     font-weight: 300;
     letter-spacing: 6px;
-    color: var(--text);
+    color: var(--title-color);
   }
   .subtitle {
     font-size: 18px;
@@ -87,5 +97,22 @@ const tr = t(lang as Lang);
   .dot {
     color: var(--text-faint);
     margin: 0 4px;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0.4;
+  }
+
+  .scroll-dot {
+    animation: scroll-bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes scroll-bounce {
+    0%, 100% { cy: 10; opacity: 1; }
+    50% { cy: 22; opacity: 0.3; }
   }
 </style>

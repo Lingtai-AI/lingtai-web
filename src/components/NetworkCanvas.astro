@@ -1,0 +1,497 @@
+---
+interface Props {
+  line1a: string;
+  line1b?: string;
+  line2: string;
+}
+
+const { line1a, line1b, line2 } = Astro.props;
+---
+
+<section class="network-section">
+  <canvas id="constellation" data-active="false"></canvas>
+  <div class="network-text">
+    <p class="network-line1 serif">{line1a}</p>
+    {line1b && <p class="network-line1 serif">{line1b}</p>}
+    <div class="network-divider"></div>
+    <p class="network-line2">{line2}</p>
+  </div>
+</section>
+
+<script>
+  const canvas = document.getElementById('constellation') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+  const section = canvas.closest('.network-section') as HTMLElement;
+
+  // --- Configuration ---
+  const MAX_GROUPS = 8;
+  const GROUP_SIZE_MIN = 4;
+  const GROUP_SIZE_MAX = 9;
+  const GROUP_SPAWN_INTERVAL = 3500;
+  const MEMBER_SPAWN_DELAY = 500;
+  const GROUP_LIFETIME_MIN = 35000;
+  const GROUP_LIFETIME_MAX = 60000;
+  const COHESION_RADIUS = 80;         // px — how spread out a group is
+  const COHESION_STRENGTH = 0.003;    // soft pull toward group center
+  const SEPARATION_DIST = 20;         // px — min distance between peers
+  const SEPARATION_STRENGTH = 0.02;
+  const WANDER_SPEED = 0.08;          // px per frame — individual drift
+  const WANDER_TURN = 0.03;           // radians per frame — random heading change
+  const INTER_GROUP_DIST = 400;
+  const INTRA_LINK_DIST = 100;        // px — max dist for within-group edges
+  const NODE_RADIUS = 2.5;            // all dots same size — peers
+  const BIRTH_FLASH_DURATION = 700;
+  const BIRTH_RING_MAX = 22;
+
+  const GREEN_RGB: number[] = [125, 171, 143];
+
+  // Read node/link colors from CSS custom properties (theme-aware)
+  function getThemeColors(): { node: number[]; link: number[] } {
+    const s = getComputedStyle(document.documentElement);
+    return {
+      node: [
+        parseInt(s.getPropertyValue('--node-r')) || 42,
+        parseInt(s.getPropertyValue('--node-g')) || 42,
+        parseInt(s.getPropertyValue('--node-b')) || 48,
+      ],
+      link: [
+        parseInt(s.getPropertyValue('--link-r')) || 196,
+        parseInt(s.getPropertyValue('--link-g')) || 154,
+        parseInt(s.getPropertyValue('--link-b')) || 108,
+      ],
+    };
+  }
+
+  let { node: INK_RGB, link: AMBER_RGB } = getThemeColors();
+
+  // Re-read on theme change
+  const themeObserver = new MutationObserver(() => {
+    const c = getThemeColors();
+    INK_RGB = c.node;
+    AMBER_RGB = c.link;
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  interface Peer {
+    x: number;
+    y: number;
+    heading: number;     // direction of wander
+    born: number;
+    birthFlash: number;
+  }
+
+  interface Group {
+    id: number;
+    peers: Peer[];
+    targetSize: number;
+    nextSpawn: number;
+    born: number;
+    lifetime: number;
+    phase: number;
+    // Group drift — slow shared movement
+    driftVx: number;
+    driftVy: number;
+  }
+
+  interface MailLink {
+    groupIdA: number;
+    groupIdB: number;
+    born: number;
+    lifetime: number;
+    phase: number;
+  }
+
+  let groups: Group[] = [];
+  let mailLinks: MailLink[] = [];
+  let lastGroupSpawn = 0;
+  let animationId = 0;
+  let isVisible = false;
+  let idCounter = 0;
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = section.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function rgba(rgb: number[], a: number): string {
+    return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+  }
+
+  function lerpRgb(a: number[], b: number[], t: number): number[] {
+    return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+  }
+
+  function opacity(phase: number): number {
+    if (phase < 0.1) return phase / 0.1;
+    if (phase > 0.9) return (1 - phase) / 0.1;
+    return 1;
+  }
+
+  function groupCenter(g: Group): [number, number] {
+    if (g.peers.length === 0) return [0, 0];
+    let sx = 0, sy = 0;
+    for (const p of g.peers) { sx += p.x; sy += p.y; }
+    return [sx / g.peers.length, sy / g.peers.length];
+  }
+
+  function spawnGroup(now: number): Group {
+    const rect = section.getBoundingClientRect();
+    const margin = 100;
+    const cx = margin + Math.random() * (rect.width - margin * 2);
+    const cy = margin + Math.random() * (rect.height - margin * 2);
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.02 + Math.random() * 0.03;
+    const g: Group = {
+      id: idCounter++,
+      peers: [],
+      targetSize: GROUP_SIZE_MIN + Math.floor(Math.random() * (GROUP_SIZE_MAX - GROUP_SIZE_MIN + 1)),
+      nextSpawn: now + 100,
+      born: now,
+      lifetime: GROUP_LIFETIME_MIN + Math.random() * (GROUP_LIFETIME_MAX - GROUP_LIFETIME_MIN),
+      phase: 0,
+      driftVx: Math.cos(angle) * speed,
+      driftVy: Math.sin(angle) * speed,
+    };
+    // First peer at center
+    g.peers.push({
+      x: cx, y: cy,
+      heading: Math.random() * Math.PI * 2,
+      born: now, birthFlash: 0,
+    });
+    return g;
+  }
+
+  function spawnPeer(g: Group, now: number): Peer {
+    // Spawn near a random existing peer
+    const parent = g.peers[Math.floor(Math.random() * g.peers.length)];
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 15 + Math.random() * 30;
+    return {
+      x: parent.x + Math.cos(angle) * dist,
+      y: parent.y + Math.sin(angle) * dist,
+      heading: Math.random() * Math.PI * 2,
+      born: now,
+      birthFlash: 0,
+    };
+  }
+
+  function tryCreateMailLink(now: number) {
+    if (groups.length < 2) return;
+    if (mailLinks.length >= groups.length * 2) return;
+    const ai = Math.floor(Math.random() * groups.length);
+    let bi = Math.floor(Math.random() * (groups.length - 1));
+    if (bi >= ai) bi++;
+    const ga = groups[ai];
+    const gb = groups[bi];
+    const [ax, ay] = groupCenter(ga);
+    const [bx, by] = groupCenter(gb);
+    const dist = Math.sqrt((ax-bx)**2 + (ay-by)**2);
+    if (dist < INTER_GROUP_DIST && dist > 50) {
+      const exists = mailLinks.some(
+        (l) => (l.groupIdA === ga.id && l.groupIdB === gb.id) ||
+               (l.groupIdA === gb.id && l.groupIdB === ga.id)
+      );
+      if (!exists) {
+        mailLinks.push({
+          groupIdA: ga.id, groupIdB: gb.id,
+          born: now,
+          lifetime: 15000 + Math.random() * 25000,
+          phase: 0,
+        });
+      }
+    }
+  }
+
+  function findGroup(id: number): Group | undefined {
+    return groups.find(g => g.id === id);
+  }
+
+  function draw(now: number) {
+    const rect = section.getBoundingClientRect();
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    // Spawn new groups
+    if (now - lastGroupSpawn > GROUP_SPAWN_INTERVAL && groups.length < MAX_GROUPS) {
+      groups.push(spawnGroup(now));
+      lastGroupSpawn = now;
+    }
+
+    // Update groups
+    groups = groups.filter((g) => {
+      g.phase = (now - g.born) / g.lifetime;
+
+      // Spawn new peers over time
+      if (g.peers.length < g.targetSize && now >= g.nextSpawn && g.phase < 0.7) {
+        g.peers.push(spawnPeer(g, now));
+        g.nextSpawn = now + MEMBER_SPAWN_DELAY + Math.random() * 400;
+      }
+
+      const [cx, cy] = groupCenter(g);
+
+      // Update each peer
+      for (const p of g.peers) {
+        const flashAge = now - p.born;
+        p.birthFlash = flashAge < BIRTH_FLASH_DURATION ? flashAge / BIRTH_FLASH_DURATION : 1;
+
+        // Wander: slowly change heading, move forward
+        p.heading += (Math.random() - 0.5) * WANDER_TURN * 2;
+        p.x += Math.cos(p.heading) * WANDER_SPEED;
+        p.y += Math.sin(p.heading) * WANDER_SPEED;
+
+        // Group drift
+        p.x += g.driftVx;
+        p.y += g.driftVy;
+
+        // Cohesion: soft pull toward group center
+        const dcx = cx - p.x;
+        const dcy = cy - p.y;
+        const distToCenter = Math.sqrt(dcx*dcx + dcy*dcy);
+        if (distToCenter > COHESION_RADIUS * 0.5) {
+          const pull = Math.min(1, (distToCenter - COHESION_RADIUS * 0.5) / COHESION_RADIUS) * COHESION_STRENGTH;
+          p.x += dcx * pull;
+          p.y += dcy * pull;
+        }
+
+        // Separation: push away from nearby peers
+        for (const other of g.peers) {
+          if (other === p) continue;
+          const sdx = p.x - other.x;
+          const sdy = p.y - other.y;
+          const sd = Math.sqrt(sdx*sdx + sdy*sdy);
+          if (sd < SEPARATION_DIST && sd > 0.1) {
+            const push = SEPARATION_STRENGTH * (1 - sd / SEPARATION_DIST);
+            p.x += (sdx / sd) * push;
+            p.y += (sdy / sd) * push;
+          }
+        }
+      }
+
+      // Bounce group drift at edges
+      if (cx < 60 || cx > rect.width - 60) g.driftVx *= -1;
+      if (cy < 60 || cy > rect.height - 60) g.driftVy *= -1;
+
+      return g.phase < 1;
+    });
+
+    // Mail links
+    if (Math.random() < 0.02) tryCreateMailLink(now);
+    mailLinks = mailLinks.filter((l) => {
+      l.phase = (now - l.born) / l.lifetime;
+      return l.phase < 1 && findGroup(l.groupIdA) && findGroup(l.groupIdB);
+    });
+
+    // === DRAW ===
+
+    // 1. Intra-group connections (peer ↔ peer)
+    for (const g of groups) {
+      const gOp = opacity(g.phase);
+      const peers = g.peers;
+      for (let i = 0; i < peers.length; i++) {
+        for (let j = i + 1; j < peers.length; j++) {
+          const a = peers[i];
+          const b = peers[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < INTRA_LINK_DIST) {
+            const strength = 1 - dist / INTRA_LINK_DIST;
+            const aOp = Math.min(1, (now - a.born) / 1500);
+            const bOp = Math.min(1, (now - b.born) / 1500);
+            const alpha = strength * 0.5 * gOp * Math.min(aOp, bOp);
+
+            // Flash green when either is newborn
+            const flashA = a.birthFlash < 1 ? (1 - a.birthFlash) : 0;
+            const flashB = b.birthFlash < 1 ? (1 - b.birthFlash) : 0;
+            const flash = Math.max(flashA, flashB);
+
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+
+            if (flash > 0) {
+              const col = lerpRgb(AMBER_RGB, GREEN_RGB, flash);
+              ctx.strokeStyle = rgba(col, Math.min(1, alpha + flash * 0.35));
+              ctx.lineWidth = 0.8 + flash * 1.2;
+            } else {
+              ctx.strokeStyle = rgba(AMBER_RGB, alpha);
+              ctx.lineWidth = 0.8;
+            }
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    // 2. Inter-group mail links (dashed green + travelling dot)
+    for (const link of mailLinks) {
+      const ga = findGroup(link.groupIdA);
+      const gb = findGroup(link.groupIdB);
+      if (!ga || !gb) continue;
+
+      // Pick a random peer from each group as endpoint (closest pair)
+      let bestDist = Infinity, ax = 0, ay = 0, bx = 0, by = 0;
+      for (const pa of ga.peers) {
+        for (const pb of gb.peers) {
+          const d = (pa.x-pb.x)**2 + (pa.y-pb.y)**2;
+          if (d < bestDist) { bestDist = d; ax = pa.x; ay = pa.y; bx = pb.x; by = pb.y; }
+        }
+      }
+
+      const linkOp = opacity(link.phase);
+      const alpha = linkOp * 0.35 * Math.min(opacity(ga.phase), opacity(gb.phase));
+
+      const dx = bx - ax;
+      const dy = by - ay;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const segments = Math.max(3, Math.floor(dist / 10));
+
+      ctx.beginPath();
+      for (let s = 0; s < segments; s++) {
+        const t1 = s / segments;
+        const t2 = (s + 0.55) / segments;
+        ctx.moveTo(ax + dx * t1, ay + dy * t1);
+        ctx.lineTo(ax + dx * t2, ay + dy * t2);
+      }
+      ctx.strokeStyle = rgba(GREEN_RGB, alpha);
+      ctx.lineWidth = 0.9;
+      ctx.stroke();
+
+      // Travelling dot
+      const travelPhase = ((now - link.born) * 0.0003) % 1;
+      ctx.beginPath();
+      ctx.arc(ax + dx * travelPhase, ay + dy * travelPhase, 2, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(GREEN_RGB, Math.min(1, alpha * 2.5));
+      ctx.fill();
+    }
+
+    // 3. Draw all peer dots (equal size — no hierarchy)
+    for (const g of groups) {
+      const gOp = opacity(g.phase);
+
+      for (const p of g.peers) {
+        const age = now - p.born;
+        const pOp = gOp * Math.min(1, age / 1500);
+
+        // Birth flash — expanding ring
+        if (p.birthFlash < 1) {
+          const prog = p.birthFlash;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, prog * BIRTH_RING_MAX, 0, Math.PI * 2);
+          ctx.strokeStyle = rgba(GREEN_RGB, (1 - prog) * 0.5);
+          ctx.lineWidth = 1.3 * (1 - prog);
+          ctx.stroke();
+        }
+
+        // Glow
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, NODE_RADIUS * 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(INK_RGB, pOp * 0.06);
+        ctx.fill();
+
+        // Core — all same size
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, NODE_RADIUS, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(INK_RGB, pOp * 0.85);
+        ctx.fill();
+      }
+    }
+
+    if (isVisible) {
+      animationId = requestAnimationFrame(draw);
+    }
+  }
+
+  // Intersection observer
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          isVisible = true;
+          canvas.dataset.active = 'true';
+          resize();
+          if (groups.length === 0) {
+            const now = performance.now();
+            for (let i = 0; i < 4; i++) {
+              const g = spawnGroup(now);
+              g.born = now - Math.random() * g.lifetime * 0.3;
+              g.peers[0].birthFlash = 1;
+              // Pre-add peers
+              const count = GROUP_SIZE_MIN + Math.floor(Math.random() * 3);
+              for (let j = 1; j < count; j++) {
+                const p = spawnPeer(g, now);
+                p.born = now - 2000 - Math.random() * 5000;
+                p.birthFlash = 1;
+                g.peers.push(p);
+              }
+              groups.push(g);
+            }
+            for (let i = 0; i < 3; i++) tryCreateMailLink(now);
+            lastGroupSpawn = now;
+          }
+          animationId = requestAnimationFrame(draw);
+        } else {
+          isVisible = false;
+          canvas.dataset.active = 'false';
+          cancelAnimationFrame(animationId);
+        }
+      }
+    },
+    { threshold: 0.1 }
+  );
+
+  observer.observe(section);
+  window.addEventListener('resize', () => {
+    if (isVisible) resize();
+  });
+</script>
+
+<style>
+  .network-section {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #constellation {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .network-text {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .network-line1 {
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    color: var(--title-color);
+  }
+
+  .network-divider {
+    width: 36px;
+    height: 1px;
+    background: var(--accent);
+    margin: 16px auto;
+  }
+
+  .network-line2 {
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    font-weight: 300;
+  }
+</style>

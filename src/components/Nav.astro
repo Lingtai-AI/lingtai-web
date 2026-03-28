@@ -13,6 +13,7 @@ const currentPath = Astro.url.pathname.replace(`/${lang}`, '') || '/';
 <nav class="nav">
   <a href={langPath(lang, '/')} class="nav-logo">{tr.nav.logo}</a>
   <div class="nav-right">
+    <a href={langPath(lang, '/')}>{tr.nav.home}</a>
     <a href={langPath(lang, '/blog/')}>{tr.nav.blog}</a>
     <a href={langPath(lang, '/about/')}>{tr.nav.about}</a>
     <div class="lang-toggle">
@@ -25,8 +26,36 @@ const currentPath = Astro.url.pathname.replace(`/${lang}`, '') || '/';
         </a>
       ))}
     </div>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+      </svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+      </svg>
+    </button>
   </div>
 </nav>
+
+<script>
+  const toggle = document.getElementById('theme-toggle')!;
+  const root = document.documentElement;
+
+  // Init from localStorage or system preference
+  const stored = localStorage.getItem('theme');
+  if (stored) {
+    root.dataset.theme = stored;
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    root.dataset.theme = 'dark';
+  }
+
+  toggle.addEventListener('click', () => {
+    const isDark = root.dataset.theme === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    root.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+</script>
 
 <style>
   .nav {
@@ -69,4 +98,22 @@ const currentPath = Astro.url.pathname.replace(`/${lang}`, '') || '/';
     background: var(--accent);
     color: var(--bg) !important;
   }
+  .theme-toggle {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+  }
+  .theme-toggle:hover {
+    color: var(--accent-warm);
+  }
+  /* Show sun in dark mode, moon in light mode */
+  .icon-sun { display: none; }
+  .icon-moon { display: block; }
+  :global([data-theme="dark"]) .icon-sun { display: block; }
+  :global([data-theme="dark"]) .icon-moon { display: none; }
 </style>
