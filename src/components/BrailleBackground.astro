@@ -11,7 +11,7 @@ const rightUrl = `/braille/right_${lang}.txt`;
 ---
 
 <div class="braille-left" data-braille-url={leftUrl}></div>
-<div class="braille-right" data-braille-url={rightUrl}></div>
+<div class:list={['braille-right', { 'braille-right-cjk': lang === 'zh' || lang === 'wen' }]} data-braille-url={rightUrl}></div>
 
 <script>
   document.querySelectorAll('[data-braille-url]').forEach((el) => {
@@ -33,18 +33,21 @@ const rightUrl = `/braille/right_${lang}.txt`;
     top: 50%;
     transform: translateY(-50%);
     font-family: monospace;
-    font-size: 14px;
-    line-height: 1.2;
-    color: rgba(125, 171, 143, 0.15);
+    font-size: 16px;
+    line-height: 1.15;
+    color: rgba(125, 171, 143, 0.65);
     white-space: pre;
     pointer-events: none;
     user-select: none;
     z-index: 0;
   }
   .braille-left {
-    left: 5%;
+    left: 13%;
   }
   .braille-right {
-    right: 5%;
+    right: 6%;
+  }
+  .braille-right-cjk {
+    right: 18%;
   }
 </style>
