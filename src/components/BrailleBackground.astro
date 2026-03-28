@@ -1,0 +1,50 @@
+---
+import type { Lang } from '../i18n/translations';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const leftUrl = `/braille/left_${lang}.txt`;
+const rightUrl = `/braille/right_${lang}.txt`;
+---
+
+<div class="braille-left" data-braille-url={leftUrl}></div>
+<div class="braille-right" data-braille-url={rightUrl}></div>
+
+<script>
+  document.querySelectorAll('[data-braille-url]').forEach((el) => {
+    const url = (el as HTMLElement).dataset.brailleUrl;
+    if (url) {
+      fetch(url)
+        .then((r) => r.text())
+        .then((text) => {
+          el.textContent = text;
+        });
+    }
+  });
+</script>
+
+<style>
+  .braille-left,
+  .braille-right {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.2;
+    color: rgba(125, 171, 143, 0.15);
+    white-space: pre;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+  .braille-left {
+    left: 5%;
+  }
+  .braille-right {
+    right: 5%;
+  }
+</style>
