@@ -1,0 +1,26 @@
+---
+import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import type { Lang } from '../i18n/translations';
+
+interface Props {
+  title: string;
+  lang: Lang;
+}
+
+const { title, lang } = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang === 'wen' ? 'lzh' : lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — LingTai AI</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <Nav lang={lang} />
+    <slot />
+  </body>
+</html>
