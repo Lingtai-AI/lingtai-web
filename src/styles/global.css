@@ -1,0 +1,46 @@
+:root {
+  --bg: #f5f0e8;
+  --bg-alt: #ece5d8;
+  --text: #2a2a30;
+  --text-dim: #5a5650;
+  --text-faint: #8a8680;
+  --accent: #7dab8f;
+  --accent-warm: #c49a6c;
+  --code-bg: #2a2a30;
+  --code-text: #e8e4df;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+body {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-warm);
+}
+
+.serif {
+  font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+}
+
+.mono {
+  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+}
