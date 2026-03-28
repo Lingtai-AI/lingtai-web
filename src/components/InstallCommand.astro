@@ -1,0 +1,60 @@
+---
+interface Props {
+  copyLabel: string;
+}
+
+const { copyLabel } = Astro.props;
+const command = 'npm install lingtai';
+---
+
+<div class="install-pill">
+  <span class="prompt">$</span>
+  <span class="command">{command}</span>
+  <button class="copy-btn" data-command={command}>{copyLabel}</button>
+</div>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const command = (btn as HTMLElement).dataset.command;
+      if (command) {
+        navigator.clipboard.writeText(command);
+        const original = btn.textContent;
+        btn.textContent = '✓';
+        setTimeout(() => {
+          btn.textContent = original;
+        }, 1500);
+      }
+    });
+  });
+</script>
+
+<style>
+  .install-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
+  .prompt {
+    color: var(--text-faint);
+  }
+  .copy-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0.7;
+    font-family: inherit;
+  }
+  .copy-btn:hover {
+    opacity: 1;
+  }
+</style>
