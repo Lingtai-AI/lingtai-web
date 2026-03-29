@@ -41,6 +41,12 @@ const command = 'curl -fsSL https://raw.githubusercontent.com/huangzesen/lingtai
     font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
     font-size: 14px;
     letter-spacing: 0.5px;
+    max-width: 640px;
+  }
+  .command {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .prompt {
     color: var(--text-faint);
