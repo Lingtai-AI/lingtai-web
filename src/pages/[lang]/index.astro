@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import BrailleBackground from '../../components/BrailleBackground.astro';
 import InstallCommand from '../../components/InstallCommand.astro';
 import NetworkCanvas from '../../components/NetworkCanvas.astro';
+import OaaSCanvas from '../../components/OaaSCanvas.astro';
 import { t, isValidLang, languages, type Lang } from '../../i18n/translations';
 
 export function getStaticPaths() {
@@ -45,6 +46,8 @@ const tr = t(lang as Lang);
   </main>
 
   <NetworkCanvas line1a={tr.network.line1a} line1b={tr.network.line1b} line2={tr.network.line2} />
+
+  <OaaSCanvas line1={tr.oaas.line1} line2={tr.oaas.line2} manifesto={tr.oaas.manifesto} />
 </BaseLayout>
 
 <style>

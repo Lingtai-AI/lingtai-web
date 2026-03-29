@@ -1,0 +1,638 @@
+---
+interface Props {
+  line1: string;
+  line2: string;
+  manifesto: string;
+}
+
+const { line1, line2, manifesto } = Astro.props;
+---
+
+<section class="oaas-section" data-snap>
+  <canvas id="oaas-canvas"></canvas>
+  <div class="oaas-text">
+    <h2 class="oaas-title">OaaS</h2>
+    <p class="oaas-subtitle">Orchestration as a Service</p>
+    <div class="oaas-divider"></div>
+    <p class="oaas-line serif">{line1}</p>
+    <p class="oaas-line serif">{line2}</p>
+    {manifesto && (
+      <details class="oaas-details">
+        <summary class="oaas-expand">
+          <svg class="expand-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </summary>
+        <p class="manifesto-text serif">{manifesto}</p>
+      </details>
+    )}
+  </div>
+</section>
+
+<script>
+  const canvas = document.getElementById('oaas-canvas') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+  const section = canvas.closest('.oaas-section') as HTMLElement;
+
+  // --- Configuration ---
+  const NETWORK_COUNT = 4;
+  const NETWORK_MIN_NODES = 5;
+  const NETWORK_MAX_NODES = 12;
+  const NODE_RADIUS = 2.5;
+  const CLIENT_RADIUS = 4.5;
+  const INTRA_LINK_DIST = 70;
+  const CLIENT_LINK_DIST = 200;
+  const NODE_SPAWN_INTERVAL_MIN = 2000;
+  const NODE_SPAWN_INTERVAL_MAX = 5000;
+  const CLIENT_SPAWN_INTERVAL = 3500;
+  const CLIENT_LIFETIME_MIN = 10000;
+  const CLIENT_LIFETIME_MAX = 20000;
+  const MAX_CLIENTS = 12;
+  const COHESION_RADIUS = 60;
+  const COHESION_STRENGTH = 0.002;
+  const SEPARATION_DIST = 16;
+  const SEPARATION_STRENGTH = 0.015;
+  const WANDER_SPEED = 0.04;
+  const WANDER_TURN = 0.02;
+  const BIRTH_FLASH_DURATION = 800;
+  const BIRTH_RING_MAX = 18;
+
+  // Center exclusion zone — keeps nodes/clients away from text
+  const EXCLUSION_W = 0.40;        // fraction of canvas width
+  const EXCLUSION_H = 0.35;        // fraction of canvas height
+  const EXCLUSION_STRENGTH = 0.5;  // push force
+
+  const GREEN_RGB: number[] = [125, 171, 143];
+  const CLIENT_RGB: number[] = [212, 168, 83]; // gold for clients
+
+  function getThemeColors(): { node: number[]; link: number[] } {
+    const s = getComputedStyle(document.documentElement);
+    return {
+      node: [
+        parseInt(s.getPropertyValue('--node-r')) || 42,
+        parseInt(s.getPropertyValue('--node-g')) || 42,
+        parseInt(s.getPropertyValue('--node-b')) || 48,
+      ],
+      link: [
+        parseInt(s.getPropertyValue('--link-r')) || 196,
+        parseInt(s.getPropertyValue('--link-g')) || 154,
+        parseInt(s.getPropertyValue('--link-b')) || 108,
+      ],
+    };
+  }
+
+  let { node: INK_RGB, link: AMBER_RGB } = getThemeColors();
+
+  const themeObserver = new MutationObserver(() => {
+    const c = getThemeColors();
+    INK_RGB = c.node;
+    AMBER_RGB = c.link;
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  interface Node {
+    x: number;
+    y: number;
+    heading: number;
+    born: number;
+    birthFlash: number;
+    isRoot: boolean;
+  }
+
+  interface Network {
+    nodes: Node[];
+    cx: number; // anchor center x
+    cy: number; // anchor center y
+    driftVx: number;
+    driftVy: number;
+    nextSpawn: number;
+    maxNodes: number;
+  }
+
+  interface Client {
+    x: number;
+    y: number;
+    born: number;
+    lifetime: number;
+    phase: number;
+    linkedNetwork: number; // index into networks[]
+    vx: number;
+    vy: number;
+  }
+
+  let networks: Network[] = [];
+  let clients: Client[] = [];
+  let lastClientSpawn = 0;
+  let animationId = 0;
+  let isVisible = false;
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = section.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function rgba(rgb: number[], a: number): string {
+    return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+  }
+
+  function lerpRgb(a: number[], b: number[], t: number): number[] {
+    return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+  }
+
+  function opacity(phase: number): number {
+    if (phase < 0.1) return phase / 0.1;
+    if (phase > 0.85) return (1 - phase) / 0.15;
+    return 1;
+  }
+
+  function pushFromCenter(px: number, py: number, w: number, h: number): [number, number] {
+    const centerX = w / 2;
+    const centerY = h / 2;
+    const halfW = w * EXCLUSION_W / 2;
+    const halfH = h * EXCLUSION_H / 2;
+    const dx = px - centerX;
+    const dy = py - centerY;
+    // How deep inside the zone (0 = edge, 1 = dead center)
+    const overlapX = 1 - Math.abs(dx) / halfW;
+    const overlapY = 1 - Math.abs(dy) / halfH;
+    if (overlapX > 0 && overlapY > 0) {
+      const strength = overlapX * overlapY * EXCLUSION_STRENGTH;
+      const pushX = dx === 0 ? (Math.random() - 0.5) : Math.sign(dx) * strength;
+      const pushY = dy === 0 ? (Math.random() - 0.5) : Math.sign(dy) * strength;
+      return [pushX, pushY];
+    }
+    return [0, 0];
+  }
+
+  function initNetworks(now: number) {
+    const rect = section.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+
+    // Place networks outside center zone, spread around edges
+    networks = [];
+    const positions: [number, number][] = [];
+    // Generate positions that avoid the center
+    const centerX = w / 2, centerY = h / 2;
+    const exW = w * EXCLUSION_W / 2, exH = h * EXCLUSION_H / 2;
+    for (let i = 0; i < NETWORK_COUNT; i++) {
+      let cx: number, cy: number;
+      do {
+        cx = w * (0.08 + Math.random() * 0.84);
+        cy = h * (0.1 + Math.random() * 0.8);
+      } while (Math.abs(cx - centerX) < exW && Math.abs(cy - centerY) < exH);
+      positions.push([cx, cy]);
+    }
+    for (let i = 0; i < NETWORK_COUNT; i++) {
+      const [cx, cy] = positions[i];
+      const maxNodes = NETWORK_MIN_NODES + Math.floor(Math.random() * (NETWORK_MAX_NODES - NETWORK_MIN_NODES));
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.01 + Math.random() * 0.015;
+
+      const net: Network = {
+        nodes: [],
+        cx,
+        cy,
+        driftVx: Math.cos(angle) * speed,
+        driftVy: Math.sin(angle) * speed,
+        nextSpawn: now + 1000 + Math.random() * 3000,
+        maxNodes,
+      };
+
+      // Root node — positioned on the right side of the cluster
+      const rootNode: Node = {
+        x: cx + 15 + Math.random() * 10,
+        y: cy + (Math.random() - 0.5) * 10,
+        heading: Math.random() * Math.PI * 2,
+        born: now - 5000,
+        birthFlash: 1,
+        isRoot: true,
+      };
+      net.nodes.push(rootNode);
+
+      // Pre-populate with some nodes
+      const preCount = 3 + Math.floor(Math.random() * 3);
+      for (let j = 0; j < preCount; j++) {
+        const parent = net.nodes[Math.floor(Math.random() * net.nodes.length)];
+        const a = Math.random() * Math.PI * 2;
+        const d = 15 + Math.random() * 30;
+        net.nodes.push({
+          x: parent.x + Math.cos(a) * d - 20, // bias left of root
+          y: parent.y + Math.sin(a) * d,
+          heading: Math.random() * Math.PI * 2,
+          born: now - 3000 - Math.random() * 5000,
+          birthFlash: 1,
+          isRoot: false,
+        });
+      }
+
+      networks.push(net);
+    }
+
+    // Pre-spawn clients
+    for (let i = 0; i < 5; i++) {
+      spawnClient(now);
+    }
+    lastClientSpawn = now;
+  }
+
+  function spawnClient(now: number) {
+    if (clients.length >= MAX_CLIENTS || networks.length === 0) return;
+    const rect = section.getBoundingClientRect();
+    const ni = Math.floor(Math.random() * networks.length);
+    const net = networks[ni];
+
+    // Client spawns near network but outside center zone
+    const root = net.nodes.find(n => n.isRoot) || net.nodes[0];
+    let x: number, y: number;
+    const cX = rect.width / 2, cY = rect.height / 2;
+    const eW = rect.width * EXCLUSION_W / 2, eH = rect.height * EXCLUSION_H / 2;
+    do {
+      x = root.x + 60 + Math.random() * (rect.width * 0.35);
+      y = root.y + (Math.random() - 0.5) * 150;
+    } while (Math.abs(x - cX) < eW && Math.abs(y - cY) < eH);
+
+    clients.push({
+      x, y,
+      born: now,
+      lifetime: CLIENT_LIFETIME_MIN + Math.random() * (CLIENT_LIFETIME_MAX - CLIENT_LIFETIME_MIN),
+      phase: 0,
+      linkedNetwork: ni,
+      vx: (Math.random() - 0.5) * 0.03,
+      vy: (Math.random() - 0.5) * 0.03,
+    });
+  }
+
+  function networkCenter(net: Network): [number, number] {
+    let sx = 0, sy = 0;
+    for (const n of net.nodes) { sx += n.x; sy += n.y; }
+    return [sx / net.nodes.length, sy / net.nodes.length];
+  }
+
+  function draw(now: number) {
+    const rect = section.getBoundingClientRect();
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    // Spawn new clients
+    if (now - lastClientSpawn > CLIENT_SPAWN_INTERVAL && clients.length < MAX_CLIENTS) {
+      spawnClient(now);
+      lastClientSpawn = now;
+    }
+
+    // Update clients
+    clients = clients.filter(c => {
+      c.phase = (now - c.born) / c.lifetime;
+      c.x += c.vx;
+      c.y += c.vy;
+      // Push away from center text zone
+      const [epx, epy] = pushFromCenter(c.x, c.y, rect.width, rect.height);
+      c.x += epx;
+      c.y += epy;
+      return c.phase < 1;
+    });
+
+    // Update networks
+    for (const net of networks) {
+      // Spawn new nodes when a client is connected (network grows by serving)
+      const hasClient = clients.some(c => c.linkedNetwork === networks.indexOf(net) && c.phase > 0.05 && c.phase < 0.85);
+      if (hasClient && net.nodes.length < net.maxNodes && now >= net.nextSpawn) {
+        const parent = net.nodes[Math.floor(Math.random() * net.nodes.length)];
+        const a = Math.random() * Math.PI * 2;
+        const d = 12 + Math.random() * 25;
+        net.nodes.push({
+          x: parent.x + Math.cos(a) * d,
+          y: parent.y + Math.sin(a) * d,
+          heading: Math.random() * Math.PI * 2,
+          born: now,
+          birthFlash: 0,
+          isRoot: false,
+        });
+        net.nextSpawn = now + NODE_SPAWN_INTERVAL_MIN + Math.random() * (NODE_SPAWN_INTERVAL_MAX - NODE_SPAWN_INTERVAL_MIN);
+        // Grow capacity slightly
+        if (net.maxNodes < NETWORK_MAX_NODES + 4) net.maxNodes++;
+      }
+
+      const [cx, cy] = networkCenter(net);
+
+      for (const node of net.nodes) {
+        // Birth flash
+        const flashAge = now - node.born;
+        node.birthFlash = flashAge < BIRTH_FLASH_DURATION ? flashAge / BIRTH_FLASH_DURATION : 1;
+
+        // Wander
+        node.heading += (Math.random() - 0.5) * WANDER_TURN * 2;
+        node.x += Math.cos(node.heading) * WANDER_SPEED;
+        node.y += Math.sin(node.heading) * WANDER_SPEED;
+
+        // Drift
+        node.x += net.driftVx;
+        node.y += net.driftVy;
+
+        // Cohesion toward cluster center
+        const dcx = cx - node.x;
+        const dcy = cy - node.y;
+        const distC = Math.sqrt(dcx * dcx + dcy * dcy);
+        if (distC > COHESION_RADIUS * 0.4) {
+          const pull = Math.min(1, (distC - COHESION_RADIUS * 0.4) / COHESION_RADIUS) * COHESION_STRENGTH;
+          node.x += dcx * pull;
+          node.y += dcy * pull;
+        }
+
+        // Separation
+        for (const other of net.nodes) {
+          if (other === node) continue;
+          const sdx = node.x - other.x;
+          const sdy = node.y - other.y;
+          const sd = Math.sqrt(sdx * sdx + sdy * sdy);
+          if (sd < SEPARATION_DIST && sd > 0.1) {
+            const push = SEPARATION_STRENGTH * (1 - sd / SEPARATION_DIST);
+            node.x += (sdx / sd) * push;
+            node.y += (sdy / sd) * push;
+          }
+        }
+
+        // Push away from center text zone
+        const [epx, epy] = pushFromCenter(node.x, node.y, rect.width, rect.height);
+        node.x += epx;
+        node.y += epy;
+      }
+
+      // Bounce drift at edges
+      if (cx < 40 || cx > rect.width - 40) net.driftVx *= -1;
+      if (cy < 40 || cy > rect.height - 40) net.driftVy *= -1;
+    }
+
+    // === DRAW ===
+
+    // 1. Intra-network edges (amber)
+    for (const net of networks) {
+      for (let i = 0; i < net.nodes.length; i++) {
+        for (let j = i + 1; j < net.nodes.length; j++) {
+          const a = net.nodes[i];
+          const b = net.nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < INTRA_LINK_DIST) {
+            const strength = 1 - dist / INTRA_LINK_DIST;
+            const aOp = Math.min(1, (now - a.born) / 1500);
+            const bOp = Math.min(1, (now - b.born) / 1500);
+            const alpha = strength * 0.45 * Math.min(aOp, bOp);
+
+            const flashA = a.birthFlash < 1 ? (1 - a.birthFlash) : 0;
+            const flashB = b.birthFlash < 1 ? (1 - b.birthFlash) : 0;
+            const flash = Math.max(flashA, flashB);
+
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+
+            if (flash > 0) {
+              const col = lerpRgb(AMBER_RGB, GREEN_RGB, flash);
+              ctx.strokeStyle = rgba(col, Math.min(1, alpha + flash * 0.3));
+              ctx.lineWidth = 0.7 + flash * 1.0;
+            } else {
+              ctx.strokeStyle = rgba(AMBER_RGB, alpha);
+              ctx.lineWidth = 0.7;
+            }
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    // 2. Client ↔ Network links (dashed green with travelling dot)
+    for (const client of clients) {
+      const net = networks[client.linkedNetwork];
+      if (!net) continue;
+
+      // Connect to the root node (or closest node)
+      const root = net.nodes.find(n => n.isRoot) || net.nodes[0];
+      const dx = client.x - root.x;
+      const dy = client.y - root.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < CLIENT_LINK_DIST * 1.5) {
+        const cOp = opacity(client.phase);
+        const alpha = cOp * 0.4;
+
+        // Dashed line
+        const segments = Math.max(3, Math.floor(dist / 12));
+        ctx.beginPath();
+        for (let s = 0; s < segments; s++) {
+          const t1 = s / segments;
+          const t2 = (s + 0.5) / segments;
+          ctx.moveTo(root.x + dx * t1, root.y + dy * t1);
+          ctx.lineTo(root.x + dx * t2, root.y + dy * t2);
+        }
+        ctx.strokeStyle = rgba(GREEN_RGB, alpha);
+        ctx.lineWidth = 0.9;
+        ctx.stroke();
+
+        // Travelling dot — goes from client to network (serving) and back
+        const travelPhase = ((now - client.born) * 0.0004) % 1;
+        const dotX = root.x + dx * travelPhase;
+        const dotY = root.y + dy * travelPhase;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(GREEN_RGB, Math.min(1, alpha * 2.5));
+        ctx.fill();
+
+        // Second dot going the other way
+        const travelPhase2 = ((now - client.born) * 0.0004 + 0.5) % 1;
+        const dotX2 = root.x + dx * travelPhase2;
+        const dotY2 = root.y + dy * travelPhase2;
+        ctx.beginPath();
+        ctx.arc(dotX2, dotY2, 2, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(CLIENT_RGB, Math.min(1, alpha * 2));
+        ctx.fill();
+      }
+    }
+
+    // 3. Network nodes
+    for (const net of networks) {
+      for (const node of net.nodes) {
+        const age = now - node.born;
+        const pOp = Math.min(1, age / 1500);
+
+        // Birth flash ring
+        if (node.birthFlash < 1) {
+          const prog = node.birthFlash;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, prog * BIRTH_RING_MAX, 0, Math.PI * 2);
+          ctx.strokeStyle = rgba(GREEN_RGB, (1 - prog) * 0.5);
+          ctx.lineWidth = 1.2 * (1 - prog);
+          ctx.stroke();
+        }
+
+        // Glow
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, NODE_RADIUS * 3, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(INK_RGB, pOp * 0.05);
+        ctx.fill();
+
+        // Core
+        const r = node.isRoot ? NODE_RADIUS * 1.3 : NODE_RADIUS;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(INK_RGB, pOp * 0.85);
+        ctx.fill();
+      }
+    }
+
+    // 4. Client dots (larger, gold-tinted)
+    for (const client of clients) {
+      const cOp = opacity(client.phase);
+
+      // Glow
+      ctx.beginPath();
+      ctx.arc(client.x, client.y, CLIENT_RADIUS * 3, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(CLIENT_RGB, cOp * 0.08);
+      ctx.fill();
+
+      // Core
+      ctx.beginPath();
+      ctx.arc(client.x, client.y, CLIENT_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(CLIENT_RGB, cOp * 0.75);
+      ctx.fill();
+
+      // Birth ring
+      if (client.phase < 0.1) {
+        const prog = client.phase / 0.1;
+        ctx.beginPath();
+        ctx.arc(client.x, client.y, prog * 24, 0, Math.PI * 2);
+        ctx.strokeStyle = rgba(CLIENT_RGB, (1 - prog) * 0.4);
+        ctx.lineWidth = 1.2 * (1 - prog);
+        ctx.stroke();
+      }
+    }
+
+    if (isVisible) {
+      animationId = requestAnimationFrame(draw);
+    }
+  }
+
+  // Intersection observer
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          isVisible = true;
+          resize();
+          if (networks.length === 0) {
+            initNetworks(performance.now());
+          }
+          animationId = requestAnimationFrame(draw);
+        } else {
+          isVisible = false;
+          cancelAnimationFrame(animationId);
+        }
+      }
+    },
+    { threshold: 0.1 }
+  );
+
+  observer.observe(section);
+  window.addEventListener('resize', () => {
+    if (isVisible) resize();
+  });
+</script>
+
+<style>
+  .oaas-section {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #oaas-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .oaas-text {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .oaas-title {
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: 6px;
+    color: var(--title-color);
+  }
+
+  .oaas-subtitle {
+    font-size: 14px;
+    color: var(--text-faint);
+    letter-spacing: 3px;
+    font-weight: 300;
+    margin-top: 4px;
+  }
+
+  .oaas-divider {
+    width: 36px;
+    height: 1px;
+    background: var(--accent);
+    margin: 20px auto;
+  }
+
+  .oaas-line {
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    font-weight: 300;
+    line-height: 1.8;
+  }
+
+  .oaas-details {
+    margin-top: 20px;
+  }
+
+  .oaas-details summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+  }
+
+  .oaas-details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .oaas-details summary:hover {
+    opacity: 0.7;
+  }
+
+  .expand-chevron {
+    transition: transform 0.3s ease;
+  }
+
+  .oaas-details[open] .expand-chevron {
+    transform: rotate(180deg);
+  }
+
+  .manifesto-text {
+    max-width: 520px;
+    margin: 16px auto 0;
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--text-faint);
+    border-left: 2px solid var(--accent);
+    padding-left: 16px;
+    text-align: left;
+  }
+</style>

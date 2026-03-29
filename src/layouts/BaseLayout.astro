@@ -31,5 +31,40 @@ const { title, lang } = Astro.props;
   <body>
     <Nav lang={lang} />
     <slot />
+    <script>
+      // Soft magnetic scroll — gently pulls to nearest [data-snap] section
+      // when the user stops scrolling near a boundary.
+      (function() {
+        const THRESHOLD = 0.28;   // how close to top/bottom (% of viewport) before magnet kicks in
+        const SETTLE_MS = 150;    // ms of no scrolling before magnet activates
+        let timer: ReturnType<typeof setTimeout> | null = null;
+        let isSnapping = false;
+
+        function trySnap() {
+          if (isSnapping) return;
+          const sections = document.querySelectorAll<HTMLElement>('[data-snap]');
+          const vh = window.innerHeight;
+          const threshold = vh * THRESHOLD;
+
+          for (const section of sections) {
+            const rect = section.getBoundingClientRect();
+            // Check if section top is near the viewport top
+            if (Math.abs(rect.top) < threshold && Math.abs(rect.top) > 2) {
+              isSnapping = true;
+              section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              // Release lock after animation completes
+              setTimeout(() => { isSnapping = false; }, 600);
+              return;
+            }
+          }
+        }
+
+        window.addEventListener('scroll', () => {
+          if (isSnapping) return;
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(trySnap, SETTLE_MS);
+        }, { passive: true });
+      })();
+    </script>
   </body>
 </html>

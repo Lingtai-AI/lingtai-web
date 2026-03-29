@@ -16,6 +16,14 @@ const tr = t(lang as Lang);
     <h1>{tr.about.heading}</h1>
     <div class="divider"></div>
     <p class="bio serif">{tr.about.bio}</p>
+
+    <section class="project">
+      <h2>{tr.about.projectHeading}</h2>
+      <div class="divider"></div>
+      {tr.about.projectBio.split('\n\n').map((p: string) => (
+        <p class="bio serif">{p}</p>
+      ))}
+    </section>
   </main>
 </BaseLayout>
 
@@ -41,5 +49,17 @@ const tr = t(lang as Lang);
     font-size: 16px;
     line-height: 1.9;
     color: var(--text-dim);
+  }
+  .project {
+    margin-top: 48px;
+  }
+  .project h2 {
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .project .bio {
+    margin-top: 12px;
   }
 </style>
