@@ -60,7 +60,7 @@ const { line1, line2, manifesto } = Astro.props;
   // Center exclusion zone — keeps nodes/clients away from text
   const EXCLUSION_W = 0.40;        // fraction of canvas width
   const EXCLUSION_H = 0.35;        // fraction of canvas height
-  const EXCLUSION_STRENGTH = 0.5;  // push force
+  const EXCLUSION_STRENGTH = 1.5;  // push force
 
   const GREEN_RGB: number[] = [125, 171, 143];
   const CLIENT_RGB: number[] = [212, 168, 83]; // gold for clients
@@ -247,14 +247,16 @@ const { line1, line2, manifesto } = Astro.props;
     const ni = Math.floor(Math.random() * networks.length);
     const net = networks[ni];
 
-    // Client spawns near network but outside center zone
+    // Client spawns near network root at random angle, outside center zone
     const root = net.nodes.find(n => n.isRoot) || net.nodes[0];
     let x: number, y: number;
     const cX = rect.width / 2, cY = rect.height / 2;
     const eW = rect.width * EXCLUSION_W / 2, eH = rect.height * EXCLUSION_H / 2;
     do {
-      x = root.x + 60 + Math.random() * (rect.width * 0.35);
-      y = root.y + (Math.random() - 0.5) * 150;
+      const angle = Math.random() * Math.PI * 2;
+      const spawnDist = 70 + Math.random() * 60;
+      x = root.x + Math.cos(angle) * spawnDist;
+      y = root.y + Math.sin(angle) * spawnDist;
     } while (Math.abs(x - cX) < eW && Math.abs(y - cY) < eH);
 
     clients.push({
@@ -289,10 +291,34 @@ const { line1, line2, manifesto } = Astro.props;
       c.phase = (now - c.born) / c.lifetime;
       c.x += c.vx;
       c.y += c.vy;
-      // Push away from center text zone
+      // Gentle attraction toward linked network's root
+      const net = networks[c.linkedNetwork];
+      if (net) {
+        const root = net.nodes.find(n => n.isRoot) || net.nodes[0];
+        const dx = root.x - c.x;
+        const dy = root.y - c.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        // Keep client orbiting at 60–120px from root
+        const idealDist = 90;
+        if (dist > idealDist) {
+          const pull = 0.003 * Math.min(1, (dist - idealDist) / 100);
+          c.vx += dx / dist * pull;
+          c.vy += dy / dist * pull;
+        } else if (dist < idealDist * 0.5) {
+          const push = 0.002;
+          c.vx -= dx / dist * push;
+          c.vy -= dy / dist * push;
+        }
+        // Dampen velocity
+        c.vx *= 0.99;
+        c.vy *= 0.99;
+      }
+      // Push away from center text zone (affects both position and velocity)
       const [epx, epy] = pushFromCenter(c.x, c.y, rect.width, rect.height);
       c.x += epx;
       c.y += epy;
+      c.vx += epx * 0.3;
+      c.vy += epy * 0.3;
       return c.phase < 1;
     });
 
