@@ -1,10 +1,5 @@
 ---
 // Static build — redirect to /zh/ by default.
-// Client-side JS detects browser language and redirects if needed.
 ---
 
 <meta http-equiv="refresh" content="0;url=/zh/" />
-<script is:inline>
-  const lang = navigator.language || '';
-  if (!lang.startsWith('zh')) window.location.replace('/en/');
-</script>
