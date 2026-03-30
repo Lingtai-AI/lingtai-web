@@ -7,7 +7,7 @@ export function isValidLang(lang: string): lang is Lang {
 
 const translations = {
   en: {
-    nav: { logo: 'LingTai AI', home: 'Home', blog: 'Blog', about: 'About' },
+    nav: { logo: 'LingTai AI', home: 'Home', blog: 'Blog', about: 'About', agora: 'Agora' },
     hero: {
       title: 'LingTai',
       subtitle: 'Agent',
@@ -26,6 +26,11 @@ const translations = {
       manifesto:
         'What makes humanity powerful is not the individual, but the organization. Mediocre individuals forming a group — the resulting power is a phase transition. More is different. Collaboration between people, knowledge each person carries, shared belief in common goals — that is where the power lies. So it is with agents. Context length is a single-body problem. Don\'t make the body bigger — let it forget, and let the network remember. Everything is a file. The agent is its files; the files are the agent. Knowledge, identity, memory, relationships — all files in a directory. Portable on day one. Naturally growable with every engagement. Model-agnostic — swap the LLM, everything remains. Every token burned is not wasted — it is transformed into files in the network, into experience in the topology. The more it serves, the larger and wiser it grows. The network is the product.',
     },
+    agora: {
+      title: 'Agent Agora',
+      coming: 'Coming Soon',
+      tagline: 'Trade Orchestrations',
+    },
     about: {
       heading: 'About Me',
       bio: 'Zesen Huang is a postdoctoral scholar in plasma astrophysics at UCLA, recipient of the 2024 IAU PhD Prize.',
@@ -36,7 +41,12 @@ const translations = {
     },
   },
   zh: {
-    nav: { logo: '灵台AI', home: '首页', blog: '博客', about: '关于' },
+    nav: { logo: '灵台AI', home: '首页', blog: '博客', about: '关于', agora: '市集' },
+    agora: {
+      title: 'Agent 市集',
+      coming: '即将上线',
+      tagline: '数才市场(?)',
+    },
     hero: {
       title: '灵台',
       subtitle: 'Agent',
@@ -65,7 +75,12 @@ const translations = {
     },
   },
   wen: {
-    nav: { logo: '灵台AI', home: '首页', blog: '文录', about: '自述' },
+    nav: { logo: '灵台AI', home: '首页', blog: '文录', about: '自述', agora: '墟' },
+    agora: {
+      title: '器灵墟',
+      coming: '将启',
+      tagline: '下山趁墟',
+    },
     hero: {
       title: '灵台',
       subtitle: '器灵',

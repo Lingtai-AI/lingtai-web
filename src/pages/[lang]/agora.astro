@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AgoraBraille from '../../components/AgoraBraille.astro';
+import { t, isValidLang, languages, type Lang } from '../../i18n/translations';
+
+export function getStaticPaths() {
+  return languages.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+if (!isValidLang(lang)) return Astro.redirect('/en/');
+const tr = t(lang as Lang);
+---
+
+<BaseLayout title={tr.agora.title} lang={lang as Lang}>
+  <AgoraBraille />
+
+  <main class="agora">
+    <h1 class="title serif">{tr.agora.title}</h1>
+    <div class="divider"></div>
+    <p class="tagline">{tr.agora.tagline}</p>
+    <p class="coming">{tr.agora.coming}</p>
+  </main>
+</BaseLayout>
+
+<style>
+  .agora {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 80px);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    padding: 0 40px;
+  }
+  .title {
+    font-size: 48px;
+    font-weight: 300;
+    letter-spacing: 6px;
+    color: var(--title-color);
+  }
+  .divider {
+    width: 48px;
+    height: 1px;
+    background: var(--accent);
+    margin: 20px 0;
+  }
+  .tagline {
+    color: var(--text-faint);
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+  .coming {
+    margin-top: 32px;
+    font-size: 14px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent-warm);
+    opacity: 0.8;
+  }
+</style>

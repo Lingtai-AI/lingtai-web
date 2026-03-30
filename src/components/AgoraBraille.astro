@@ -1,0 +1,67 @@
+---
+/**
+ * Three braille watermarks (墟, 市集, Agora) placed at staggered
+ * vertical offsets so one appears per viewport-height as the user
+ * scrolls.  Repeats infinitely via CSS.
+ */
+---
+
+<div class="agora-braille" id="agora-braille">
+  <div class="braille-piece piece-xu" data-braille-url="/braille/agora/xu.txt"></div>
+  <div class="braille-piece piece-shiji" data-braille-url="/braille/agora/shiji.txt"></div>
+  <div class="braille-piece piece-agora" data-braille-url="/braille/agora/agora.txt"></div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('#agora-braille [data-braille-url]').forEach((el) => {
+    const url = el.dataset.brailleUrl;
+    if (url) {
+      fetch(url)
+        .then((r) => r.text())
+        .then((text) => {
+          el.textContent = text;
+        });
+    }
+  });
+</script>
+
+<style>
+  .agora-braille {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .braille-piece {
+    position: absolute;
+    font-family: monospace;
+    font-size: 16px;
+    line-height: 1.15;
+    color: rgba(125, 171, 143, 0.5);
+    white-space: pre;
+  }
+
+  /* 墟 — top-right area */
+  .piece-xu {
+    top: 12%;
+    right: 8%;
+  }
+  /* 市集 — middle-left */
+  .piece-shiji {
+    top: 42%;
+    left: 6%;
+  }
+  /* Agora — bottom-right */
+  .piece-agora {
+    top: 72%;
+    right: 12%;
+  }
+
+  @media (max-width: 900px) {
+    .agora-braille {
+      display: none;
+    }
+  }
+</style>

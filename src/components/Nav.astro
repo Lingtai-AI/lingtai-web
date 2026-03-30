@@ -23,6 +23,7 @@ const currentPath = Astro.url.pathname.replace(`/${lang}`, '') || '/';
   </a>
   <div class="nav-right">
     <a href={langPath(lang, '/')}>{tr.nav.home}</a>
+    <a href={langPath(lang, '/agora/')}>{tr.nav.agora}</a>
     <a href={langPath(lang, '/blog/')}>{tr.nav.blog}</a>
     <a href={langPath(lang, '/about/')}>{tr.nav.about}</a>
     <div class="lang-toggle">
