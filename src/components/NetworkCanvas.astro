@@ -3,9 +3,11 @@ interface Props {
   line1a: string;
   line1b?: string;
   line2: string;
+  quickstart?: string;
+  copyLabel?: string;
 }
 
-const { line1a, line1b, line2 } = Astro.props;
+const { line1a, line1b, line2, quickstart, copyLabel } = Astro.props;
 ---
 
 <section class="network-section" data-snap>
@@ -15,6 +17,15 @@ const { line1a, line1b, line2 } = Astro.props;
     {line1b && <p class="network-line1 serif">{line1b}</p>}
     <div class="network-divider"></div>
     <p class="network-line2">{line2}</p>
+    {quickstart && (
+      <div class="quickstart">
+        <div class="quickstart-pill">
+          <span class="qs-prompt">$</span>
+          <span class="qs-command">{quickstart}</span>
+          {copyLabel && <button class="qs-copy-btn" data-command={quickstart}>{copyLabel}</button>}
+        </div>
+      </div>
+    )}
   </div>
   <div class="scroll-hint" aria-hidden="true">
     <svg width="20" height="32" viewBox="0 0 20 32" fill="none">
@@ -25,6 +36,18 @@ const { line1a, line1b, line2 } = Astro.props;
 </section>
 
 <script>
+  document.querySelectorAll('.qs-copy-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const command = (btn as HTMLElement).dataset.command;
+      if (command) {
+        navigator.clipboard.writeText(command);
+        const original = btn.textContent;
+        btn.textContent = '✓';
+        setTimeout(() => { btn.textContent = original; }, 1500);
+      }
+    });
+  });
+
   const canvas = document.getElementById('constellation') as HTMLCanvasElement;
   const ctx = canvas.getContext('2d')!;
   const section = canvas.closest('.network-section') as HTMLElement;
@@ -499,6 +522,42 @@ const { line1a, line1b, line2 } = Astro.props;
     color: var(--text-dim);
     letter-spacing: 2px;
     font-weight: 300;
+  }
+
+  .quickstart {
+    margin-top: 28px;
+    pointer-events: auto;
+  }
+
+  .quickstart-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  .qs-prompt {
+    color: var(--text-faint);
+  }
+
+  .qs-copy-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0.7;
+    font-family: inherit;
+  }
+
+  .qs-copy-btn:hover {
+    opacity: 1;
   }
 
   .scroll-hint {
