@@ -4,10 +4,11 @@ interface Props {
   line1b?: string;
   line2: string;
   quickstart?: string;
+  quickstartLabel?: string;
   copyLabel?: string;
 }
 
-const { line1a, line1b, line2, quickstart, copyLabel } = Astro.props;
+const { line1a, line1b, line2, quickstart, quickstartLabel, copyLabel } = Astro.props;
 ---
 
 <section class="network-section" data-snap>
@@ -19,6 +20,7 @@ const { line1a, line1b, line2, quickstart, copyLabel } = Astro.props;
     <p class="network-line2">{line2}</p>
     {quickstart && (
       <div class="quickstart">
+        {quickstartLabel && <p class="quickstart-label">{quickstartLabel}</p>}
         <div class="quickstart-pill">
           <span class="qs-prompt">$</span>
           <span class="qs-command">{quickstart}</span>
@@ -527,6 +529,14 @@ const { line1a, line1b, line2, quickstart, copyLabel } = Astro.props;
   .quickstart {
     margin-top: 28px;
     pointer-events: auto;
+  }
+
+  .quickstart-label {
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
   }
 
   .quickstart-pill {

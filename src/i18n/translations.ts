@@ -19,6 +19,7 @@ const translations = {
       line1a: 'One Soul',
       line1b: 'Thousand Avatars',
       line2: 'Self-Growing Agent Network',
+      quickstartLabel: 'Quick Start',
     },
     oaas: {
       line1: 'The Network Is the Product',
@@ -58,6 +59,7 @@ const translations = {
       line1a: '一心化万相',
       line1b: '',
       line2: '自生长Agent网络',
+      quickstartLabel: '快速开始',
     },
     oaas: {
       line1: '网络即产品',
@@ -92,6 +94,7 @@ const translations = {
       line1a: '一心万相',
       line1b: '',
       line2: '灵台相阵',
+      quickstartLabel: '速启',
     },
     oaas: {
       line1: '一生二，二生三，三生万物',
