@@ -24,6 +24,12 @@ const tr = t(lang as Lang);
         <p class="bio serif">{p}</p>
       ))}
     </section>
+
+    <section class="contact">
+      <h2>{tr.about.contactHeading}</h2>
+      <div class="divider"></div>
+      <p class="bio"><a href={`mailto:${tr.about.contactEmail}`}>{tr.about.contactEmail}</a></p>
+    </section>
   </main>
 </BaseLayout>
 
@@ -61,5 +67,16 @@ const tr = t(lang as Lang);
   }
   .project .bio {
     margin-top: 12px;
+  }
+  .contact {
+    margin-top: 48px;
+  }
+  .contact a {
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 0.5px;
+  }
+  .contact a:hover {
+    text-decoration: underline;
   }
 </style>
