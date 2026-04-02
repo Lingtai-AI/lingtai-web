@@ -3,12 +3,13 @@ interface Props {
   line1a: string;
   line1b?: string;
   line2: string;
+  line3?: string;
   quickstart?: string;
   quickstartLabel?: string;
   copyLabel?: string;
 }
 
-const { line1a, line1b, line2, quickstart, quickstartLabel, copyLabel } = Astro.props;
+const { line1a, line1b, line2, line3, quickstart, quickstartLabel, copyLabel } = Astro.props;
 ---
 
 <section class="network-section" data-snap>
@@ -18,6 +19,7 @@ const { line1a, line1b, line2, quickstart, quickstartLabel, copyLabel } = Astro.
     {line1b && <p class="network-line1 serif">{line1b}</p>}
     <div class="network-divider"></div>
     <p class="network-line2">{line2}</p>
+    {line3 && <p class="network-line3">{line3}</p>}
     {quickstart && (
       <div class="quickstart">
         {quickstartLabel && <p class="quickstart-label">{quickstartLabel}</p>}
@@ -520,10 +522,18 @@ const { line1a, line1b, line2, quickstart, quickstartLabel, copyLabel } = Astro.
   }
 
   .network-line2 {
-    font-size: 16px;
-    color: var(--text-dim);
+    font-size: 14px;
+    color: var(--text-faint);
     letter-spacing: 2px;
     font-weight: 300;
+  }
+
+  .network-line3 {
+    font-size: 18px;
+    color: var(--title-color);
+    letter-spacing: 3px;
+    font-weight: 300;
+    margin-top: 6px;
   }
 
   .quickstart {

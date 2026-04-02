@@ -18,7 +18,8 @@ const translations = {
     network: {
       line1a: 'One Soul',
       line1b: 'Thousand Avatars',
-      line2: 'Self-Growing Agent Network',
+      line2: 'Agent Genesis',
+      line3: 'An Agent OS that gifts life to agents',
       quickstartLabel: 'Quick Start',
     },
     oaas: {
@@ -60,7 +61,8 @@ const translations = {
     network: {
       line1a: '一心化万相',
       line1b: '',
-      line2: '自生长Agent网络',
+      line2: '器灵创生',
+      line3: '赋予智能体生命的操作系统',
       quickstartLabel: '快速开始',
     },
     oaas: {
@@ -97,7 +99,8 @@ const translations = {
     network: {
       line1a: '一心万相',
       line1b: '',
-      line2: '灵台相阵',
+      line2: '器灵创生',
+      line3: '予器灵以生之制',
       quickstartLabel: '速启',
     },
     oaas: {
