@@ -19,7 +19,7 @@ const translations = {
       line1a: 'One Soul',
       line1b: 'Thousand Avatars',
       line2: 'Agent Genesis',
-      line3: 'An Agent OS that gifts life to agents',
+      line3: 'An Agent OS that gifts life',
       quickstartLabel: 'Quick Start',
     },
     oaas: {
