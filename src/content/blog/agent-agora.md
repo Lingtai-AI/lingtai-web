@@ -1,7 +1,7 @@
 ---
 title: "Agent Agora: Share Your Agent Networks"
 date: 2026-04-09
-tags: [feature, agora]
+tags: [tech]
 lang: en
 description: "Agent Agora lets you publish your lingtai agent networks as portable git repos. Recipients clone, run the TUI, and the network wakes up with a guided first-run experience."
 ---

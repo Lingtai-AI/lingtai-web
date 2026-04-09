@@ -1,7 +1,7 @@
 ---
 title: "Orchestration as a Service"
 date: 2026-04-09
-tags: [essay, agora]
+tags: [philosophy]
 lang: en
 description: "Why the value of an AI system is in its orchestration — the accumulated topology, memory, and crystallized expertise of its agent network — and how Agent Agora makes that value portable."
 ---
