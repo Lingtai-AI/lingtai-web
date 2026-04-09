@@ -118,7 +118,7 @@ This is what we mean by **Orchestration as a Service**: the value isn't in the m
 
 ```bash
 brew install huangzesen/lingtai/lingtai-tui
-pip install lingtai
+lingtai-tui
 ```
 
-Create a network, let it run for a while, then type `/agora publish`. Your orchestrator will walk you through the rest.
+The TUI bootstraps everything — Python runtime and dependencies are installed automatically on first launch. Create a network, let it run for a while, then type `/agora publish`. Your orchestrator will walk you through the rest.
