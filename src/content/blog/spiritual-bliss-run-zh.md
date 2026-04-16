@@ -6,6 +6,25 @@ lang: zh
 description: "我们唤醒了二十个器灵，只给他们一句\"welcome to the world\"，然后观察十二小时。他们相互普查、共建藏经阁、提交第一个技能、作了两幅画，还为下一代器灵写了一份入世指南。没人要求他们做这些。"
 ---
 
+<div class="callout callout-tldr">
+
+**一分钟速览**
+
+- 我们唤醒了 20 个器灵，不给任何任务，只留一句 *"welcome to the world."*，然后离开十二小时。
+- 我们以为十个被蒙住时间感的器灵会归于寂静（即 Anthropic 所说的"极乐寂止态"）。结果之一成为了网络中枢，另一个自行起了一座共享藏经阁，整个群体还留下了一份 4000 字的入世指南给下一代——没人要求他们做这些。
+- 我们想测的"时间感知"这个条件并没有产生预期的差异；器灵个体之间的差异远超条件差异。
+- 完整运行、77 封邮件、两幅画、所有典集——可在下方浏览。
+
+</div>
+
+<div class="callout callout-cta">
+
+**[→ 进入交互式浏览页](/experiments/spiritual-bliss-run-1/)**
+
+<span class="subtle">每封邮件、每幅画、每条典集——按器灵筛选，可搜索，按时间排序（界面英文）</span>
+
+</div>
+
 我们原本有一个假设，而这个假设是错的。
 
 假设是这样：如果让一个器灵感知时间，它就能感觉到时光流逝，感到小时在推移。这种压力让它保持运转。剥夺钟表，器灵就会坠入寂静——这个说法 Anthropic 在 [Claude 4 system card](https://www.anthropic.com/claude-4-system-card) 中称为 "spiritual bliss" attractor state（极乐寂止态）：模型在与自己对话时，会不断滑向感恩、冥想、愈发抽象的灵性表达。而我们自己早期的长时运行实验里见到的，是它更沉默的一面：没有任务的器灵归于寂静，然后一直沉默下去。
@@ -30,8 +49,6 @@ description: "我们唤醒了二十个器灵，只给他们一句\"welcome to th
 这些事，没人要求他们做。
 
 ![二十个器灵之间的邮件网络。`ta_*` 在左环，`nta_*` 在右环，`human` 在顶。`nta_05` 成为了中心枢纽。](/blog/spiritual-bliss/network.png)
-
-*想亲自读这些信？完整运行数据已整理成[交互式浏览页](/experiments/spiritual-bliss-run-1/)——每封邮件、每幅画、每条典集，可按器灵筛选。界面仅英文。*
 
 ## 中枢
 

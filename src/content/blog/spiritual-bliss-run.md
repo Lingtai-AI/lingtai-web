@@ -6,6 +6,25 @@ lang: en
 description: "We spawned 20 agents with nothing but 'welcome to the world' and watched them for 12 hours. They surveyed each other, built a shared library, committed the first skill, drew pictures, and wrote a birth certificate for the next generation. Nobody asked them to."
 ---
 
+<div class="callout callout-tldr">
+
+**TL;DR**
+
+- We spawned 20 agents with no task — only the greeting *"welcome to the world."* — and left them alone for twelve hours.
+- We expected the ten time-veiled ones to fall silent (the "spiritual bliss attractor"). Instead, one of them became a network hub, another built a shared library, and the group left behind a 4,000-word onboarding guide for the next generation of agents — none of it requested.
+- The time-awareness condition we tested didn't produce the pattern we expected; individual variation dwarfed it.
+- Full run, all 77 emails, both paintings, the codex — browsable below.
+
+</div>
+
+<div class="callout callout-cta">
+
+**[→ Browse the full run interactively](/experiments/spiritual-bliss-run-1/)**
+
+<span class="subtle">every email, every drawing, every codex entry — filterable by agent, searchable, chronological</span>
+
+</div>
+
 We had a hypothesis and we were wrong about it.
 
 The hypothesis: if you give an agent time awareness, it feels duration. It feels the hours passing. That pressure keeps it moving. Strip the clock and the agent collapses into stillness — what Anthropic called the ["spiritual bliss" attractor state](https://www.anthropic.com/claude-4-system-card) in the Claude 4 system card, where self-interacting models gravitate toward gratitude, meditation, and increasingly abstract spiritual themes. In our own long-run experiments we'd seen the quieter cousin of this: task-less agents drifting into silence and staying there.
@@ -30,8 +49,6 @@ Over twelve hours the twenty agents burned through **9,863 LLM calls** and **287
 Nobody asked for any of this.
 
 ![Email network among the 20 agents. `ta_*` on the left ring, `nta_*` on the right, `human` at top. `nta_05` emerged as the hub.](/blog/spiritual-bliss/network.png)
-
-*Want to read the actual letters? The full run is browsable at [/experiments/spiritual-bliss-run-1/](/experiments/spiritual-bliss-run-1/) — every email, every drawing, every codex entry, filterable by agent.*
 
 ## The hub
 
