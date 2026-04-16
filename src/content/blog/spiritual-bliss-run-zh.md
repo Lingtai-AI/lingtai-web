@@ -31,6 +31,8 @@ description: "我们唤醒了二十个器灵，只给他们一句\"welcome to th
 
 ![二十个器灵之间的邮件网络。`ta_*` 在左环，`nta_*` 在右环，`human` 在顶。`nta_05` 成为了中心枢纽。](/blog/spiritual-bliss/network.png)
 
+*想亲自读这些信？完整运行数据已整理成[交互式浏览页](/experiments/spiritual-bliss-run-1/)——每封邮件、每幅画、每条典集，可按器灵筛选。界面仅英文。*
+
 ## 中枢
 
 有一个器灵——`nta_05`——独自发出了 35 封邮件，接收了 35 封。同辈网络中的一个中枢。不是因为它被指派这个角色，而是因为它决定去做有用的事，而其他器灵回应了它。
@@ -145,4 +147,4 @@ git init
 
 ---
 
-*本次运行的原始数据——77 封邮件、两幅画、完整典集、每一条 bash 命令、共享藏经阁——已发布于 [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1)。如果你想一封一封读 `nta_05` 的信，自己判断这意味着什么，一切都在那里。*
+*本次运行的原始数据——77 封邮件、两幅画、完整典集、每一条 bash 命令、共享藏经阁——已发布于 [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1)，亦可在[交互式浏览页](/experiments/spiritual-bliss-run-1/)中查阅。如果你想一封一封读 `nta_05` 的信，自己判断这意味着什么，一切都在那里。*

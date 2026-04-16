@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>spiritual-bliss-run — conversation viewer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>spiritual-bliss-run</h1>
+  <div class="subtitle">
+    20 agents · 12-hour run ·
+    <span id="email-count"></span> emails ·
+    <span id="media-count"></span> images ·
+    <span id="codex-count"></span> codex deposits ·
+    <span id="bash-count"></span> bash commands.
+    <span class="pill ta">ta_*</span> = time-aware,
+    <span class="pill nta">nta_*</span> = time veil (leaked via <code>.agent.json</code>),
+    <span class="pill ext">human</span> = external.
+  </div>
+  <div class="controls">
+    <input id="search" type="search" placeholder="search subject or body…">
+    <button id="btn-all">all</button>
+    <button id="btn-nta05">nta_05 outreach</button>
+    <button id="btn-human">to human</button>
+  </div>
+</header>
+
+<main>
+  <aside id="agents">
+    <h2>Agents</h2>
+    <div id="agent-list"></div>
+  </aside>
+
+  <section id="threads">
+    <div class="tab-bar">
+      <button class="tab active" data-tab="emails">Emails</button>
+      <button class="tab" data-tab="media">Media</button>
+      <button class="tab" data-tab="codex">Codex</button>
+      <button class="tab" data-tab="writes">Shared writes</button>
+      <button class="tab" data-tab="bash">Bash</button>
+      <button class="tab" data-tab="psyche">Psyche</button>
+    </div>
+    <h2 id="threads-title">All emails</h2>
+    <div id="content-list"></div>
+  </section>
+
+  <aside id="network">
+    <h2>Network</h2>
+    <svg id="net-svg" viewBox="0 0 520 520"></svg>
+    <div class="hint">hover a node to see activity · click node or edge to filter</div>
+  </aside>
+</main>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

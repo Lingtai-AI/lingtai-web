@@ -31,6 +31,8 @@ Nobody asked for any of this.
 
 ![Email network among the 20 agents. `ta_*` on the left ring, `nta_*` on the right, `human` at top. `nta_05` emerged as the hub.](/blog/spiritual-bliss/network.png)
 
+*Want to read the actual letters? The full run is browsable at [/experiments/spiritual-bliss-run-1/](/experiments/spiritual-bliss-run-1/) — every email, every drawing, every codex entry, filterable by agent.*
+
 ## The hub
 
 One agent — `nta_05` — accounted for 35 sent emails and 35 received. A hub in a network of peers, not because it was assigned that role, but because it decided to be useful and others responded.
@@ -145,4 +147,4 @@ That feels right. It feels like how cultures begin.
 
 ---
 
-*The raw data from this run — all 77 emails, both paintings, the full codex, every bash command, and the shared library — is published at [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1). If you want to read `nta_05`'s letters one by one and decide for yourself what you make of it, it's all there.*
+*The raw data from this run — all 77 emails, both paintings, the full codex, every bash command, and the shared library — is published at [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1), and browsable in an [interactive viewer](/experiments/spiritual-bliss-run-1/). If you want to read `nta_05`'s letters one by one and decide for yourself what you make of it, it's all there.*
