@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
 import { t, isValidLang, languages, type Lang } from '../../../i18n/translations';
+import { postsForLang } from '../../../lib/posts';
 
 export function getStaticPaths() {
   return languages.map((lang) => ({ params: { lang } }));
@@ -11,25 +11,25 @@ const { lang } = Astro.params;
 if (!isValidLang(lang)) return Astro.redirect('/en/blog/');
 const tr = t(lang as Lang);
 
-const posts = (await getCollection('blog'))
-  .filter((post) => post.data.lang === lang)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const entries = (await postsForLang(lang as Lang))
+  .sort((a, b) => b.post.data.date.valueOf() - a.post.data.date.valueOf());
 ---
 
 <BaseLayout title={tr.nav.blog} lang={lang as Lang}>
   <main class="blog-list">
     <h1>{tr.nav.blog}</h1>
-    {posts.length === 0 && <p class="empty">No posts yet.</p>}
+    {entries.length === 0 && <p class="empty">No posts yet.</p>}
     <ul>
-      {posts.map((post) => (
+      {entries.map(({ slug, post, isFallback }) => (
         <li>
-          <a href={`/${lang}/blog/${post.id}/`}>
+          <a href={`/${lang}/blog/${slug}/`}>
             <span class="post-title">{post.data.title}</span>
             <span class="post-date">{post.data.date.toISOString().slice(0, 10)}</span>
           </a>
           {post.data.tags.map((tag) => (
             <span class="tag">{tag}</span>
           ))}
+          {isFallback && <span class="fallback">en</span>}
         </li>
       ))}
     </ul>
@@ -76,5 +76,15 @@ const posts = (await getCollection('blog'))
     padding: 2px 8px;
     border-radius: 3px;
     margin-left: 8px;
+  }
+  .fallback {
+    font-size: 10px;
+    color: var(--text-faint);
+    border: 1px solid var(--text-faint);
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 </style>

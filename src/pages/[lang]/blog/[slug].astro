@@ -1,19 +1,26 @@
 ---
 import BlogPost from '../../../layouts/BlogPost.astro';
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import { languages, type Lang } from '../../../i18n/translations';
+import { postsByCanonicalSlug, pickForLang } from '../../../lib/posts';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
-  return posts.flatMap((post) =>
-    languages.map((lang) => ({
-      params: { lang, slug: post.id },
-      props: { post },
-    }))
-  );
+  const groups = await postsByCanonicalSlug();
+  const paths: Array<{ params: { lang: Lang; slug: string }; props: { post: any; isFallback: boolean } }> = [];
+  for (const [slug, versions] of groups) {
+    for (const lang of languages) {
+      const post = pickForLang(versions, lang);
+      if (!post) continue;
+      paths.push({
+        params: { lang, slug },
+        props: { post, isFallback: post.data.lang !== lang },
+      });
+    }
+  }
+  return paths;
 }
 
-const { post } = Astro.props;
+const { post } = Astro.props as { post: any; isFallback: boolean };
 const { lang } = Astro.params;
 const { Content } = await render(post);
 ---
