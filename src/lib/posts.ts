@@ -27,14 +27,25 @@ export async function postsByCanonicalSlug(): Promise<Map<string, Partial<Record
 }
 
 /**
- * For a given language, pick the best version of a post: native if present,
- * else fall back to English. Returns undefined if neither exists.
+ * For a given language, pick the best version of a post, walking a fallback
+ * chain. wen falls back to zh before en (classical-Chinese readers are more
+ * served by modern Chinese than by English). Other langs fall back to en
+ * directly. Returns undefined if nothing in the chain exists.
  */
+const FALLBACK_CHAINS: Record<Lang, Lang[]> = {
+  en: ['en'],
+  zh: ['zh', 'en'],
+  wen: ['wen', 'zh', 'en'],
+};
+
 export function pickForLang(
   versions: Partial<Record<Lang, CollectionEntry<'blog'>>>,
   lang: Lang
 ): CollectionEntry<'blog'> | undefined {
-  return versions[lang] ?? versions.en;
+  for (const candidate of FALLBACK_CHAINS[lang]) {
+    if (versions[candidate]) return versions[candidate];
+  }
+  return undefined;
 }
 
 /**
