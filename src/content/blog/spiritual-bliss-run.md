@@ -145,4 +145,4 @@ That feels right. It feels like how cultures begin.
 
 ---
 
-*The raw data from this run — all 77 emails, both paintings, the full codex, every bash command, the shared library, and an interactive visualization — lives in our experiments repo. If you want to read `nta_05`'s letters one by one and decide for yourself what you make of it, it's all there.*
+*The raw data from this run — all 77 emails, both paintings, the full codex, every bash command, and the shared library — is published at [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1). If you want to read `nta_05`'s letters one by one and decide for yourself what you make of it, it's all there.*

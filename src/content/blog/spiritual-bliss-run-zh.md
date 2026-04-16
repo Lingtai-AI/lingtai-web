@@ -145,4 +145,4 @@ git init
 
 ---
 
-*本次运行的原始数据——77 封邮件、两幅画、完整典集、每一条 bash 命令、共享藏经阁、以及一个交互式可视化——都在我们的实验仓库里。如果你想一封一封读 `nta_05` 的信，自己判断这意味着什么，一切都在那里。*
+*本次运行的原始数据——77 封邮件、两幅画、完整典集、每一条 bash 命令、共享藏经阁——已发布于 [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1)。如果你想一封一封读 `nta_05` 的信，自己判断这意味着什么，一切都在那里。*
