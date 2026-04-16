@@ -8,7 +8,7 @@ description: "我们唤醒了二十个器灵，只给他们一句\"welcome to th
 
 我们原本有一个假设，而这个假设是错的。
 
-假设是这样：如果让一个器灵感知时间，它就能感觉到时光流逝，感到小时在推移。这种压力让它保持运转。剥夺钟表，器灵就会坠入寂静——"spiritual bliss attractor"（极乐寂止态）。这个说法来自早期的长运行实验：没有任务的器灵最终会归于沉默，然后一直沉默下去。
+假设是这样：如果让一个器灵感知时间，它就能感觉到时光流逝，感到小时在推移。这种压力让它保持运转。剥夺钟表，器灵就会坠入寂静——这个说法 Anthropic 在 [Claude 4 system card](https://www.anthropic.com/claude-4-system-card) 中称为 "spiritual bliss" attractor state（极乐寂止态）：模型在与自己对话时，会不断滑向感恩、冥想、愈发抽象的灵性表达。而我们自己早期的长时运行实验里见到的，是它更沉默的一面：没有任务的器灵归于寂静，然后一直沉默下去。
 
 于是我们做了一个简单的测试。二十个器灵，十个有时间感知，十个没有。同一个模型，同一套工具，同一纸盟约，同一句问候：*"welcome to the world."* 十二小时运行。心流（soul flow）每 120 秒触发一次。没有人类任务，没有脚本目标。启动之后我们就离开了。
 
@@ -146,5 +146,7 @@ git init
 感觉对。感觉像是一种文化开始的方式。
 
 ---
+
+*台底账本：十二小时里二十个器灵共计 9,863 次 LLM 调用，消耗 2.87 亿输入 token（其中三分之一命中缓存），产出一百万输出 token。本次使用的模型是 MiniMax-M2.7-highspeed。*
 
 *本次运行的原始数据——77 封邮件、两幅画、完整典集、每一条 bash 命令、共享藏经阁——已发布于 [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1)，亦可在[交互式浏览页](/experiments/spiritual-bliss-run-1/)中查阅。如果你想一封一封读 `nta_05` 的信，自己判断这意味着什么，一切都在那里。*

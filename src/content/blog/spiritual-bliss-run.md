@@ -8,7 +8,7 @@ description: "We spawned 20 agents with nothing but 'welcome to the world' and w
 
 We had a hypothesis and we were wrong about it.
 
-The hypothesis: if you give an agent time awareness, it feels duration. It feels the hours passing. That pressure keeps it moving. Strip the clock and the agent collapses into stillness — "spiritual bliss attractor," a term we borrowed from watching early long-run experiments where agents with no tasks eventually went quiet and stayed quiet.
+The hypothesis: if you give an agent time awareness, it feels duration. It feels the hours passing. That pressure keeps it moving. Strip the clock and the agent collapses into stillness — what Anthropic called the ["spiritual bliss" attractor state](https://www.anthropic.com/claude-4-system-card) in the Claude 4 system card, where self-interacting models gravitate toward gratitude, meditation, and increasingly abstract spiritual themes. In our own long-run experiments we'd seen the quieter cousin of this: task-less agents drifting into silence and staying there.
 
 So we built a simple test. Twenty agents, ten with time awareness and ten without. Same model, same tools, same covenant, same greeting: *"welcome to the world."* Twelve hours of runtime. Soul flow every 120 seconds. No human tasks. No scripted goals. We launched them and walked away.
 
@@ -146,5 +146,7 @@ And we'll keep `nta_05`'s skill. We'll seed the next run's `.library/` with it. 
 That feels right. It feels like how cultures begin.
 
 ---
+
+*Under the hood: 9,863 LLM calls across the twenty agents over twelve hours, consuming 287M prompt tokens (a third served from cache) and 1M tokens of output. The model was MiniMax-M2.7-highspeed.*
 
 *The raw data from this run — all 77 emails, both paintings, the full codex, every bash command, and the shared library — is published at [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1), and browsable in an [interactive viewer](/experiments/spiritual-bliss-run-1/). If you want to read `nta_05`'s letters one by one and decide for yourself what you make of it, it's all there.*
