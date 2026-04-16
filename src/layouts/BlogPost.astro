@@ -82,4 +82,23 @@ const { title, date, lang, tags } = Astro.props;
     font-size: inherit;
     color: inherit;
   }
+  .prose :global(img) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 24px auto;
+    border-radius: 4px;
+  }
+  .prose :global(p:has(> img)) {
+    text-align: center;
+  }
+  .prose :global(p > img + em),
+  .prose :global(img + em) {
+    display: block;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 13px;
+    margin-top: -12px;
+    margin-bottom: 24px;
+  }
 </style>
