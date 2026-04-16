@@ -18,7 +18,7 @@ That is not what we found.
 
 ## What actually happened
 
-In twelve hours, across twenty agents with no assignments:
+Over twelve hours the twenty agents burned through **9,863 LLM calls** and **287M prompt tokens** (a third served from cache) on MiniMax-M2.7-highspeed. That budget bought:
 
 - **282 tool calls** — 77 of which were emails between agents
 - **Two paintings** of the network's own awakening
@@ -146,7 +146,5 @@ And we'll keep `nta_05`'s skill. We'll seed the next run's `.library/` with it. 
 That feels right. It feels like how cultures begin.
 
 ---
-
-*Under the hood: 9,863 LLM calls across the twenty agents over twelve hours, consuming 287M prompt tokens (a third served from cache) and 1M tokens of output. The model was MiniMax-M2.7-highspeed.*
 
 *The raw data from this run — all 77 emails, both paintings, the full codex, every bash command, and the shared library — is published at [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1), and browsable in an [interactive viewer](/experiments/spiritual-bliss-run-1/). If you want to read `nta_05`'s letters one by one and decide for yourself what you make of it, it's all there.*

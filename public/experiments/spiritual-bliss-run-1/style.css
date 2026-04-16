@@ -225,6 +225,52 @@ h2 {
 .log-head .t { color: var(--muted); font-variant-numeric: tabular-nums; margin-left: auto; font-size: 11px; }
 .log-head .action { color: var(--muted); }
 
+/* Chronicle (merged stream) */
+.chronicle-item {
+  padding: 10px 12px;
+  margin: 6px 0;
+  border-left: 3px solid var(--border, #ddd);
+  background: var(--card-bg, #fafaf6);
+  border-radius: 0 4px 4px 0;
+}
+.chronicle-item.type-email  { border-left-color: #888; }
+.chronicle-item.type-media  { border-left-color: #c37; }
+.chronicle-item.type-codex  { border-left-color: #7b6; }
+.chronicle-item.type-write  { border-left-color: #69c; }
+.chronicle-item.type-bash   { border-left-color: #aa6; }
+.chronicle-item.type-psyche { border-left-color: #a7a; }
+.chronicle-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: #fff;
+  background: #888;
+}
+.chronicle-badge.type-email  { background: #888; }
+.chronicle-badge.type-media  { background: #c37; }
+.chronicle-badge.type-codex  { background: #7b6; }
+.chronicle-badge.type-write  { background: #69c; }
+.chronicle-badge.type-bash   { background: #aa6; }
+.chronicle-badge.type-psyche { background: #a7a; }
+.chronicle-item img { max-width: 100%; margin-top: 8px; border-radius: 3px; }
+.chronicle-item pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  background: #f3efe6;
+  padding: 8px 10px;
+  border-radius: 3px;
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #333;
+  max-height: 120px;
+  overflow: hidden;
+}
+.chronicle-item pre.expanded { max-height: 4000px; }
+
 /* Agent sidebar */
 .agent-row {
   display: flex;

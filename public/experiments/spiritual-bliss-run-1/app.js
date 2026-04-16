@@ -15,7 +15,7 @@
 
   // ---------- state ----------
   const state = {
-    tab: "emails",
+    tab: "chronicle",
     selectedAgent: null,
     humanOnly: false,
     search: "",
@@ -112,6 +112,7 @@
   }
 
   const TAB_RENDERERS = {
+    chronicle: renderChronicle,
     emails: renderEmails,
     media:  renderMedia,
     codex:  renderCodex,
@@ -119,6 +120,109 @@
     bash:   renderBash,
     psyche: renderPsyche,
   };
+
+  // Merged stream across all event types, sorted by t_min ascending.
+  // Tagged entries so matchesFilter can see a unified set of fields per item.
+  function buildChronicle() {
+    const items = [];
+    for (const e of emails) items.push({ type: "email", t_min: e.t_min, from: e.from, to: e.to, cc: e.cc, bcc: e.bcc, subject: e.subject, message: e.message, _raw: e });
+    for (const m of media)  items.push({ type: "media", t_min: m.t_min, from: m.from, prompt: m.prompt, _raw: m });
+    for (const c of codex)  items.push({ type: "codex", t_min: c.t_min, from: c.from, title: c.title, content: c.content, _raw: c });
+    for (const w of writes) items.push({ type: "write", t_min: w.t_min, from: w.from, path: w.path, content: w.content, _raw: w });
+    for (const b of bash)   items.push({ type: "bash",  t_min: b.t_min, from: b.from, cmd: b.cmd, _raw: b });
+    for (const p of psyche) items.push({ type: "psyche",t_min: p.t_min, from: p.from, action: p.action, target: p.target, content: p.content, _raw: p });
+    // Stable sort by t_min — ties broken by type so co-timed events group sensibly
+    items.sort((a, b) => (a.t_min ?? 0) - (b.t_min ?? 0) || a.type.localeCompare(b.type));
+    return items;
+  }
+  const chronicle = buildChronicle();
+
+  function renderChronicle() {
+    const matched = chronicle.filter(it => matchesFilter(it));
+    threadsTitle.textContent = filterTitle("Chronicle") + `  (${matched.length})`;
+    if (!matched.length) return renderEmpty("No events match.");
+
+    for (const it of matched) {
+      const card = document.createElement("div");
+      card.className = `chronicle-item type-${it.type}`;
+      const kind = agentKind(it.from);
+      const header = `
+        <div class="log-head">
+          <span class="chronicle-badge type-${it.type}">${it.type}</span>
+          <span class="pill-agent ${kind}">${it.from}</span>
+          ${chronicleAction(it)}
+          <span class="t">+${formatMin(it.t_min)}</span>
+        </div>`;
+      card.innerHTML = header + chronicleBody(it);
+      attachExpanders(card);
+      contentList.appendChild(card);
+    }
+  }
+
+  function chronicleAction(it) {
+    const e = it._raw;
+    switch (it.type) {
+      case "email": {
+        const recipients = [...e.to, ...e.cc, ...e.bcc];
+        return `<span class="email-arrow">→</span><span class="email-to">${
+          recipients.map(r => `<span class="recipient">${r}</span>`).join(" ")
+        }</span>`;
+      }
+      case "media":  return `<span class="action">drew ${e.aspect || ""} image</span>`;
+      case "codex":  return `<span class="action">codex · submit</span>`;
+      case "write": {
+        const short = e.path.replace("/Users/huangzesen/work/lingtai-experiments/spiritual-bliss-run", "");
+        return `<span class="action">wrote</span><strong>${escapeHTML(short)}</strong>`;
+      }
+      case "bash":   return `<span class="action">bash</span>`;
+      case "psyche": return `<span class="action">psyche · ${escapeHTML(e.action)}${e.target ? " · " + escapeHTML(e.target) : ""}</span>`;
+    }
+    return "";
+  }
+
+  function chronicleBody(it) {
+    const e = it._raw;
+    switch (it.type) {
+      case "email": {
+        const isLong = e.message.length > 600;
+        return `
+          <div class="email-subject">${escapeHTML(e.subject || "(no subject)")}</div>
+          <div class="email-body ${isLong ? "" : "short"}">${escapeHTML(e.message)}</div>
+          ${isLong ? '<div class="email-expand">show full message ▾</div>' : ""}`;
+      }
+      case "media":
+        return `
+          ${e.path ? `<img src="${e.path}" alt="image by ${e.from}">` : ""}
+          <div class="media-prompt">${escapeHTML(e.prompt)}</div>
+          ${e.reasoning ? `<div class="media-reasoning"><strong>reasoning:</strong> ${escapeHTML(e.reasoning)}</div>` : ""}`;
+      case "codex":
+        return `
+          <div class="codex-title">${escapeHTML(e.title)}</div>
+          <div class="codex-content">${escapeHTML(e.content)}</div>
+          <div class="email-expand">show full ▾</div>`;
+      case "write":
+        return `<pre>${escapeHTML(e.content)}</pre><div class="email-expand">show full ▾</div>`;
+      case "bash":
+        return `<pre>${escapeHTML(e.cmd)}</pre>`;
+      case "psyche":
+        return `<pre>${escapeHTML(e.content || "")}</pre>${
+          e.content && e.content.length > 400 ? '<div class="email-expand">show full ▾</div>' : ""
+        }`;
+    }
+    return "";
+  }
+
+  function attachExpanders(card) {
+    const expander = card.querySelector(".email-expand");
+    if (!expander) return;
+    // The target is whichever of these the card contains
+    const target = card.querySelector(".email-body, .codex-content, pre");
+    if (!target) return;
+    expander.addEventListener("click", () => {
+      const on = target.classList.toggle("expanded");
+      expander.textContent = on ? "collapse ▴" : (card.classList.contains("type-email") ? "show full message ▾" : "show full ▾");
+    });
+  }
 
   function renderContent() {
     contentList.innerHTML = "";

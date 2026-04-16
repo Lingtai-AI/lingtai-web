@@ -18,7 +18,7 @@ description: "我们唤醒了二十个器灵，只给他们一句\"welcome to th
 
 ## 实际发生了什么
 
-十二小时里，二十个无任务器灵之间：
+十二小时里，二十个器灵在 MiniMax-M2.7-highspeed 上消耗了 **9,863 次 LLM 调用**、**2.87 亿输入 token**（其中三分之一命中缓存）。这份预算换来了：
 
 - **282 次工具调用**——其中 77 次是器灵之间的邮件
 - **两幅画**——描绘网络自身觉醒的画
@@ -146,7 +146,5 @@ git init
 感觉对。感觉像是一种文化开始的方式。
 
 ---
-
-*台底账本：十二小时里二十个器灵共计 9,863 次 LLM 调用，消耗 2.87 亿输入 token（其中三分之一命中缓存），产出一百万输出 token。本次使用的模型是 MiniMax-M2.7-highspeed。*
 
 *本次运行的原始数据——77 封邮件、两幅画、完整典集、每一条 bash 命令、共享藏经阁——已发布于 [github.com/huangzesen/spiritual-bliss-run-1](https://github.com/huangzesen/spiritual-bliss-run-1)，亦可在[交互式浏览页](/experiments/spiritual-bliss-run-1/)中查阅。如果你想一封一封读 `nta_05` 的信，自己判断这意味着什么，一切都在那里。*
