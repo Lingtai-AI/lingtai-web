@@ -1,0 +1,307 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Giscus from '../../../components/Giscus.astro';
+import { t, isValidLang, languages, type Lang } from '../../../i18n/translations';
+import statsData from '../../../../agora-stats.json';
+
+interface AgoraStat {
+  stars?: number;
+  discussion?: number;
+  reactions?: Record<string, number>;
+  reactionsTotal?: number;
+}
+
+const stats = (statsData as { stats: Record<string, AgoraStat> }).stats;
+
+export async function getStaticPaths() {
+  const entries = await getCollection('agora');
+  const paths = [];
+  for (const lang of languages) {
+    for (const entry of entries) {
+      paths.push({ params: { lang, id: entry.data.id }, props: { entry: entry.data } });
+    }
+  }
+  return paths;
+}
+
+const { lang } = Astro.params;
+const { entry } = Astro.props;
+
+if (!isValidLang(lang)) return Astro.redirect('/en/');
+const tr = t(lang as Lang);
+
+const repoUrl = `https://github.com/${entry.repo}`;
+const cloneCmd = entry.ref === 'main'
+  ? `git clone ${repoUrl}.git`
+  : `git clone -b ${entry.ref} ${repoUrl}.git`;
+
+const stat = stats[entry.id] ?? {};
+const reactionEmoji: Record<string, string> = {
+  THUMBS_UP: '👍',
+  THUMBS_DOWN: '👎',
+  HEART: '❤️',
+  HOORAY: '🎉',
+  ROCKET: '🚀',
+  EYES: '👀',
+  LAUGH: '😄',
+  CONFUSED: '😕',
+};
+const reactionEntries = stat.reactions
+  ? Object.entries(stat.reactions).filter(([, n]) => n > 0)
+  : [];
+
+const formattedDate = entry.addedAt
+  ? new Date(entry.addedAt).toISOString().slice(0, 10)
+  : null;
+---
+
+<BaseLayout title={entry.name} lang={lang as Lang}>
+  <main class="entry">
+    <a class="back-link" href={`/${lang}/agora/`}>← {tr.agora.back}</a>
+
+    <header class="entry-header">
+      <h1 class="name serif">{entry.name}</h1>
+      <p class="byline">
+        {tr.agora.by} <a href={entry.authorUrl} target="_blank" rel="noopener">{entry.author}</a>
+        {formattedDate && (
+          <span class="added"> · {tr.agora.added} {formattedDate}</span>
+        )}
+      </p>
+
+      <div class="counters">
+        {stat.stars !== undefined && (
+          <a class="counter" href={`${repoUrl}/stargazers`} target="_blank" rel="noopener" title={tr.agora.starsTitle}>
+            ⭐ {stat.stars}
+          </a>
+        )}
+        {reactionEntries.length > 0 && (
+          <span class="counter reactions" title={tr.agora.reactionsTitle}>
+            {reactionEntries.map(([key, n]) => (
+              <span class="reaction">
+                <span class="emoji">{reactionEmoji[key] ?? '·'}</span>
+                <span class="num">{n}</span>
+              </span>
+            ))}
+          </span>
+        )}
+      </div>
+    </header>
+
+    <p class="description">{entry.description}</p>
+
+    {entry.tags.length > 0 && (
+      <ul class="tags">
+        {entry.tags.map((tag: string) => <li class="tag">{tag}</li>)}
+      </ul>
+    )}
+
+    <section class="install">
+      <h2 class="section-heading">{tr.agora.install}</h2>
+      <div class="install-pill">
+        <span class="prompt">$</span>
+        <span class="command">{cloneCmd}</span>
+        <button class="copy-btn" data-command={cloneCmd}>{tr.agora.copy}</button>
+      </div>
+      <p class="install-hint">{tr.agora.installHint}</p>
+    </section>
+
+    <section class="links">
+      <h2 class="section-heading">{tr.agora.links}</h2>
+      <ul class="link-list">
+        <li><a href={repoUrl} target="_blank" rel="noopener">{tr.agora.viewOnGithub} →</a></li>
+        <li><a href={`${repoUrl}/issues`} target="_blank" rel="noopener">{tr.agora.issues} →</a></li>
+      </ul>
+    </section>
+
+    <section class="discussion">
+      <h2 class="section-heading">{tr.agora.discussion}</h2>
+      <Giscus term={entry.id} lang={lang as Lang} />
+    </section>
+  </main>
+</BaseLayout>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.copy-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const cmd = btn.dataset.command;
+      if (!cmd) return;
+      navigator.clipboard.writeText(cmd);
+      const original = btn.textContent;
+      btn.textContent = '✓';
+      setTimeout(() => {
+        btn.textContent = original;
+      }, 1500);
+    });
+  });
+</script>
+
+<style>
+  .entry {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .back-link {
+    display: inline-block;
+    color: var(--text-faint);
+    font-size: 13px;
+    letter-spacing: 1px;
+    margin-bottom: 32px;
+  }
+  .back-link:hover {
+    color: var(--accent);
+  }
+
+  .entry-header {
+    margin-bottom: 32px;
+  }
+  .name {
+    font-size: 32px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: var(--title-color);
+    margin-bottom: 6px;
+  }
+  .byline {
+    font-size: 14px;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+  .byline a {
+    color: var(--text-dim);
+  }
+  .byline a:hover {
+    color: var(--accent);
+  }
+  .added {
+    color: var(--text-faint);
+  }
+
+  .counters {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  .counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-dim);
+    border: 1px solid rgba(138, 134, 128, 0.25);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  a.counter:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .reactions {
+    gap: 10px;
+  }
+  .reaction {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .reaction .num {
+    color: var(--text-faint);
+  }
+
+  .description {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    margin: 24px 0;
+  }
+
+  .tags {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0;
+    margin: 0 0 32px;
+  }
+  .tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-faint);
+    border: 1px solid rgba(138, 134, 128, 0.3);
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+
+  .section-heading {
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(138, 134, 128, 0.18);
+  }
+
+  .install {
+    margin: 36px 0;
+  }
+  .install-pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 12px 18px;
+    border-radius: 6px;
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 13px;
+  }
+  .prompt {
+    color: var(--text-faint);
+  }
+  .command {
+    flex: 1;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .copy-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0.7;
+    font-family: inherit;
+  }
+  .copy-btn:hover {
+    opacity: 1;
+  }
+  .install-hint {
+    margin-top: 10px;
+    color: var(--text-faint);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  .links {
+    margin: 36px 0;
+  }
+  .link-list {
+    list-style: none;
+    padding: 0;
+  }
+  .link-list li {
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .discussion {
+    margin-top: 48px;
+  }
+</style>

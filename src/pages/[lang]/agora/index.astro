@@ -1,9 +1,16 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import AgoraBraille from '../../components/AgoraBraille.astro';
-import RecipeCard from '../../components/RecipeCard.astro';
-import { t, isValidLang, languages, type Lang } from '../../i18n/translations';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AgoraBraille from '../../../components/AgoraBraille.astro';
+import RecipeCard from '../../../components/RecipeCard.astro';
+import { t, isValidLang, languages, type Lang } from '../../../i18n/translations';
+import statsData from '../../../../agora-stats.json';
+
+interface AgoraStat {
+  stars?: number;
+  reactionsTotal?: number;
+}
+const stats = (statsData as { stats: Record<string, AgoraStat> }).stats;
 
 export function getStaticPaths() {
   return languages.map((lang) => ({ params: { lang } }));
@@ -51,8 +58,12 @@ const submitUrl = 'https://github.com/Lingtai-AI/lingtai-agora/issues/new?templa
             authorUrl={entry.authorUrl}
             ref={entry.ref}
             tags={entry.tags}
+            stars={stats[entry.id]?.stars}
+            reactionsTotal={stats[entry.id]?.reactionsTotal}
             copyLabel={tr.agora.copy}
             byLabel={tr.agora.by}
+            viewLabel={tr.agora.view}
+            detailHref={`/${lang}/agora/${entry.id}/`}
           />
         ))}
       </section>

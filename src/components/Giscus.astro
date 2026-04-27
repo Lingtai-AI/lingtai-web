@@ -1,0 +1,83 @@
+---
+import type { Lang } from '../i18n/translations';
+
+interface Props {
+  term: string;
+  lang: Lang;
+}
+
+const { term, lang } = Astro.props;
+
+const giscusLang = lang === 'zh' ? 'zh-CN' : lang === 'wen' ? 'zh-CN' : 'en';
+
+const repo = 'Lingtai-AI/lingtai-agora';
+const repoId = 'GISCUS_REPO_ID_PLACEHOLDER';
+const category = 'General';
+const categoryId = 'GISCUS_CATEGORY_ID_PLACEHOLDER';
+
+const isConfigured = !repoId.includes('PLACEHOLDER');
+---
+
+{isConfigured ? (
+  <section class="giscus-wrapper">
+    <script
+      src="https://giscus.app/client.js"
+      data-repo={repo}
+      data-repo-id={repoId}
+      data-category={category}
+      data-category-id={categoryId}
+      data-mapping="specific"
+      data-term={term}
+      data-strict="1"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="bottom"
+      data-theme="preferred_color_scheme"
+      data-lang={giscusLang}
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async
+    ></script>
+  </section>
+) : (
+  <section class="giscus-pending">
+    <p class="pending-note">
+      Discussion will appear here once Giscus is configured.
+    </p>
+  </section>
+)}
+
+<script>
+  function syncGiscusTheme() {
+    const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+    if (!iframe) return;
+    iframe.contentWindow?.postMessage(
+      { giscus: { setConfig: { theme } } },
+      'https://giscus.app'
+    );
+  }
+
+  const observer = new MutationObserver(syncGiscusTheme);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  });
+
+  setTimeout(syncGiscusTheme, 1500);
+</script>
+
+<style>
+  .giscus-wrapper,
+  .giscus-pending {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(125, 171, 143, 0.18);
+  }
+  .pending-note {
+    color: var(--text-faint);
+    font-size: 13px;
+    text-align: center;
+    font-style: italic;
+  }
+</style>

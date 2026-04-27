@@ -8,11 +8,30 @@ interface Props {
   authorUrl: string;
   ref: string;
   tags: string[];
+  stars?: number;
+  reactionsTotal?: number;
   copyLabel: string;
   byLabel: string;
+  viewLabel: string;
+  detailHref: string;
 }
 
-const { id, repo, name, description, author, authorUrl, ref, tags, copyLabel, byLabel } = Astro.props;
+const {
+  id,
+  repo,
+  name,
+  description,
+  author,
+  authorUrl,
+  ref,
+  tags,
+  stars,
+  reactionsTotal,
+  copyLabel,
+  byLabel,
+  viewLabel,
+  detailHref,
+} = Astro.props;
 const repoUrl = `https://github.com/${repo}`;
 const cloneCmd = ref === 'main'
   ? `git clone ${repoUrl}.git`
@@ -22,11 +41,19 @@ const cloneCmd = ref === 'main'
 <article class="recipe-card" data-id={id}>
   <header>
     <h3 class="name serif">
-      <a href={repoUrl} target="_blank" rel="noopener">{name}</a>
+      <a href={detailHref}>{name}</a>
     </h3>
     <p class="byline">
       {byLabel} <a href={authorUrl} target="_blank" rel="noopener">{author}</a>
     </p>
+    {(stars !== undefined || (reactionsTotal && reactionsTotal > 0)) && (
+      <p class="stat-row">
+        {stars !== undefined && <span class="stat">⭐ {stars}</span>}
+        {reactionsTotal && reactionsTotal > 0 && (
+          <span class="stat">💬 {reactionsTotal}</span>
+        )}
+      </p>
+    )}
   </header>
 
   <p class="description">{description}</p>
@@ -42,6 +69,8 @@ const cloneCmd = ref === 'main'
     <span class="command">{cloneCmd}</span>
     <button class="copy-btn" data-command={cloneCmd}>{copyLabel}</button>
   </div>
+
+  <a class="view-link" href={detailHref}>{viewLabel} →</a>
 </article>
 
 <style>
@@ -144,6 +173,31 @@ const cloneCmd = ref === 'main'
   }
   .copy-btn:hover {
     opacity: 1;
+  }
+
+  .stat-row {
+    margin-top: 6px;
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+  .stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .view-link {
+    align-self: flex-end;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .view-link:hover {
+    color: var(--accent-warm);
   }
 </style>
 
