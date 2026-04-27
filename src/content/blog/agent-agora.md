@@ -117,7 +117,7 @@ This is what we mean by **Orchestration as a Service**: the value isn't in the m
 ## Try it
 
 ```bash
-brew install huangzesen/lingtai/lingtai-tui
+brew install lingtai-ai/lingtai/lingtai-tui
 lingtai-tui
 ```
 

@@ -119,7 +119,7 @@ This is orchestration as a service — not the model, not the framework, but the
 ## Try it
 
 ```bash
-brew install huangzesen/lingtai/lingtai-tui
+brew install lingtai-ai/lingtai/lingtai-tui
 lingtai-tui
 ```
 
