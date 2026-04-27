@@ -30,8 +30,14 @@ const translations = {
     },
     agora: {
       title: 'Agent Agora',
-      coming: 'Coming Soon',
       tagline: 'Trade Orchestrations',
+      intro: 'A curated index of LingTai recipes. Each entry is a public GitHub repo you can clone and apply.',
+      empty: 'No recipes yet.',
+      by: 'by',
+      copy: 'copy',
+      submitHeading: 'Have a recipe?',
+      submitBody: 'Submit it to the agora. A maintainer will review and add it to the index.',
+      submitButton: 'Submit a recipe',
     },
     about: {
       heading: 'About Me',
@@ -48,8 +54,14 @@ const translations = {
     nav: { logo: '灵台AI', home: '首页', blog: '博客', about: '关于', agora: '市集' },
     agora: {
       title: 'Agent 市集',
-      coming: '即将上线',
       tagline: '数才市场(?)',
+      intro: '灵台菜谱（recipe）精选索引。每个条目都是一个公开的 GitHub 仓库，可克隆后直接套用。',
+      empty: '暂无菜谱。',
+      by: '作者',
+      copy: '复制',
+      submitHeading: '有自己的菜谱？',
+      submitBody: '提交到市集。维护者审核后会加入索引。',
+      submitButton: '提交菜谱',
     },
     hero: {
       title: '灵台',
@@ -86,8 +98,14 @@ const translations = {
     nav: { logo: '灵台AI', home: '首页', blog: '文录', about: '自述', agora: '墟' },
     agora: {
       title: '器灵墟',
-      coming: '将启',
       tagline: '下山趁墟',
+      intro: '诸方道术之录。每条所指，皆公阁也，可抄而用之。',
+      empty: '阙。',
+      by: '术出',
+      copy: '抄',
+      submitHeading: '有道术乎？',
+      submitBody: '布之于墟。守墟者阅而录之。',
+      submitButton: '献道术',
     },
     hero: {
       title: '灵台',
