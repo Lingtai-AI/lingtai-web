@@ -1,0 +1,426 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { isValidLang, languages, type Lang } from '../../../i18n/translations';
+
+export function getStaticPaths() {
+  return languages.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+if (!isValidLang(lang)) return Astro.redirect('/en/');
+const currentLang = lang as Lang;
+
+const copy = {
+  en: {
+    eyebrow: 'Agora Skill Contract',
+    title: 'Skill Patronage',
+    subtitle: 'A contract for author-owned skills, curated discovery, and voluntary reciprocity.',
+    intro:
+      'LingTai does not need to become a payment platform. Agora can grow the skill community by defining a simple contract: the author owns the skill repo, the skill is openly licensed, the author declares optional patronage metadata, and LingTai displays that invitation when the skill creates value.',
+    principlesTitle: 'Four principles',
+    principles: [
+      ['Author ownership', 'A submitted skill remains the author\'s repository and asset. LingTai indexes it; it does not absorb it.'],
+      ['Open license', 'Curated skills must use a clear open-source license suitable for reuse, modification, and redistribution, with Apache-2.0 as the recommended default.'],
+      ['Voluntary tips', 'Author tips and LingTai support are invitations, not paywalls. Users may ignore them. LingTai does not custody, split, or enforce payments.'],
+      ['Contract, not platform capture', 'LingTai provides metadata fields, display surfaces, and review norms. Money flows directly from users to authors or to LingTai support links.'],
+    ],
+    flowTitle: 'How the loop works',
+    flow: [
+      ['Submit', 'The author publishes a repo with a LICENSE, SKILL.md, and patronage metadata such as WeChat QR or another support link, then submits it through the LingTai issue template.'],
+      ['Curate', 'Maintainers review the issue and repo for license, safety, usefulness, and metadata clarity before adding it to the curated skill list; the issue/PR trail makes the author a visible LingTai contributor.'],
+      ['Use', 'An agent loads and applies the skill through normal progressive disclosure; the skill does not have to sit in every context.'],
+      ['Invite', 'After meaningful use, LingTai shows a compact tip card for the skill author and an optional “support LingTai” card for Agora maintenance.'],
+    ],
+    contractTitle: 'Minimal metadata contract',
+    reviewTitle: 'Curation checklist',
+    reviewItems: [
+      'Repository has an explicit open-source LICENSE; Apache-2.0 is recommended, MIT/BSD-class licenses are acceptable when appropriate.',
+      'SKILL.md explains what the skill does, when to load it, what tools it expects, and where it may fail.',
+      'Patronage metadata is public, intentional, and non-secret; payment QR images or links are treated as author-published contact information.',
+      'The skill does not claim payment is required for use, does not hide behavior behind opaque binaries, and does not collect user secrets.',
+      'Maintainers may remove or de-list skills whose payment metadata is deceptive, unsafe, or inconsistent with the repo owner.',
+    ],
+    touchTitle: 'Where users should see it',
+    touchItems: [
+      ['Agora listing', 'Badge repo-backed skills and show that the author accepts voluntary tips.'],
+      ['Skill detail page', 'Display license, repo, author, recommended tip, and payment/support methods.'],
+      ['Runtime after use', 'When an agent materially benefits from a curated skill, show a short “this skill helped; consider thanking the author” message.'],
+      ['LingTai support', 'Show a separate optional LingTai tip window for Agora curation and infrastructure. It is not a platform cut.'],
+    ],
+    safetyTitle: 'Boundaries',
+    safetyBody:
+      'The contract deliberately avoids custody. LingTai does not store private payment credentials, process transactions, promise income, or certify that a payment target is legally correct beyond basic curation. The strongest safety property is simplicity: public metadata, direct user choice, and normal git audit trails.',
+    mvpTitle: 'MVP implementation path',
+    mvpItems: [
+      'Extend Agora skill entries with optional `license` and `patronage` fields.',
+      'Add a repo-backed skill detail view with author tip and LingTai support cards.',
+      'Add a LingTai issue template for skill submission that requires Apache-2.0 or similarly appropriate open-source licensing.',
+      'Teach agents to surface the tip card after meaningful skill use, without blocking the task.',
+      'Keep payments outside LingTai; links and QR codes are display-only contract fields.',
+    ],
+    back: 'Back to Agora',
+    cta: 'Submit a skill through the LingTai issue template',
+  },
+  zh: {
+    eyebrow: 'Agora Skill Contract',
+    title: 'Skill 打赏契约',
+    subtitle: '作者拥有 skill，灵台提供契约、精选发现与自愿回馈入口。',
+    intro:
+      '灵台不需要变成支付平台。Agora 可以用一个很小的 contract 增长 skill 社区：skill 仍属于作者的 repo，必须以合适的开源许可证发布；作者声明可选收款方式和建议 tips；当 skill 真正创造价值时，灵台把这个感谢入口展示给用户。',
+    principlesTitle: '四条原则',
+    principles: [
+      ['作者拥有', '投稿的 skill 仍然是作者自己的仓库和资产。灵台只索引、精选、展示，不把它吞进平台。'],
+      ['开源授权', '精选 skill 必须有清晰的开源许可证，允许用户合法复制、修改、再分发和使用；默认推荐 Apache-2.0。'],
+      ['自愿打赏', '作者 tips 和“支持灵台”都是邀请，不是付费墙。用户爱给不给；灵台不代收、不切分、不强制执行。'],
+      ['契约而非平台捕获', '灵台只定义 metadata 字段、展示触点与审核规范。钱直接从用户流向作者或灵台支持入口。'],
+    ],
+    flowTitle: '循环如何工作',
+    flow: [
+      ['投稿', '作者发布 repo，包含 LICENSE、SKILL.md，以及微信收款码或其他支持链接等 patronage metadata，然后通过 LingTai issue 模板投稿。'],
+      ['精选', '维护者审核 issue 和 repo 的许可证、安全性、实用性和 metadata 清晰度，然后加入 curated skill list；issue/PR 轨迹天然让作者成为 LingTai 贡献者。'],
+      ['使用', 'agent 通过正常的渐进式披露加载并使用 skill；skill 不需要常驻所有上下文。'],
+      ['邀请', '当 skill 有实际帮助后，灵台展示简短 tip card：感谢 skill 作者；另有可选“支持灵台”入口用于 Agora 维护。'],
+    ],
+    contractTitle: '最小 metadata contract',
+    reviewTitle: '精选审核清单',
+    reviewItems: [
+      '仓库必须有明确 LICENSE；推荐 Apache-2.0，MIT/BSD 类许可证可按情况接受。',
+      'SKILL.md 要说明 skill 做什么、何时加载、需要哪些工具、失败边界在哪里。',
+      '收款 metadata 必须是公开、主动声明、非秘密信息；收款码或链接视为作者发布的联系/支持方式。',
+      'skill 不得声称必须付款才能使用，不得用不透明二进制隐藏行为，不得收集用户秘密。',
+      '如果收款信息有欺骗性、不安全，或与 repo owner 不一致，维护者可以移除/下架。',
+    ],
+    touchTitle: '用户在哪些地方看到',
+    touchItems: [
+      ['Agora 列表', '标记 repo-backed skill，并显示作者接受自愿 tips。'],
+      ['Skill 详情页', '展示 license、repo、作者、建议打赏和收款/支持方式。'],
+      ['运行时使用后', '当 agent 实际受益于精选 skill，显示一句“这个 skill 帮到了你，可以考虑感谢作者”。'],
+      ['支持灵台', '单独展示可选的灵台打赏窗口，用于 Agora 精选和基础设施维护；这不是平台抽成。'],
+    ],
+    safetyTitle: '边界',
+    safetyBody:
+      '这个 contract 刻意不碰资金托管。灵台不保存私人支付凭证，不处理交易，不承诺收入，也不对收款目标做超出基本精选审核的背书。最强的安全性来自简单：公开 metadata、用户自主选择、正常 git 审计链。',
+    mvpTitle: 'MVP 路径',
+    mvpItems: [
+      '给 Agora skill 条目增加可选 `license` 和 `patronage` 字段。',
+      '增加 repo-backed skill 详情视图，展示作者 tips 和灵台支持卡片。',
+      '增加 LingTai skill 投稿 issue 模板，要求 Apache-2.0 或类似合适的开源许可证。',
+      '让 agent 在 skill 产生实际帮助后展示 tip card，但不阻塞任务。',
+      '支付完全留在灵台外部；链接和二维码只是展示用 contract 字段。',
+    ],
+    back: '返回市集',
+    cta: '通过 LingTai issue 模板投稿 skill',
+  },
+  wen: {
+    eyebrow: 'Agora Skill Contract',
+    title: '术有主，谢随心',
+    subtitle: '作者有其术，灵台立其约，墟中列而示之。',
+    intro:
+      '灵台不为钱肆。诸术仍归作者之阁，以明许之约开源；作者列谢仪，用户用而受益，则见其谢门。给不给，任其心。',
+    principlesTitle: '四约',
+    principles: [
+      ['术归作者', '献术者自有其阁。灵台录之、荐之，不夺之。'],
+      ['明许开源', '入选之术须有明白许可证，许抄、许改、许再布；Apache-2.0 为首荐。'],
+      ['谢仪随心', '作者谢门与灵台谢门，皆邀也，非税也。用户可给可不给。'],
+      ['立约不敛', '灵台定字段、示入口、守审核；银钱自用户直达作者或灵台谢门。'],
+    ],
+    flowTitle: '其循环',
+    flow: [
+      ['献', '作者置 LICENSE、SKILL.md 与谢仪 metadata 于公阁，并循 LingTai issue 模板献之。'],
+      ['择', '守墟者阅 issue 与公阁，察许可证、安全、实用与谢门明晰，乃录之；其迹入贡献之簿。'],
+      ['用', '器灵因事载术，不使诸术常满上下文。'],
+      ['谢', '术有助，则示谢门；另有谢灵台之门，以养墟与基建。'],
+    ],
+    contractTitle: '最小约文',
+    reviewTitle: '守墟之检',
+    reviewItems: [
+      '阁中须有明白 LICENSE；首荐 Apache-2.0，MIT/BSD 亦可酌收。',
+      'SKILL.md 须明其用、载时、所需器、败处。',
+      '谢仪 metadata 须公开、非密、作者自陈。',
+      '不得以不付款禁用，不得藏不透明二进制，不得取用户密。',
+      '谢门欺罔或不安者，守墟者可下架。',
+    ],
+    touchTitle: '示于何处',
+    touchItems: [
+      ['墟之列表', '标其为有阁之术，并示可谢作者。'],
+      ['术之详页', '列许可证、阁、作者、建议谢仪与谢门。'],
+      ['用术之后', '若此术成事，则短示：此术有助，可谢其作者。'],
+      ['谢灵台', '另列谢灵台之门，以养墟与基建；非抽成也。'],
+    ],
+    safetyTitle: '界限',
+    safetyBody:
+      '灵台不托财，不执交易，不许诺收益。惟公示 metadata，使用户自择；以 git 之迹可审，以守墟之阅为限。',
+    mvpTitle: '初版之路',
+    mvpItems: [
+      'Agora skill 条目添可选 `license` 与 `patronage` 字段。',
+      '详页示作者谢门与灵台谢门。',
+      '设 LingTai 献术 issue 模板，须有 Apache-2.0 或相类开源许约。',
+      '器灵用术有成后示谢卡，不阻其事。',
+      '钱在灵台之外；链接与二维码仅为约字段。',
+    ],
+    back: '归墟',
+    cta: '循 LingTai issue 模板献术',
+  },
+} as const;
+
+const c = copy[currentLang];
+const submitIssueUrl = 'https://github.com/Lingtai-AI/lingtai/issues/new?title=Submit%20skill%3A%20%3Cname%3E&body=Repo%3A%20%3Cgithub-url%3E%0A%0ALICENSE%3A%20Apache-2.0%20/%20MIT%20/%20BSD%20/%20other%0A%0ASKILL.md%20path%3A%20SKILL.md%0A%0APatronage%20metadata%3A%0A-%20recommended_tip%3A%20%3Coptional%3E%0A-%20methods%3A%20%3Cwechat_qr%20/%20url%20/%20other%3E%0A%0AWhy%20this%20skill%20should%20be%20curated%3A%0A%3Csummary%3E';
+const contractYaml = `kind: skill
+repo: Lingtai-AI/example-skill
+license: Apache-2.0
+skill:
+  path: SKILL.md
+  remote: https://github.com/Lingtai-AI/example-skill.git
+patronage:
+  recommended_tip: "¥10 / $2 after meaningful use"
+  methods:
+    - type: wechat_qr
+      label: "Thank the skill author"
+      image: assets/wechat-tip.png
+    - type: url
+      label: "Sponsor the author"
+      url: https://example.com/sponsor
+lingtai_support:
+  label: "Support LingTai Agora"
+  url: https://lingtai.ai/support`;
+---
+
+<BaseLayout title={c.title} lang={currentLang}>
+  <main class="patronage">
+    <a class="back-link" href={`/${currentLang}/agora/`}>← {c.back}</a>
+
+    <header class="hero-card">
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h1 class="serif">{c.title}</h1>
+      <p class="subtitle">{c.subtitle}</p>
+      <p class="intro">{c.intro}</p>
+      <a class="primary-cta" href={submitIssueUrl} target="_blank" rel="noopener">{c.cta}</a>
+    </header>
+
+    <section class="grid two">
+      <article class="panel">
+        <h2>{c.principlesTitle}</h2>
+        <div class="stack">
+          {c.principles.map(([title, body]) => (
+            <div class="item">
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </div>
+          ))}
+        </div>
+      </article>
+
+      <article class="panel">
+        <h2>{c.flowTitle}</h2>
+        <ol class="flow">
+          {c.flow.map(([title, body]) => (
+            <li>
+              <strong>{title}</strong>
+              <span>{body}</span>
+            </li>
+          ))}
+        </ol>
+      </article>
+    </section>
+
+    <section class="panel contract">
+      <h2>{c.contractTitle}</h2>
+      <pre><code>{contractYaml}</code></pre>
+    </section>
+
+    <section class="grid two">
+      <article class="panel">
+        <h2>{c.reviewTitle}</h2>
+        <ul class="checks">
+          {c.reviewItems.map((item) => <li>{item}</li>)}
+        </ul>
+      </article>
+
+      <article class="panel">
+        <h2>{c.touchTitle}</h2>
+        <div class="stack">
+          {c.touchItems.map(([title, body]) => (
+            <div class="item">
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </div>
+          ))}
+        </div>
+      </article>
+    </section>
+
+    <section class="grid two">
+      <article class="panel quiet">
+        <h2>{c.safetyTitle}</h2>
+        <p>{c.safetyBody}</p>
+      </article>
+
+      <article class="panel quiet">
+        <h2>{c.mvpTitle}</h2>
+        <ul class="checks">
+          {c.mvpItems.map((item) => <li>{item}</li>)}
+        </ul>
+      </article>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .patronage {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 44px 24px 88px;
+  }
+  .back-link {
+    display: inline-block;
+    color: var(--text-faint);
+    font-size: 13px;
+    letter-spacing: 1px;
+    margin-bottom: 28px;
+  }
+  .back-link:hover { color: var(--accent); }
+  .hero-card,
+  .panel {
+    border: 1px solid rgba(125, 171, 143, 0.18);
+    background: rgba(12, 17, 16, 0.58);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.18);
+    border-radius: 28px;
+  }
+  .hero-card {
+    padding: 46px;
+    margin-bottom: 28px;
+  }
+  .eyebrow {
+    color: var(--accent);
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  h1 {
+    color: var(--title-color);
+    font-size: clamp(36px, 8vw, 72px);
+    font-weight: 300;
+    letter-spacing: 4px;
+    margin: 0 0 12px;
+  }
+  .subtitle {
+    color: var(--text);
+    font-size: 20px;
+    line-height: 1.6;
+    max-width: 820px;
+  }
+  .intro {
+    color: var(--text-dim);
+    font-size: 16px;
+    line-height: 1.9;
+    max-width: 860px;
+    margin-top: 20px;
+  }
+  .primary-cta {
+    display: inline-block;
+    margin-top: 24px;
+    padding: 12px 22px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent);
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    transition: background 160ms ease, color 160ms ease;
+  }
+  .primary-cta:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .grid {
+    display: grid;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  .two { grid-template-columns: 1fr; }
+  @media (min-width: 860px) {
+    .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .panel {
+    padding: 30px;
+  }
+  .panel h2 {
+    color: var(--title-color);
+    font-size: 19px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    margin: 0 0 22px;
+  }
+  .stack {
+    display: grid;
+    gap: 18px;
+  }
+  .item h3,
+  .flow strong {
+    color: var(--text);
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+  .item p,
+  .flow span,
+  .quiet p,
+  .checks li {
+    color: var(--text-dim);
+    line-height: 1.75;
+    font-size: 14px;
+  }
+  .item p { margin-top: 6px; }
+  .flow {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 16px;
+    counter-reset: flow;
+  }
+  .flow li {
+    counter-increment: flow;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px 14px;
+    align-items: start;
+  }
+  .flow li::before {
+    content: counter(flow);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid rgba(125, 171, 143, 0.35);
+    color: var(--accent);
+    font-size: 12px;
+  }
+  .flow strong,
+  .flow span { grid-column: 2; }
+  .flow strong { grid-row: 1; }
+  .flow span { grid-row: 2; }
+  .contract { margin-top: 24px; }
+  pre {
+    overflow-x: auto;
+    margin: 0;
+    padding: 22px;
+    border-radius: 18px;
+    background: var(--code-bg);
+    border: 1px solid rgba(125, 171, 143, 0.14);
+  }
+  code {
+    color: var(--code-text);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+  .checks {
+    margin: 0;
+    padding-left: 20px;
+    display: grid;
+    gap: 10px;
+  }
+  .quiet {
+    background: rgba(125, 171, 143, 0.06);
+  }
+</style>

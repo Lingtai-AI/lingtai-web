@@ -23,6 +23,19 @@ const agora = defineCollection({
     authorUrl: z.string().url(),
     ref: z.string().default('main'),
     tags: z.array(z.string()).default([]),
+    // Recipes remain the default Agora object. Skill entries may opt into the
+    // patronage contract documented at /agora/skill-patronage/.
+    kind: z.enum(['recipe', 'skill']).default('recipe'),
+    license: z.string().optional(),
+    patronage: z.object({
+      recommendedTip: z.string().optional(),
+      methods: z.array(z.object({
+        type: z.enum(['wechat_qr', 'url', 'other']),
+        label: z.string(),
+        url: z.string().url().optional(),
+        image: z.string().optional(),
+      })).default([]),
+    }).optional(),
     featured: z.boolean().default(false),
     addedAt: z.coerce.date().optional(),
   }),

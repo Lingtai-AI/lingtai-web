@@ -31,6 +31,23 @@ const sorted = entries
   });
 
 const submitUrl = 'https://github.com/Lingtai-AI/lingtai-agora/issues/new?template=submit-recipe.yml';
+const patronageCopy = {
+  en: {
+    heading: 'Skill patronage contract',
+    body: 'Agora can also curate repo-backed skills: authors keep ownership, publish under an open license, and declare optional tip links. LingTai provides the contract, discovery, and post-use invitation — not payment custody.',
+    button: 'Read the contract',
+  },
+  zh: {
+    heading: 'Skill 打赏契约',
+    body: 'Agora 也可以精选 repo-backed skill：作者保留所有权，以开源许可证发布，并声明可选收款方式。灵台只提供契约、发现与用后提示，不托管支付。',
+    button: '查看契约',
+  },
+  wen: {
+    heading: '术之谢约',
+    body: 'Agora 亦可择有阁之术：作者有其术，以明许开源，列谢门。灵台立约、示之、用后提醒，不托财。',
+    button: '阅其约',
+  },
+}[lang as Lang];
 ---
 
 <BaseLayout title={tr.agora.title} lang={lang as Lang}>
@@ -68,6 +85,14 @@ const submitUrl = 'https://github.com/Lingtai-AI/lingtai-agora/issues/new?templa
         ))}
       </section>
     )}
+
+    <section class="submit patronage">
+      <h2 class="serif">{patronageCopy.heading}</h2>
+      <p>{patronageCopy.body}</p>
+      <a class="submit-button" href={`/${lang}/agora/skill-patronage/`}>
+        {patronageCopy.button}
+      </a>
+    </section>
 
     <section class="submit">
       <h2 class="serif">{tr.agora.submitHeading}</h2>
@@ -164,6 +189,12 @@ const submitUrl = 'https://github.com/Lingtai-AI/lingtai-agora/issues/new?templa
     letter-spacing: 2px;
     text-transform: uppercase;
     transition: background 160ms ease, color 160ms ease;
+  }
+  .submit.patronage {
+    margin-top: 56px;
+    border: 1px solid rgba(125, 171, 143, 0.18);
+    border-radius: 24px;
+    background: rgba(125, 171, 143, 0.05);
   }
   .submit-button:hover {
     background: var(--accent);
