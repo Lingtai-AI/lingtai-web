@@ -1,0 +1,12 @@
+{
+  "_instructions": "Edit entrants below; see src/data/lottery-entrants.README.md. This file is mirrored to /lottery/entrants.json at build time.",
+  "title": "LingTai Lottery",
+  "subtitle": "A small drawing among the registered GitHub handles.",
+  "drawingDate": null,
+  "prize": "M5Stack Cardputer ADV card-sized mini computer",
+  "entrants": [
+    { "handle": "placeholder-entrant-1", "note": "replace with real GitHub handle" },
+    { "handle": "placeholder-entrant-2", "note": "replace with real GitHub handle" },
+    { "handle": "placeholder-entrant-3", "note": "replace with real GitHub handle" }
+  ]
+}

@@ -1,0 +1,562 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import entrantsData from '../../data/lottery-entrants.json';
+
+type Entrant = { handle: string; note?: string };
+const entrants = entrantsData.entrants as Entrant[];
+const { title, subtitle, prize, drawingDate } = entrantsData;
+---
+
+<BaseLayout title={title} lang="en">
+  <main class="lottery">
+    <header class="ceremony">
+      <p class="eyebrow">抽奖 · Drawing</p>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1 class="serif">{title}</h1>
+          <p class="subtitle">{subtitle}</p>
+          <dl class="meta" aria-label="Drawing details">
+            <div>
+              <dt>Entrants</dt>
+              <dd>{entrants.length}</dd>
+            </div>
+            <div>
+              <dt>Prize</dt>
+              <dd>{prize}</dd>
+            </div>
+            <div>
+              <dt>Date</dt>
+              <dd>{drawingDate ?? '—'}</dd>
+            </div>
+          </dl>
+        </div>
+        <figure class="prize-card">
+          <img src="/lottery/cardputer-adv.jpg" alt="M5Stack Cardputer ADV in retail packaging" loading="eager" />
+          <figcaption>M5Stack Cardputer ADV</figcaption>
+        </figure>
+      </div>
+    </header>
+
+    <section class="stage" aria-live="polite">
+      <div class="halo" aria-hidden="true"></div>
+
+      <div class="reel" id="reel">
+        <div class="reel-card" id="reelCard">
+          <img id="reelAvatar" class="reel-avatar" alt="" width="120" height="120" />
+          <div class="reel-handle" id="reelHandle">—</div>
+          <div class="reel-status" id="reelStatus">Press draw to begin</div>
+        </div>
+        <div class="reel-frame" aria-hidden="true"></div>
+      </div>
+
+      <div class="controls">
+        <button id="drawBtn" class="draw-btn" type="button">
+          <span class="draw-btn-label">Draw</span>
+          <span class="draw-btn-glyph" aria-hidden="true">✶</span>
+        </button>
+        <button id="resetBtn" class="reset-btn" type="button" hidden>Draw again</button>
+      </div>
+    </section>
+
+    <section class="roster" aria-label="Registered entrants">
+      <h2 class="roster-heading">Registered</h2>
+      <ul class="roster-list" id="roster">
+        {entrants.map((e) => (
+          <li class="entrant" data-handle={e.handle}>
+            <img
+              class="entrant-avatar"
+              loading="lazy"
+              width="64"
+              height="64"
+              alt=""
+              src={`https://github.com/${e.handle}.png?size=128`}
+              onerror="this.classList.add('avatar-fallback'); this.removeAttribute('src');"
+            />
+            <a
+              class="entrant-handle"
+              href={`https://github.com/${e.handle}`}
+              target="_blank"
+              rel="noopener"
+            >@{e.handle}</a>
+          </li>
+        ))}
+      </ul>
+      <p class="roster-foot">
+        Entrants are maintained in
+        <code>src/data/lottery-entrants.json</code>. Public mirror:
+        <a href="/lottery/entrants.json">/lottery/entrants.json</a>.
+      </p>
+    </section>
+  </main>
+</BaseLayout>
+
+<script define:vars={{ entrants }}>
+  // Client-side drawing. No backend.
+  const reelAvatar = document.getElementById('reelAvatar');
+  const reelHandle = document.getElementById('reelHandle');
+  const reelStatus = document.getElementById('reelStatus');
+  const reelCard = document.getElementById('reelCard');
+  const drawBtn = document.getElementById('drawBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const roster = document.getElementById('roster');
+
+  const pool = entrants.slice();
+
+  function avatarFor(handle) {
+    return `https://github.com/${handle}.png?size=256`;
+  }
+
+  function setReel(handle) {
+    reelHandle.textContent = '@' + handle;
+    reelAvatar.src = avatarFor(handle);
+    reelAvatar.alt = handle + ' avatar';
+  }
+
+  function highlightWinner(handle) {
+    roster.querySelectorAll('.entrant').forEach((li) => {
+      if (li.dataset.handle === handle) li.classList.add('won');
+      else li.classList.add('dim');
+    });
+  }
+
+  function clearHighlights() {
+    roster.querySelectorAll('.entrant').forEach((li) => {
+      li.classList.remove('won');
+      li.classList.remove('dim');
+    });
+  }
+
+  let spinning = false;
+
+  function draw() {
+    if (spinning || pool.length === 0) return;
+    spinning = true;
+    clearHighlights();
+    reelCard.classList.remove('revealed');
+    reelCard.classList.add('spinning');
+    drawBtn.disabled = true;
+    resetBtn.hidden = true;
+    reelStatus.textContent = 'Shuffling…';
+
+    // Cryptographically random winner.
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    const winnerIdx = buf[0] % pool.length;
+    const winner = pool[winnerIdx];
+
+    // Shuffle animation: cycle through entrants with decelerating cadence.
+    const totalSteps = Math.max(18, pool.length * 3);
+    let step = 0;
+    let i = Math.floor(Math.random() * pool.length);
+
+    const tick = () => {
+      i = (i + 1) % pool.length;
+      setReel(pool[i].handle);
+      step += 1;
+      // Decelerating delay: ease out.
+      const progress = step / totalSteps;
+      const delay = 60 + Math.pow(progress, 2.2) * 360;
+      if (step < totalSteps) {
+        setTimeout(tick, delay);
+      } else {
+        // Land on winner.
+        setReel(winner.handle);
+        reelCard.classList.remove('spinning');
+        reelCard.classList.add('revealed');
+        reelStatus.textContent = 'Winner';
+        highlightWinner(winner.handle);
+        drawBtn.disabled = false;
+        resetBtn.hidden = false;
+        spinning = false;
+      }
+    };
+    tick();
+  }
+
+  function reset() {
+    clearHighlights();
+    reelCard.classList.remove('revealed');
+    reelAvatar.removeAttribute('src');
+    reelHandle.textContent = '—';
+    reelStatus.textContent = 'Press draw to begin';
+    resetBtn.hidden = true;
+  }
+
+  drawBtn.addEventListener('click', draw);
+  resetBtn.addEventListener('click', reset);
+
+  // Keyboard: space/enter to draw when button focused is native; also allow 'd'.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'd' && !spinning && document.activeElement?.tagName !== 'INPUT') {
+      draw();
+    }
+  });
+</script>
+
+<style>
+  .lottery {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+
+  /* — Header — */
+  .ceremony {
+    text-align: center;
+    padding: 24px 0 36px;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+    gap: 36px;
+    align-items: center;
+  }
+  .hero-copy {
+    min-width: 0;
+  }
+  .prize-card {
+    margin: 0;
+    padding: 14px;
+    border-radius: 24px;
+    background: color-mix(in oklab, var(--bg-alt) 72%, transparent);
+    border: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
+    box-shadow: 0 28px 70px rgba(0,0,0,0.14);
+  }
+  .prize-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 16px;
+  }
+  .prize-card figcaption {
+    margin-top: 10px;
+    color: var(--text-faint);
+    font-size: 11px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+  }
+  .eyebrow {
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .ceremony h1 {
+    font-size: clamp(38px, 7vw, 64px);
+    font-weight: 300;
+    letter-spacing: 6px;
+    color: var(--title-color);
+    margin: 0;
+  }
+  .subtitle {
+    margin-top: 12px;
+    color: var(--text-faint);
+    font-size: 15px;
+    letter-spacing: 1.5px;
+  }
+  .meta {
+    display: flex;
+    gap: 36px;
+    justify-content: center;
+    margin: 28px 0 0;
+    flex-wrap: wrap;
+  }
+  .meta > div {
+    display: grid;
+    gap: 4px;
+  }
+  .meta dt {
+    color: var(--text-faint);
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+  }
+  .meta dd {
+    color: var(--text);
+    font-size: 15px;
+    margin: 0;
+    font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+  }
+
+  /* — Stage / reel — */
+  .stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 28px 0 12px;
+  }
+  .halo {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      circle at center,
+      color-mix(in oklab, var(--accent) 22%, transparent) 0%,
+      transparent 60%
+    );
+    filter: blur(40px);
+    opacity: 0.7;
+    z-index: 0;
+  }
+  .reel {
+    position: relative;
+    width: min(380px, 90vw);
+    height: 380px;
+    display: grid;
+    place-items: center;
+    z-index: 1;
+  }
+  .reel-frame {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px dashed color-mix(in oklab, var(--accent) 45%, transparent);
+    animation: slow-rotate 32s linear infinite;
+  }
+  .reel-frame::before,
+  .reel-frame::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in oklab, var(--accent) 18%, transparent);
+  }
+  .reel-frame::after {
+    inset: 30px;
+    border-style: dotted;
+    border-color: color-mix(in oklab, var(--accent-warm) 30%, transparent);
+    animation: slow-rotate 48s linear infinite reverse;
+  }
+  @keyframes slow-rotate {
+    to { transform: rotate(360deg); }
+  }
+  .reel-card {
+    position: relative;
+    display: grid;
+    place-items: center;
+    gap: 14px;
+    padding: 32px;
+    border-radius: 50%;
+    width: 240px;
+    height: 240px;
+    background:
+      radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--bg-alt) 90%, transparent), var(--bg-alt));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--accent) 25%, transparent),
+      0 30px 60px rgba(0,0,0,0.18);
+    transition: transform 240ms ease, box-shadow 240ms ease;
+  }
+  .reel-card.spinning {
+    animation: tremble 0.55s ease-in-out infinite alternate;
+  }
+  .reel-card.revealed {
+    transform: scale(1.04);
+    box-shadow:
+      inset 0 0 0 1px var(--accent),
+      0 0 0 6px color-mix(in oklab, var(--accent) 14%, transparent),
+      0 40px 80px rgba(0,0,0,0.28);
+    animation: reveal-pulse 1.2s ease-out;
+  }
+  @keyframes tremble {
+    from { transform: translate3d(-1px, 0, 0) rotate(-0.3deg); }
+    to   { transform: translate3d(1px, 1px, 0) rotate(0.3deg); }
+  }
+  @keyframes reveal-pulse {
+    0%   { transform: scale(0.9); }
+    55%  { transform: scale(1.12); }
+    100% { transform: scale(1.04); }
+  }
+  .reel-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--bg);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--text-faint) 30%, transparent);
+    transition: filter 200ms ease;
+  }
+  .reel-card.spinning .reel-avatar {
+    filter: blur(1.5px) saturate(0.9);
+  }
+  .reel-handle {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+  .reel-card.revealed .reel-handle {
+    color: var(--accent-warm);
+  }
+  .reel-status {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .reel-card.revealed .reel-status {
+    color: var(--accent);
+  }
+
+  /* — Controls — */
+  .controls {
+    margin-top: 28px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    z-index: 1;
+  }
+  .draw-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 28px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: background 180ms ease, color 180ms ease, transform 120ms ease;
+  }
+  .draw-btn:hover:not(:disabled) {
+    background: var(--accent);
+    color: var(--bg);
+    transform: translateY(-1px);
+  }
+  .draw-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  .draw-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .draw-btn-glyph {
+    font-size: 14px;
+    color: var(--accent-warm);
+  }
+  .draw-btn:hover:not(:disabled) .draw-btn-glyph {
+    color: var(--bg);
+  }
+  .reset-btn {
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    font: inherit;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: color-mix(in oklab, var(--text-faint) 50%, transparent);
+  }
+  .reset-btn:hover { color: var(--accent); }
+
+  /* — Roster — */
+  .roster {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid color-mix(in oklab, var(--text-faint) 22%, transparent);
+  }
+  .roster-heading {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+    margin: 0 0 20px;
+  }
+  .roster-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .entrant {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--bg-alt) 60%, transparent);
+    border: 1px solid color-mix(in oklab, var(--text-faint) 14%, transparent);
+    transition: opacity 300ms ease, border-color 300ms ease, transform 300ms ease;
+  }
+  .entrant.dim {
+    opacity: 0.3;
+  }
+  .entrant.won {
+    border-color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 12%, var(--bg-alt));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px color-mix(in oklab, var(--accent) 18%, transparent);
+  }
+  .entrant-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .entrant-avatar.avatar-fallback {
+    background:
+      linear-gradient(135deg,
+        color-mix(in oklab, var(--accent) 30%, var(--bg-alt)),
+        color-mix(in oklab, var(--accent-warm) 25%, var(--bg-alt))
+      );
+  }
+  .entrant-handle {
+    font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .entrant-handle:hover { color: var(--accent-warm); }
+  .entrant.won .entrant-handle { color: var(--accent-warm); }
+
+  .roster-foot {
+    margin-top: 28px;
+    font-size: 12px;
+    color: var(--text-faint);
+    line-height: 1.7;
+  }
+  .roster-foot code {
+    font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+    background: color-mix(in oklab, var(--text-faint) 14%, transparent);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  /* — Responsive — */
+  @media (max-width: 720px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+    .prize-card {
+      max-width: 320px;
+      margin: 0 auto;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .meta { gap: 20px; }
+    .reel { height: 320px; }
+    .reel-card { width: 200px; height: 200px; padding: 24px; }
+    .reel-avatar { width: 96px; height: 96px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reel-frame, .reel-frame::after { animation: none; }
+    .reel-card.spinning { animation: none; }
+    .reel-card.revealed { animation: none; }
+  }
+</style>
