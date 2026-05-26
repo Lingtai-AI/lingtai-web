@@ -7,7 +7,10 @@ interface Props {
 
 const { lang } = Astro.props;
 const tr = t(lang);
-const currentPath = Astro.url.pathname.replace(`/${lang}`, '') || '/';
+const rawPath = Astro.url.pathname;
+const langPrefix = `/${lang}`;
+const isLangPrefixed = rawPath === langPrefix || rawPath.startsWith(`${langPrefix}/`);
+const currentPath = isLangPrefixed ? rawPath.slice(langPrefix.length) || '/' : rawPath;
 ---
 
 <nav class="nav">
@@ -26,6 +29,7 @@ const currentPath = Astro.url.pathname.replace(`/${lang}`, '') || '/';
     <a href={langPath(lang, '/xingtan/')}>{tr.nav.xingtan}</a>
     <a href={langPath(lang, '/agora/')}>{tr.nav.agora}</a>
     <a href={langPath(lang, '/blog/')}>{tr.nav.blog}</a>
+    <a href="/releases/">{tr.nav.releases}</a>
     <a href={langPath(lang, '/about/')}>{tr.nav.about}</a>
     <a
       href="https://github.com/Lingtai-AI/lingtai"
@@ -41,7 +45,7 @@ const currentPath = Astro.url.pathname.replace(`/${lang}`, '') || '/';
     <div class="lang-toggle">
       {languages.map((l) => (
         <a
-          href={langPath(l, currentPath)}
+          href={isLangPrefixed ? langPath(l, currentPath) : currentPath}
           class:list={['lang-option', { active: l === lang }]}
         >
           {l === 'en' ? 'EN' : l === 'zh' ? '中' : '文'}
