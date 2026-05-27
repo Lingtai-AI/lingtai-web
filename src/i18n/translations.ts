@@ -7,7 +7,7 @@ export function isValidLang(lang: string): lang is Lang {
 
 const translations = {
   en: {
-    nav: { logo: 'LingTai AI', home: 'Home', blog: 'Blog', about: 'About', agora: 'Agora', xingtan: 'Xingtan', releases: 'Releases' },
+    nav: { logo: 'LingTai AI', home: 'Home', blog: 'Blog', about: 'About', agora: 'Agora', xingtan: 'Xingtan', releases: 'Releases', freeTokens: 'Free Tokens' },
     hero: {
       title: 'LingTai',
       subtitle: 'Agent',
@@ -62,7 +62,7 @@ const translations = {
     },
   },
   zh: {
-    nav: { logo: '灵台AI', home: '首页', blog: '博客', about: '关于', agora: '市集', xingtan: '杏坛', releases: '发布' },
+    nav: { logo: '灵台AI', home: '首页', blog: '博客', about: '关于', agora: '市集', xingtan: '杏坛', releases: '发布', freeTokens: '免费额度' },
     agora: {
       title: 'Agent 市集',
       tagline: '数才市场(?)',
@@ -117,7 +117,7 @@ const translations = {
     },
   },
   wen: {
-    nav: { logo: '灵台AI', home: '首页', blog: '文录', about: '自述', agora: '墟', xingtan: '杏坛', releases: '纪' },
+    nav: { logo: '灵台AI', home: '首页', blog: '文录', about: '自述', agora: '墟', xingtan: '杏坛', releases: '纪', freeTokens: '免额' },
     agora: {
       title: '器灵墟',
       tagline: '下山趁墟',
