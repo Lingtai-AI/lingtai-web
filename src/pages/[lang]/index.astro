@@ -4,6 +4,7 @@ import BrailleBackground from '../../components/BrailleBackground.astro';
 import InstallCommand from '../../components/InstallCommand.astro';
 import NetworkCanvas from '../../components/NetworkCanvas.astro';
 import OaaSCanvas from '../../components/OaaSCanvas.astro';
+import ProductSections from '../../components/ProductSections.astro';
 import { t, isValidLang, languages, type Lang } from '../../i18n/translations';
 
 export function getStaticPaths() {
@@ -46,6 +47,8 @@ const tr = t(lang as Lang);
   <NetworkCanvas line1a={tr.network.line1a} line1b={tr.network.line1b} line2={tr.network.line2} line3={tr.network.line3} quickstart="lingtai-tui" quickstartLabel={tr.network.quickstartLabel} copyLabel={tr.hero.copy} />
 
   <OaaSCanvas line1={tr.oaas.line1} line2={tr.oaas.line2} manifesto={tr.oaas.manifesto} />
+
+  <ProductSections sections={tr.sections} copyLabel={tr.hero.copy} lang={lang as Lang} />
 </BaseLayout>
 
 <style>

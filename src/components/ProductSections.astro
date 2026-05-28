@@ -1,0 +1,532 @@
+---
+import InstallCommand from './InstallCommand.astro';
+import { type Lang } from '../i18n/translations';
+
+interface ToolEntry { name: string; desc: string }
+interface Column { title: string; tools: ToolEntry[] }
+interface Pillar { n: string; title: string; body: string }
+interface CodingItem { name: string; cmd: string; href: string; linkLabel: string }
+interface AddonItem { name: string; desc: string }
+interface ArchRow { pkg: string; role: string; href: string }
+interface Entry { title: string; desc: string }
+
+interface Sections {
+  pitch: { eyebrow: string; heading: string; body: string };
+  directory: { eyebrow: string; heading: string; body: string; treeCaption: string };
+  pillars: { eyebrow: string; heading: string; items: Pillar[] };
+  capabilities: { eyebrow: string; heading: string; body: string; columns: Column[] };
+  coding: { eyebrow: string; heading: string; body: string; items: CodingItem[] };
+  addons: { eyebrow: string; heading: string; body: string; items: AddonItem[] };
+  architecture: { eyebrow: string; heading: string; body: string; rows: ArchRow[]; entryHeading: string; entries: Entry[] };
+  cta: { eyebrow: string; heading: string; body: string; github: string; docs: string; docsHref: string };
+}
+
+interface Props {
+  sections: Sections;
+  copyLabel: string;
+  lang: Lang;
+}
+
+const { sections, copyLabel } = Astro.props;
+
+const treeRaw: { path: string; comment: string }[] = [
+  { path: '.lingtai/wukong/', comment: '' },
+  { path: '  .agent.json', comment: 'identity + manifest' },
+  { path: '  .agent.heartbeat', comment: 'liveness proof' },
+  { path: '  system/', comment: '' },
+  { path: '    covenant.md', comment: 'protected instructions' },
+  { path: '    pad.md', comment: 'durable working notes' },
+  { path: '  mailbox/', comment: '' },
+  { path: '    inbox/', comment: 'received letters' },
+  { path: '    outbox/', comment: 'pending sends' },
+  { path: '    sent/', comment: 'delivery audit trail' },
+  { path: '  knowledge/', comment: 'private long-term memory' },
+  { path: '  .library/', comment: 'skills this agent can use' },
+  { path: '  logs/events.jsonl', comment: 'structured runtime history' },
+];
+
+const treeText = treeRaw
+  .map((l) => {
+    if (!l.comment) return l.path;
+    const padLen = Math.max(26 - l.path.length, 2);
+    return l.path + ' '.repeat(padLen) + '# ' + l.comment;
+  })
+  .join('\n');
+---
+
+<!-- Pitch -->
+<section class="psec psec-pitch" data-snap>
+  <div class="psec-inner narrow">
+    <div class="eyebrow">{sections.pitch.eyebrow}</div>
+    <h2 class="psec-title serif">{sections.pitch.heading}</h2>
+    <div class="psec-divider"></div>
+    <p class="psec-body serif">{sections.pitch.body}</p>
+  </div>
+</section>
+
+<!-- Agent = Directory -->
+<section class="psec psec-dir" data-snap>
+  <div class="psec-inner two-col">
+    <div class="col-text">
+      <div class="eyebrow">{sections.directory.eyebrow}</div>
+      <h2 class="psec-title serif">{sections.directory.heading}</h2>
+      <div class="psec-divider"></div>
+      <p class="psec-body serif">{sections.directory.body}</p>
+    </div>
+    <div class="col-tree">
+      <div class="tree-caption">{sections.directory.treeCaption}</div>
+      <pre class="tree mono"><code>{treeText}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- Five Pillars -->
+<section class="psec psec-pillars" data-snap>
+  <div class="psec-inner">
+    <div class="eyebrow center">{sections.pillars.eyebrow}</div>
+    <h2 class="psec-title serif center">{sections.pillars.heading}</h2>
+    <div class="psec-divider center"></div>
+    <div class="pillars-grid">
+      {sections.pillars.items.map((it) => (
+        <article class="pillar">
+          <div class="pillar-n mono">{it.n}</div>
+          <h3 class="pillar-title">{it.title}</h3>
+          <p class="pillar-body">{it.body}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- Capabilities -->
+<section class="psec psec-caps" data-snap>
+  <div class="psec-inner">
+    <div class="eyebrow center">{sections.capabilities.eyebrow}</div>
+    <h2 class="psec-title serif center">{sections.capabilities.heading}</h2>
+    <div class="psec-divider center"></div>
+    <p class="psec-body serif center narrow-center">{sections.capabilities.body}</p>
+    <div class="caps-grid">
+      {sections.capabilities.columns.map((col) => (
+        <div class="caps-col">
+          <h3 class="caps-col-title">{col.title}</h3>
+          <ul class="caps-list">
+            {col.tools.map((t) => (
+              <li>
+                <code class="cap-name">{t.name}</code>
+                <span class="cap-desc">{t.desc}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- Coding agents -->
+<section class="psec psec-coding" data-snap>
+  <div class="psec-inner">
+    <div class="eyebrow center">{sections.coding.eyebrow}</div>
+    <h2 class="psec-title serif center">{sections.coding.heading}</h2>
+    <div class="psec-divider center"></div>
+    <p class="psec-body serif center narrow-center">{sections.coding.body}</p>
+    <div class="coding-grid">
+      {sections.coding.items.map((it) => (
+        <article class="coding-card">
+          <h3 class="coding-name">{it.name}</h3>
+          <pre class="coding-cmd mono"><code>{it.cmd}</code></pre>
+          <a class="coding-link" href={it.href} target="_blank" rel="noopener noreferrer">→ {it.linkLabel}</a>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- Addons -->
+<section class="psec psec-addons" data-snap>
+  <div class="psec-inner">
+    <div class="eyebrow center">{sections.addons.eyebrow}</div>
+    <h2 class="psec-title serif center">{sections.addons.heading}</h2>
+    <div class="psec-divider center"></div>
+    <p class="psec-body serif center narrow-center">{sections.addons.body}</p>
+    <div class="addons-grid">
+      {sections.addons.items.map((it) => (
+        <div class="addon-card">
+          <div class="addon-name">{it.name}</div>
+          <div class="addon-desc">{it.desc}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section class="psec psec-arch" data-snap>
+  <div class="psec-inner">
+    <div class="eyebrow center">{sections.architecture.eyebrow}</div>
+    <h2 class="psec-title serif center">{sections.architecture.heading}</h2>
+    <div class="psec-divider center"></div>
+    <p class="psec-body serif center narrow-center">{sections.architecture.body}</p>
+
+    <div class="arch-rows">
+      {sections.architecture.rows.map((r) => (
+        <a class="arch-row" href={r.href} target="_blank" rel="noopener noreferrer">
+          <code class="arch-pkg">{r.pkg}</code>
+          <span class="arch-role">{r.role}</span>
+        </a>
+      ))}
+    </div>
+
+    <h3 class="entry-heading">{sections.architecture.entryHeading}</h3>
+    <div class="entries-grid">
+      {sections.architecture.entries.map((e) => (
+        <div class="entry">
+          <div class="entry-title mono">{e.title}</div>
+          <div class="entry-desc">{e.desc}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="psec psec-cta" data-snap>
+  <div class="psec-inner narrow center-text">
+    <div class="eyebrow center">{sections.cta.eyebrow}</div>
+    <h2 class="psec-title serif center">{sections.cta.heading}</h2>
+    <div class="psec-divider center"></div>
+    <p class="psec-body serif center">{sections.cta.body}</p>
+    <div class="cta-install">
+      <InstallCommand copyLabel={copyLabel} />
+    </div>
+    <div class="cta-links">
+      <a href="https://github.com/Lingtai-AI/lingtai" target="_blank" rel="noopener noreferrer">{sections.cta.github}</a>
+      <span class="dot">·</span>
+      <a href={sections.cta.docsHref} target="_blank" rel="noopener noreferrer">{sections.cta.docs}</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .psec {
+    padding: 96px 24px;
+    position: relative;
+  }
+  .psec + .psec {
+    border-top: 1px solid var(--bg-alt);
+  }
+  .psec-inner {
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+  .psec-inner.narrow {
+    max-width: 720px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .eyebrow.center { text-align: center; }
+  .psec-title {
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: var(--title-color);
+    line-height: 1.35;
+  }
+  .psec-title.center { text-align: center; }
+  .psec-divider {
+    width: 36px;
+    height: 1px;
+    background: var(--accent);
+    margin: 18px 0;
+  }
+  .psec-divider.center { margin: 18px auto; }
+  .psec-body {
+    font-size: 16px;
+    line-height: 1.9;
+    color: var(--text-dim);
+  }
+  .psec-body.center { text-align: center; }
+  .narrow-center {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  /* directory two-col */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 48px;
+    align-items: center;
+  }
+  @media (max-width: 760px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+  .col-tree {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-size: 12px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+  }
+  .tree-caption {
+    color: var(--text-faint);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .tree {
+    margin: 0;
+    white-space: pre;
+    line-height: 1.65;
+    background: transparent;
+    color: inherit;
+    overflow-x: auto;
+  }
+  .tree-path { color: var(--code-text); }
+  .tree-comment { color: var(--text-faint); }
+
+  /* pillars */
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 28px;
+    margin-top: 36px;
+  }
+  .pillar {
+    padding: 24px;
+    border: 1px solid var(--bg-alt);
+    border-radius: 8px;
+    background: var(--bg);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .pillar:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .pillar-n {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .pillar-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+  }
+  .pillar-body {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-dim);
+  }
+
+  /* capabilities */
+  .caps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+  }
+  .caps-col {
+    border-top: 1px solid var(--accent);
+    padding-top: 14px;
+  }
+  .caps-col-title {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+  .caps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .caps-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cap-name {
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    color: var(--accent-warm);
+    font-size: 13px;
+  }
+  .cap-desc {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+
+  /* coding */
+  .coding-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 36px;
+  }
+  .coding-card {
+    border: 1px solid var(--bg-alt);
+    border-radius: 8px;
+    padding: 22px;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+  .coding-card:hover {
+    border-color: var(--accent);
+  }
+  .coding-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.4px;
+  }
+  .coding-cmd {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    overflow-x: auto;
+    margin: 0;
+    white-space: pre;
+  }
+  .coding-cmd code {
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+  }
+  .coding-link {
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.3px;
+  }
+
+  /* addons */
+  .addons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 36px;
+  }
+  .addon-card {
+    border-left: 2px solid var(--accent);
+    padding: 4px 0 4px 16px;
+  }
+  .addon-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+  .addon-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* architecture */
+  .arch-rows {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .arch-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+    align-items: baseline;
+    padding: 14px 18px;
+    border: 1px solid var(--bg-alt);
+    border-radius: 6px;
+    color: var(--text-dim);
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .arch-row:hover {
+    border-color: var(--accent);
+    background: var(--bg-alt);
+    color: var(--text);
+  }
+  .arch-pkg {
+    color: var(--accent-warm);
+    font-size: 13px;
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+  }
+  .arch-role {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  @media (max-width: 600px) {
+    .arch-row { grid-template-columns: 1fr; gap: 6px; }
+  }
+
+  .entry-heading {
+    margin-top: 56px;
+    margin-bottom: 22px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .entries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+  .entry {
+    text-align: center;
+    padding: 18px 12px;
+  }
+  .entry-title {
+    color: var(--accent);
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .entry-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* cta */
+  .center-text { text-align: center; }
+  .cta-install {
+    margin-top: 28px;
+    display: flex;
+    justify-content: center;
+  }
+  .cta-links {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .cta-links a {
+    color: var(--accent);
+  }
+  .cta-links .dot {
+    margin: 0 8px;
+    color: var(--text-faint);
+  }
+</style>
