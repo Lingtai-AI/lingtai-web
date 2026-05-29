@@ -1,0 +1,13 @@
+---
+import ReleaseIndex from '../../../components/ReleaseIndex.astro';
+import { releases } from '../../../data/releases';
+import { languages, type Lang } from '../../../i18n/translations';
+
+export function getStaticPaths() {
+  return languages.map((lang) => ({ params: { lang }, props: { lang } }));
+}
+
+const { lang } = Astro.props as { lang: Lang };
+---
+
+<ReleaseIndex releases={releases} lang={lang} />

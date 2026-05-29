@@ -1,0 +1,15 @@
+---
+import ReleaseDetail from '../../../components/ReleaseDetail.astro';
+import { releases } from '../../../data/releases';
+import { languages, type Lang } from '../../../i18n/translations';
+
+export function getStaticPaths() {
+  return languages.flatMap((lang) =>
+    releases.map((release) => ({ params: { lang, id: release.id }, props: { lang, release } })),
+  );
+}
+
+const { lang, release } = Astro.props as { lang: Lang; release: (typeof releases)[number] };
+---
+
+<ReleaseDetail release={release} lang={lang} />

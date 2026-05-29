@@ -30,7 +30,7 @@ const currentPath = isLangPrefixed ? rawPath.slice(langPrefix.length) || '/' : r
     <a href={langPath(lang, '/opportunities/')}>{tr.nav.opportunities}</a>
     <a href={langPath(lang, '/agora/')}>{tr.nav.agora}</a>
     <a href={langPath(lang, '/blog/')}>{tr.nav.blog}</a>
-    <a href="/releases/">{tr.nav.releases}</a>
+    <a href={langPath(lang, '/releases/')}>{tr.nav.releases}</a>
     <a href="/free-tokens/">{tr.nav.freeTokens}</a>
     <a href={langPath(lang, '/about/')}>{tr.nav.about}</a>
     <a

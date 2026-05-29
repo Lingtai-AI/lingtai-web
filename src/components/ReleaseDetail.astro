@@ -1,0 +1,362 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import type { Release } from '../data/releases';
+import type { Lang } from '../i18n/translations';
+
+interface Props {
+  release: Release;
+  lang: Lang;
+  legacy?: boolean;
+}
+
+const { release, lang, legacy = false } = Astro.props;
+const isEn = lang === 'en';
+const displayLang: Lang = isEn ? 'en' : 'zh';
+const title = isEn ? release.titleEn : release.titleZh;
+const summary = isEn ? release.summaryEn : release.summaryZh;
+const zhHref = legacy ? `/releases/${release.id}/` : `/zh/releases/${release.id}/`;
+const enHref = `/en/releases/${release.id}/`;
+const archiveHref = isEn ? '/en/releases/' : (legacy ? '/releases/' : '/zh/releases/');
+
+const labels = isEn
+  ? {
+      back: '← Releases',
+      install: 'Install',
+      features: 'New features and improvements',
+      why: 'Why it matters:',
+      contributors: 'Contributors',
+      contributorNote: 'Thanks to everyone whose PRs or reported/closed issues are represented in this release window.',
+      validation: 'Validation',
+      validationCommit: 'Final release validation was run from a clean release worktree at commit',
+      links: 'Links',
+      copy: 'copy',
+      copied: '✓',
+      zh: '中文',
+      en: 'English',
+    }
+  : {
+      back: '← 发布',
+      install: '安装',
+      features: '新功能与改进',
+      why: '为什么重要：',
+      contributors: '贡献者',
+      contributorNote: '感谢本发布窗口中提交 PR、报告问题或推动 issue closure 的贡献者。',
+      validation: '验证',
+      validationCommit: '最终 release validation 来自干净 release worktree，commit',
+      links: '链接',
+      copy: '复制',
+      copied: '✓',
+      zh: '中文',
+      en: 'English',
+    };
+
+function splitCode(text: string): Array<{ kind: 'text' | 'code'; value: string }> {
+  const parts: Array<{ kind: 'text' | 'code'; value: string }> = [];
+  const re = /`([^`]+)`/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > last) parts.push({ kind: 'text', value: text.slice(last, match.index) });
+    parts.push({ kind: 'code', value: match[1] });
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push({ kind: 'text', value: text.slice(last) });
+  return parts;
+}
+---
+
+<BaseLayout title={`${release.version} · ${title}`} lang={displayLang}>
+  <main class="release-detail" data-release-lang={displayLang}>
+    <div class="top-actions">
+      <a class="back-link" href={archiveHref}>{labels.back}</a>
+      <div class="release-lang-switch" aria-label="Release language">
+        <a class:list={['lang-pill', { active: !isEn }]} href={zhHref}>{labels.zh}</a>
+        <a class:list={['lang-pill', { active: isEn }]} href={enHref}>{labels.en}</a>
+      </div>
+    </div>
+
+    <header class="detail-header">
+      <p class="meta-row">
+        <span class="release-id">id <span class="mono">{release.id}</span></span>
+        <span class="meta-sep">·</span>
+        <span class="release-date">{release.date}</span>
+        <span class="meta-sep">·</span>
+        <span class="tag mono">{release.tag}</span>
+      </p>
+      <h1 class="version serif">{release.version}</h1>
+      <h2 class="main-title serif">{title}</h2>
+      <div class="divider"></div>
+      <p class="summary">{summary}</p>
+    </header>
+
+    <section class="install-block">
+      <h3 class="section-heading">{labels.install}</h3>
+      <div class="install-pill">
+        <span class="prompt">$</span>
+        <span class="command">{release.install}</span>
+        <button class="copy-btn" data-command={release.install} data-copy={labels.copy} data-copied={labels.copied}>{labels.copy}</button>
+      </div>
+    </section>
+
+    <section class="features">
+      <h3 class="section-heading">{labels.features}</h3>
+      <ol class="feature-list">
+        {release.features.map((feature, idx) => {
+          const featureTitle = isEn ? feature.titleEn : feature.titleZh;
+          const lead = isEn ? feature.leadEn : feature.leadZh;
+          const bullets = isEn ? feature.bulletsEn : feature.bulletsZh;
+          const why = isEn ? feature.whyEn : feature.whyZh;
+          return (
+            <li class="feature">
+              <p class="feature-number serif">{String(idx + 1).padStart(2, '0')}</p>
+              <h4 class="feature-title serif">{featureTitle}</h4>
+              <p class="lead">
+                {splitCode(lead).map((p) =>
+                  p.kind === 'code' ? <code>{p.value}</code> : <span>{p.value}</span>,
+                )}
+              </p>
+              <ul>
+                {bullets.map((b) => (
+                  <li>
+                    {splitCode(b).map((p) =>
+                      p.kind === 'code' ? <code>{p.value}</code> : <span>{p.value}</span>,
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <p class="why"><strong>{labels.why}</strong>{why}</p>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+
+    <section class="contributors-block">
+      <h3 class="section-heading">{labels.contributors}</h3>
+      <p class="contributor-note">{labels.contributorNote}</p>
+      <ul class="contributor-list">
+        {release.contributors.map((name) => (
+          <li>
+            <a href={`https://github.com/${name}`} target="_blank" rel="noopener">
+              @{name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="validation-block">
+      <h3 class="section-heading">{labels.validation}</h3>
+      {release.validation.commit && (
+        <p class="commit-note">
+          {labels.validationCommit}
+          <code class="commit-hash">{release.validation.commit.slice(0, 12)}</code>.
+        </p>
+      )}
+      <ul class="validation-list">
+        {release.validation.items.map((item) => (
+          <li>
+            <span class="val-label">{item.label}</span>
+            <span class="val-dots" aria-hidden="true"></span>
+            <span class="val-result">{item.result}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="links-block">
+      <h3 class="section-heading">{labels.links}</h3>
+      <ul class="link-list">
+        {release.links.map((l) => (
+          <li>
+            <a href={l.href} target="_blank" rel="noopener">{l.label} →</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </main>
+</BaseLayout>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.copy-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const cmd = btn.dataset.command;
+      if (!cmd) return;
+      navigator.clipboard.writeText(cmd);
+      btn.textContent = btn.dataset.copied || '✓';
+      setTimeout(() => {
+        btn.textContent = btn.dataset.copy || 'copy';
+      }, 1500);
+    });
+  });
+</script>
+
+<style>
+  .release-detail {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 24px 96px;
+  }
+  .top-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .back-link {
+    display: inline-block;
+    color: var(--text-faint);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .back-link:hover { color: var(--accent); }
+  .release-lang-switch {
+    display: inline-flex;
+    gap: 6px;
+    border: 1px solid rgba(125, 171, 143, 0.45);
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .lang-pill {
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .lang-pill.active {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .detail-header { margin-bottom: 48px; }
+  .meta-row {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .meta-sep { margin: 0 8px; color: var(--text-faint); opacity: 0.6; }
+  .mono, .tag { font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace; }
+  .release-id .mono, .tag { text-transform: none; color: var(--text-dim); }
+  .version {
+    font-size: 52px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    color: var(--title-color);
+    margin-bottom: 10px;
+    line-height: 1.1;
+  }
+  .main-title {
+    font-size: 24px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: var(--text);
+    line-height: 1.45;
+  }
+  .divider { width: 48px; height: 1px; background: var(--accent); margin: 28px 0; }
+  .summary { font-size: 16px; line-height: 1.9; color: var(--text-dim); }
+  .section-heading {
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent-warm);
+    margin: 54px 0 22px;
+  }
+  .install-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid rgba(125, 171, 143, 0.22);
+    background: rgba(125, 171, 143, 0.05);
+    border-radius: 10px;
+    overflow-x: auto;
+  }
+  .prompt { color: var(--accent); font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace; }
+  .command { font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace; font-size: 13px; color: var(--text); white-space: nowrap; }
+  .copy-btn {
+    margin-left: auto;
+    border: 1px solid rgba(125, 171, 143, 0.35);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--accent);
+    padding: 5px 9px;
+    cursor: pointer;
+  }
+  .feature-list { list-style: none; padding: 0; margin: 0; }
+  .feature {
+    position: relative;
+    border-top: 1px solid rgba(138, 134, 128, 0.18);
+    padding: 30px 0 34px 72px;
+  }
+  .feature-number {
+    position: absolute;
+    left: 0;
+    top: 28px;
+    font-size: 28px;
+    color: rgba(125, 171, 143, 0.42);
+  }
+  .feature-title {
+    font-size: 22px;
+    line-height: 1.35;
+    margin-bottom: 14px;
+    color: var(--title-color);
+    font-weight: 400;
+  }
+  .lead, .feature li, .why, .contributor-note, .commit-note {
+    color: var(--text-dim);
+    line-height: 1.85;
+    font-size: 15px;
+  }
+  .feature ul { margin: 16px 0 18px; padding-left: 22px; }
+  .feature li { margin-bottom: 8px; }
+  code {
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    background: rgba(125, 171, 143, 0.10);
+    color: var(--text);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+  }
+  .why {
+    border-left: 2px solid rgba(212, 168, 83, 0.45);
+    padding-left: 14px;
+    color: var(--text);
+  }
+  .contributor-list, .validation-list, .link-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .contributor-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .contributor-list a {
+    display: inline-block;
+    border: 1px solid rgba(125, 171, 143, 0.22);
+    border-radius: 999px;
+    padding: 6px 11px;
+    color: var(--text-dim);
+  }
+  .validation-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(138, 134, 128, 0.12);
+  }
+  .val-label { color: var(--text); }
+  .val-dots { flex: 1; border-bottom: 1px dotted rgba(138, 134, 128, 0.35); transform: translateY(-4px); }
+  .val-result { color: var(--text-dim); font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace; font-size: 13px; text-align: right; }
+  .link-list li { margin-bottom: 10px; }
+  .link-list a { color: var(--accent); }
+  @media (max-width: 720px) {
+    .top-actions { align-items: flex-start; flex-direction: column; }
+    .version { font-size: 38px; }
+    .feature { padding-left: 0; }
+    .feature-number { position: static; margin-bottom: 8px; }
+    .validation-list li { display: block; }
+    .val-dots { display: none; }
+    .val-result { display: block; margin-top: 4px; text-align: left; }
+  }
+</style>

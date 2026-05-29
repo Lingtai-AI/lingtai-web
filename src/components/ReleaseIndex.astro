@@ -1,0 +1,144 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import type { Release } from '../data/releases';
+import type { Lang } from '../i18n/translations';
+
+interface Props {
+  releases: Release[];
+  lang: Lang;
+  legacy?: boolean;
+}
+
+const { releases, lang, legacy = false } = Astro.props;
+const isEn = lang === 'en';
+const displayLang: Lang = isEn ? 'en' : 'zh';
+const sorted = [...releases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+const zhHref = legacy ? '/releases/' : '/zh/releases/';
+const enHref = '/en/releases/';
+const labels = isEn
+  ? {
+      eyebrow: 'Release archive',
+      title: 'Releases',
+      intro: 'Release notes for LingTai. Each entry links to the published artifacts and the validation that accompanied them.',
+      empty: 'No releases yet.',
+      read: 'Read release log',
+      zh: '中文',
+      en: 'English',
+    }
+  : {
+      eyebrow: '发布纪',
+      title: '发布',
+      intro: '灵台发布记录。每条记录都附有发布产物、验证结果与相关链接。',
+      empty: '暂无发布。',
+      read: '阅读发布日志',
+      zh: '中文',
+      en: 'English',
+    };
+---
+
+<BaseLayout title={isEn ? 'Releases' : '发布'} lang={displayLang}>
+  <main class="releases">
+    <header class="releases-header">
+      <div class="topline">
+        <p class="eyebrow">{labels.eyebrow}</p>
+        <div class="release-lang-switch" aria-label="Release language">
+          <a class:list={['lang-pill', { active: !isEn }]} href={zhHref}>{labels.zh}</a>
+          <a class:list={['lang-pill', { active: isEn }]} href={enHref}>{labels.en}</a>
+        </div>
+      </div>
+      <h1 class="title serif">{labels.title}</h1>
+      <div class="divider"></div>
+      <p class="intro">{labels.intro}</p>
+    </header>
+
+    {sorted.length === 0 ? (
+      <p class="empty">{labels.empty}</p>
+    ) : (
+      <ol class="release-list">
+        {sorted.map((release) => {
+          const title = isEn ? release.titleEn : release.titleZh;
+          const summary = isEn ? release.summaryEn : release.summaryZh;
+          const href = isEn ? `/en/releases/${release.id}/` : (legacy ? `/releases/${release.id}/` : `/zh/releases/${release.id}/`);
+          return (
+            <li class="release-row">
+              <a class="release-link" href={href}>
+                <div class="row-top">
+                  <span class="version serif">{release.version}</span>
+                  <span class="date">{release.date}</span>
+                </div>
+                <h2 class="row-title serif">{title}</h2>
+                <p class="row-summary">{summary}</p>
+                <span class="read-more">{labels.read} →</span>
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+    )}
+  </main>
+</BaseLayout>
+
+<style>
+  .releases {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 60px 24px 96px;
+  }
+  .releases-header { margin-bottom: 56px; }
+  .topline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0;
+  }
+  .release-lang-switch {
+    display: inline-flex;
+    gap: 6px;
+    border: 1px solid rgba(125, 171, 143, 0.45);
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .lang-pill {
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .lang-pill.active {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .title {
+    font-size: 42px;
+    font-weight: 300;
+    letter-spacing: 6px;
+    color: var(--title-color);
+    margin-top: 8px;
+  }
+  .divider { width: 48px; height: 1px; background: var(--accent); margin: 18px 0; }
+  .intro { max-width: 620px; color: var(--text-dim); font-size: 15px; line-height: 1.8; }
+  .empty { text-align: center; color: var(--text-faint); padding: 60px 0; }
+  .release-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid rgba(138, 134, 128, 0.18); }
+  .release-row { border-bottom: 1px solid rgba(138, 134, 128, 0.18); }
+  .release-link { display: block; padding: 30px 4px; color: var(--text); transition: background 160ms ease; }
+  .release-link:hover { background: rgba(125, 171, 143, 0.04); }
+  .row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+  .version { font-size: 22px; letter-spacing: 1.5px; color: var(--title-color); }
+  .date { font-size: 12px; letter-spacing: 1px; color: var(--text-faint); font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace; }
+  .row-title { font-size: 21px; line-height: 1.4; color: var(--text); font-weight: 400; margin-bottom: 10px; }
+  .row-summary { font-size: 14px; color: var(--text-dim); line-height: 1.8; margin-bottom: 12px; }
+  .read-more { color: var(--accent); font-size: 13px; letter-spacing: 0.5px; }
+  .release-link:hover .version, .release-link:hover .row-title { color: var(--accent); }
+  @media (max-width: 680px) {
+    .topline { align-items: flex-start; flex-direction: column; }
+    .row-top { align-items: flex-start; flex-direction: column; gap: 6px; }
+  }
+</style>
