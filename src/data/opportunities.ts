@@ -123,12 +123,12 @@ export const opportunities: Opportunity[] = [
       {
         name: 'Zesen Huang',
         nameZh: '黄泽森',
-        role: 'LingTai lead / agent-systems builder',
-        roleZh: '灵台负责人 / Agent 系统构建者',
+        role: 'Collaborator / LingTai agent-systems builder',
+        roleZh: '合作者 / LingTai agent 系统构建者',
         profile:
-          'Zesen Huang is a postdoctoral scholar in Earth, Planetary, and Space Sciences at UCLA, working in plasma astrophysics with research interests including solar wind, magnetohydrodynamic turbulence, solar physics, and time-series analysis. He is the creator of LingTai, an agent operating system built around persistent memory, skills, avatars, daemons, mail, and multi-agent growth. In this project, his role is to turn the research question into a working LingTai experiment: define the avatar topology, maintain reproducible simulation protocols, build the interactive demo, and connect literary counterfactuals with measurable agent-network behavior.',
+          'Zesen Huang is a postdoctoral scholar in Earth, Planetary, and Space Sciences at UCLA, working in plasma astrophysics with research interests including solar wind, magnetohydrodynamic turbulence, solar physics, and time-series analysis. He is the creator of LingTai, an agent operating system built around persistent memory, skills, avatars, daemons, mail, and multi-agent growth. As a collaborator, he brings the LingTai agent-systems side of the work: helping translate the research question into an executable experiment, define avatar topologies, maintain reproducible simulation protocols, build interactive demos, and connect literary counterfactuals with measurable agent-network behavior.',
         profileZh:
-          '黄泽森是 UCLA 地球、行星与空间科学系博士后学者，研究方向属于等离子体天体物理，关注太阳风、磁流体湍流、太阳物理与时间序列分析。他也是 LingTai 的创建者；LingTai 是围绕持久记忆、技能、分身、神识、邮件和多 agent 成长机制构建的 agent operating system。在这个项目中，他负责把研究问题落成可运行的 LingTai 实验：设计 avatar 拓扑、维护可复现模拟协议、搭建交互 demo，并把文学反事实问题连接到可度量的 agent-network 行为。',
+          '黄泽森是 UCLA 地球、行星与空间科学系博士后学者，研究方向属于等离子体天体物理，关注太阳风、磁流体湍流、太阳物理与时间序列分析。他也是 LingTai 的创建者；LingTai 是围绕持久记忆、技能、分身、神识、邮件和多 agent 成长机制构建的 agent operating system。在这个项目中，他作为合作者提供 LingTai agent 系统方面的支持：帮助把研究问题落成可运行的实验，设计 avatar 拓扑，维护可复现模拟协议，搭建交互 demo，并把文学反事实问题连接到可度量的 agent-network 行为。',
         links: [
           { label: 'UCLA EPSS profile', href: 'https://epss.ucla.edu/zesen-huang/' },
           { label: 'LingTai about page', href: 'https://lingtai.ai/en/about/' },
