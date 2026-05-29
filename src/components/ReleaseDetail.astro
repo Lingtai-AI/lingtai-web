@@ -21,7 +21,7 @@ const archiveHref = isEn ? '/en/releases/' : (legacy ? '/releases/' : '/zh/relea
 const labels = isEn
   ? {
       back: '← Releases',
-      install: 'Install',
+      install: 'Upgrade / runtime',
       features: 'New features and improvements',
       why: 'Why it matters:',
       contributors: 'Contributors',
@@ -36,7 +36,7 @@ const labels = isEn
     }
   : {
       back: '← 发布',
-      install: '安装',
+      install: '升级 / runtime',
       features: '新功能与改进',
       why: '为什么重要：',
       contributors: '贡献者',
@@ -91,11 +91,20 @@ function splitCode(text: string): Array<{ kind: 'text' | 'code'; value: string }
 
     <section class="install-block">
       <h3 class="section-heading">{labels.install}</h3>
-      <div class="install-pill">
-        <span class="prompt">$</span>
-        <span class="command">{release.install}</span>
-        <button class="copy-btn" data-command={release.install} data-copy={labels.copy} data-copied={labels.copied}>{labels.copy}</button>
-      </div>
+      {release.install && (
+        <div class="install-pill">
+          <span class="prompt">$</span>
+          <span class="command">{release.install}</span>
+          <button class="copy-btn" data-command={release.install} data-copy={labels.copy} data-copied={labels.copied}>{labels.copy}</button>
+        </div>
+      )}
+      {(isEn ? release.runtimeNoteEn : release.runtimeNoteZh) && (
+        <p class="runtime-note">
+          {splitCode(isEn ? release.runtimeNoteEn! : release.runtimeNoteZh!).map((p) =>
+            p.kind === 'code' ? <code>{p.value}</code> : <span>{p.value}</span>,
+          )}
+        </p>
+      )}
     </section>
 
     <section class="features">
@@ -264,6 +273,21 @@ function splitCode(text: string): Array<{ kind: 'text' | 'code'; value: string }
     color: var(--accent-warm);
     margin: 54px 0 22px;
   }
+  .runtime-note {
+    max-width: 900px;
+    margin: 0.9rem 0 0;
+    color: var(--color-muted);
+    line-height: 1.65;
+    font-size: 0.98rem;
+  }
+
+  .runtime-note code {
+    color: var(--color-text);
+    background: rgba(15, 23, 42, 0.06);
+    border-radius: 6px;
+    padding: 0.05rem 0.28rem;
+  }
+
   .install-pill {
     display: flex;
     align-items: center;

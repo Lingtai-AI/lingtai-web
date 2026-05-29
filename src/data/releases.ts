@@ -1,5 +1,5 @@
 // Release archive entries. Newest entries go at the top of the `releases` array.
-// Detail pages render bilingual content (zh + en) side-by-side per section.
+// Detail pages render one language at a time; shared release data carries zh + en fields.
 
 export interface ReleaseFeature {
   /** Short heading without the leading number (e.g. "Daemon backend expansion"). */
@@ -42,8 +42,11 @@ export interface Release {
   pkg: string;
   /** Git tag. */
   tag: string;
-  /** Install command, single line. */
-  install: string;
+  /** Optional user-facing install/upgrade command, single line. Leave unset when runtime is venv-managed only. */
+  install?: string;
+  /** Optional runtime/install explanatory note. */
+  runtimeNoteEn?: string;
+  runtimeNoteZh?: string;
   /** Short summaries shown on archive + lead of detail page. */
   summaryEn: string;
   summaryZh: string;
@@ -66,7 +69,11 @@ const v0_8_12_v0_11_0: Release = {
   date: '2026-05-29',
   pkg: 'lingtai-tui + lingtai',
   tag: 'v0.8.12 / v0.11.0',
-  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui && python -m pip install --upgrade lingtai==0.11.0',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The kernel/runtime package `lingtai==0.11.0` is published on PyPI, but ordinary LingTai projects do not upgrade it with a bare `pip install`. The TUI owns each project runtime through its managed virtualenv and resolves the kernel package there.',
+  runtimeNoteZh:
+    '内核/runtime 包 `lingtai==0.11.0` 已发布到 PyPI，但普通 LingTai 项目不通过裸 `pip install` 来升级它。TUI 负责创建和维护每个项目的 runtime venv，并在该 venv 中解析内核包。',
   summaryEn:
     'A coordinated release window for the Go TUI/Portal and the Python/Rust kernel. The TUI reaches v0.8.12 with safer first-run recovery, safer Homebrew upgrades, clearer MCP controls, Rust sidecar diagnostics, and dev-runtime protection; the kernel reaches v0.11.0 to mark the Rust-backed rewrite line and ships on PyPI after full release validation.',
   summaryZh:
@@ -243,7 +250,10 @@ const v0_10_10: Release = {
   date: '2026-05-26',
   pkg: 'lingtai',
   tag: 'v0.10.10',
-  install: 'python -m pip install --upgrade lingtai==0.10.10',
+  runtimeNoteEn:
+    'This is a kernel/runtime package release. In ordinary LingTai use, the TUI manages the project virtualenv and resolves the kernel package there; bare `pip install lingtai` is for development, diagnostics, or clean-venv validation, not the primary user upgrade path.',
+  runtimeNoteZh:
+    '这是一次内核/runtime 包发布。普通 LingTai 使用中，TUI 管理项目 virtualenv，并在其中解析内核包；裸 `pip install lingtai` 只适合开发、诊断或 clean-venv 验证，不是主要用户升级路径。',
   summaryEn:
     'A kernel release focused on runtime reliability, daemon extensibility, and MCP/addon communication polish. It adds an OpenCode daemon backend, improves configurable/asynchronous CLI daemon behavior, fixes several long-session recovery and wake-up issues, and improves cross-platform file reads, intrinsic tool manuals, and external communication addons.',
   summaryZh:
