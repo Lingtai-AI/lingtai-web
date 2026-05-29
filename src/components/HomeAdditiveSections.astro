@@ -1,0 +1,567 @@
+---
+import type { Lang } from '../i18n/translations';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const isEn = lang === 'en';
+const copy = isEn
+  ? {
+      introEyebrow: 'Below the fold',
+      introTitle: 'Keep the first screen as art. Let the next scroll explain the product.',
+      introBody:
+        'LingTai is a filesystem-native operating system for long-lived AI agents: memory, mail, skills, avatars, MCP addons, and visualized networks, all grounded in local files you can inspect.',
+      latest: 'Latest release',
+      latestBody: 'LingTai TUI v0.8.12 + kernel v0.11.0 — daemon backends, MCP-owned onboarding, release discipline, and runtime fixes.',
+      releaseLink: 'Read release log',
+      differentEyebrow: 'Why LingTai is different',
+      differentTitle: 'Not a bigger chat window. A body for agents.',
+      differentBody: 'Four contrasts that quickly place LingTai in the right category for a newcomer.',
+      productEyebrow: 'Product overview',
+      productTitle: 'The directory is the agent.',
+      productBody: 'The agent has a filesystem body. Its memory, identity, relationships, tools, and history live as inspectable files.',
+      pathsEyebrow: 'Choose your path',
+      pathsTitle: 'Give each visitor a next step.',
+      pathsBody: 'A practical guidepost below the artwork: try it, understand it, connect channels, or contribute.',
+      communityEyebrow: 'Community',
+      communityTitle: 'Make the doors visible.',
+      communityBody: 'Discord, GitHub, and WeChat sit below the fold, so the hero remains quiet while support paths are easy to find.',
+      seoEyebrow: 'Small technical polish',
+      seoTitle: 'Share cards without changing the art.',
+      seoBody: 'Metadata is invisible on the page, but makes links to lingtai.ai look intentional in Telegram, Discord, X, and search results.',
+      install: 'Install command',
+      cards: [
+        ['Runtime', 'Chat session', 'Long-lived process', 'Agents sleep, wake, receive mail, and continue after the TUI closes.'],
+        ['Memory', 'Opaque state', 'Inspectable files', 'Pad, knowledge, skills, mail, and logs live under .lingtai/.'],
+        ['Scale', 'One assistant', 'Growing avatar network', 'Spawn persistent peers when a capability should compound over time.'],
+        ['Tools', 'Prompt wrapper', 'Agent substrate', 'Mail, MCP, skills, daemons, web, shell, and vision become part of the body.'],
+      ],
+      features: [
+        ['分', 'Avatars', 'Persistent peers with their own address and memory. They are how the network learns new specialties.'],
+        ['识', 'Daemons', 'Short-lived, context-isolated subagents for scans, reviews, batch work, and mechanical exploration.'],
+        ['蜕', 'Molt', 'Conversation can be shed while pad, character, knowledge, skills, and mail carry the grain forward.'],
+        ['桥', 'MCP external channels', 'The same agent can be reached through real services while keeping one memory.'],
+      ],
+      paths: [
+        ['Try', 'I want to run LingTai', 'Install the TUI, choose a preset, and create a first long-lived agent.', '#top', 'Install command ↑'],
+        ['Understand', 'I want the mental model', 'Read the README for body, memory, mail, avatars, daemons, molt, and skills.', 'https://github.com/Lingtai-AI/lingtai', 'Open README →'],
+        ['Connect', 'I want messaging', 'Bridge agents to IMAP, Telegram, Feishu/Lark, or WeChat using MCP addons.', '#community', 'See channels →'],
+        ['Build', 'I want to contribute', 'TUI/portal in Go + Astro; kernel runtime in Python/Rust; external services as MCP packages.', 'https://github.com/Lingtai-AI/lingtai', 'GitHub →'],
+      ],
+      links: [
+        ['Discord', 'Fast international chat and feedback.', 'https://discord.gg/cMchjXpg'],
+        ['GitHub Issues', 'Bugs, regressions, feature requests.', 'https://github.com/Lingtai-AI/lingtai/issues'],
+        ['Discussions', 'Ideas, recipes, and usage patterns.', 'https://github.com/Lingtai-AI/lingtai/discussions'],
+        ['Release logs', 'Human-facing changes and validation.', '/en/releases/20260529-1/'],
+      ],
+      wechatTitle: 'WeChat group',
+      wechatBody: 'Chinese-language testing and discussion. Add the author on WeChat and mention “lingtai”.',
+      socialTitle: 'LingTai AI — Agent OS',
+      socialBody: 'A filesystem-native operating system for long-lived AI agents: memory, mail, skills, avatars, MCP addons, and visualized networks.',
+    }
+  : {
+      introEyebrow: '下拉之后',
+      introTitle: '第一屏保留为美术；产品解释从下一屏开始。',
+      introBody:
+        '灵台是文件系统原生的长期运行 Agent OS：记忆、传书、技能、分身、MCP 外部通道与可视化网络，都落在可检查的本地文件中。',
+      latest: '最新发布',
+      latestBody: 'LingTai TUI v0.8.12 + kernel v0.11.0 — daemon 后端、MCP 自承载 onboarding、发布纪律与 runtime 修复。',
+      releaseLink: '阅读发布日志',
+      differentEyebrow: '灵台何以不同',
+      differentTitle: '不是更大的聊天窗口，而是 Agent 的身体。',
+      differentBody: '用四个对比，让新访客快速知道灵台属于什么范畴。',
+      productEyebrow: '产品结构',
+      productTitle: '目录即器灵。',
+      productBody: 'Agent 拥有文件系统身体。记忆、身份、关系、工具与历史，都是可检查的文件。',
+      pathsEyebrow: '选择路径',
+      pathsTitle: '给每个访客一个下一步。',
+      pathsBody: '在美术第一屏之后放一个实用入口：试用、理解、连接外部通道，或参与贡献。',
+      communityEyebrow: '社群',
+      communityTitle: '把入口放在看得见的地方。',
+      communityBody: 'Discord、GitHub、微信放在下方，不打扰第一屏的静气，同时让支持路径清晰可见。',
+      seoEyebrow: '小的技术打磨',
+      seoTitle: '分享卡片，不改变页面美术。',
+      seoBody: '元信息在页面上不可见，却会让 lingtai.ai 在 Telegram、Discord、X 和搜索结果中更像正式项目。',
+      install: '安装命令',
+      cards: [
+        ['运行时', '一次聊天', '长期运行进程', 'Agent 可以睡眠、唤醒、收信，并在 TUI 关闭后继续存在。'],
+        ['记忆', '不可见状态', '可检查文件', 'pad、knowledge、skills、mail、logs 都在 .lingtai/ 之下。'],
+        ['规模', '单个助手', '自生长分身网络', '当能力需要沉淀，就化出能持续学习的分身。'],
+        ['工具', 'Prompt 包装器', 'Agent 基座', '传书、MCP、技能、分神、网页、shell、视觉，成为身体的一部分。'],
+      ],
+      features: [
+        ['分', '分身', '拥有独立地址与记忆的长期同伴，是网络积累专长的方式。'],
+        ['识', '分神', '短暂、隔离上下文的子进程，适合扫描、审查、批处理与机械探索。'],
+        ['蜕', '凝蜕', '对话可舍，简、性、知识、技能与传书保留真正重要的粮。'],
+        ['桥', 'MCP 外部通道', '同一个 Agent 可经由真实外部服务抵达，同时保持同一份记忆。'],
+      ],
+      paths: [
+        ['试用', '我想跑起来', '安装 TUI，选择 preset，创建第一个长期运行的 Agent。', '#top', '回到安装命令 ↑'],
+        ['理解', '我想理解模型', '阅读 README：身体、记忆、传书、分身、分神、凝蜕与技能。', 'https://github.com/Lingtai-AI/lingtai', '打开 README →'],
+        ['连接', '我想接外部消息', '用 MCP addon 连接 IMAP、Telegram、飞书/Lark 或微信。', '#community', '查看通道 →'],
+        ['贡献', '我想参与开发', 'TUI/portal 在 Go + Astro；kernel 在 Python/Rust；外部服务是 MCP 包。', 'https://github.com/Lingtai-AI/lingtai', 'GitHub →'],
+      ],
+      links: [
+        ['Discord', '国际交流与快速反馈。', 'https://discord.gg/cMchjXpg'],
+        ['GitHub Issues', 'Bug、回归、功能请求。', 'https://github.com/Lingtai-AI/lingtai/issues'],
+        ['Discussions', '想法、recipe、使用模式。', 'https://github.com/Lingtai-AI/lingtai/discussions'],
+        ['发布日志', '面向人的变更与验证记录。', '/releases/20260529-1/'],
+      ],
+      wechatTitle: '微信群',
+      wechatBody: '中文测试与讨论。添加作者微信时请备注 “lingtai”。',
+      socialTitle: '灵台 LingTai — Agent OS',
+      socialBody: '文件系统原生的长期运行 Agent OS：记忆、传书、技能、分身、MCP 外部通道与可视化网络。',
+    };
+
+const releaseHref = isEn ? '/en/releases/20260529-1/' : '/releases/20260529-1/';
+---
+
+<section class="home-additive intro-band" data-snap>
+  <div class="intro-inner">
+    <p class="eyebrow">{copy.introEyebrow}</p>
+    <h2 class="serif">{copy.introTitle}</h2>
+    <p class="lead">{copy.introBody}</p>
+    <a class="release-strip" href={releaseHref}>
+      <span>
+        <strong>{copy.latest}</strong>
+        <em>{copy.latestBody}</em>
+      </span>
+      <b>{copy.releaseLink} →</b>
+    </a>
+  </div>
+</section>
+
+<section class="home-additive" data-snap id="different">
+  <div class="section-head">
+    <p class="eyebrow">{copy.differentEyebrow}</p>
+    <h2 class="serif">{copy.differentTitle}</h2>
+    <p class="lead">{copy.differentBody}</p>
+  </div>
+  <div class="grid four">
+    {copy.cards.map(([tag, from, to, body]) => (
+      <article class="card contrast">
+        <p class="tag">{tag}</p>
+        <p class="from">{from}</p>
+        <div class="arrow">↓</div>
+        <h3>{to}</h3>
+        <p>{body}</p>
+      </article>
+    ))}
+  </div>
+</section>
+
+<section class="home-additive" id="product">
+  <div class="section-head">
+    <p class="eyebrow">{copy.productEyebrow}</p>
+    <h2 class="serif">{copy.productTitle}</h2>
+    <p class="lead">{copy.productBody}</p>
+  </div>
+  <div class="product-grid">
+    <pre class="tree"><code>.lingtai/
+  wukong/
+    init.json          # model, tools, MCP wiring
+    system/pad.md      # durable working state
+    knowledge/         # long-term project facts
+    mailbox/           # internal mail transport
+    delegates/         # avatar network ledger
+    daemons/           # ephemeral subagent runs
+    logs/events.jsonl  # inspectable runtime trace
+  .portal/             # visual network history</code></pre>
+    <div class="feature-list">
+      {copy.features.map(([glyph, title, body]) => (
+        <article class="feature">
+          <span class="glyph serif">{glyph}</span>
+          <div>
+            <h3>{title}</h3>
+            <p>{body}</p>
+            {title.includes('MCP') || title.includes('外部') ? (
+              <div class="addons"><span>IMAP</span><span>Telegram</span><span>Feishu</span><span>WeChat</span></div>
+            ) : null}
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="home-additive" id="paths">
+  <div class="section-head">
+    <p class="eyebrow">{copy.pathsEyebrow}</p>
+    <h2 class="serif">{copy.pathsTitle}</h2>
+    <p class="lead">{copy.pathsBody}</p>
+  </div>
+  <div class="grid four">
+    {copy.paths.map(([tag, title, body, href, link]) => (
+      <article class="card path-card">
+        <p class="tag">{tag}</p>
+        <h3>{title}</h3>
+        <p>{body}</p>
+        <a href={href}>{link}</a>
+      </article>
+    ))}
+  </div>
+</section>
+
+<section class="home-additive community-section" id="community">
+  <div class="section-head">
+    <p class="eyebrow">{copy.communityEyebrow}</p>
+    <h2 class="serif">{copy.communityTitle}</h2>
+    <p class="lead">{copy.communityBody}</p>
+  </div>
+  <div class="community-grid">
+    <div class="link-grid">
+      {copy.links.map(([title, body, href]) => (
+        <a class="link-card" href={href}>
+          <strong>{title}</strong>
+          <span>{body}</span>
+        </a>
+      ))}
+    </div>
+    <aside class="wechat-card">
+      <img src="/community/wechat.png" alt="WeChat QR code for LingTai community" loading="lazy" />
+      <h3>{copy.wechatTitle}</h3>
+      <p>{copy.wechatBody}</p>
+    </aside>
+  </div>
+</section>
+
+<section class="home-additive seo-section">
+  <div class="section-head">
+    <p class="eyebrow">{copy.seoEyebrow}</p>
+    <h2 class="serif">{copy.seoTitle}</h2>
+    <p class="lead">{copy.seoBody}</p>
+  </div>
+  <div class="seo-grid">
+    <article class="social-preview">
+      <div class="social-art serif">LingTai</div>
+      <div class="social-body">
+        <h3>{copy.socialTitle}</h3>
+        <p>{copy.socialBody}</p>
+      </div>
+    </article>
+    <pre class="meta-preview"><code>&lt;meta name="description" content="A filesystem-native OS for long-lived AI agents."&gt;
+&lt;meta property="og:title" content="LingTai AI — Agent OS"&gt;
+&lt;meta property="og:image" content="https://lingtai.ai/og.png"&gt;
+&lt;link rel="canonical" href="https://lingtai.ai/en/"&gt;
+&lt;link rel="alternate" hreflang="zh" href="https://lingtai.ai/zh/"&gt;</code></pre>
+  </div>
+</section>
+
+<style>
+  .home-additive {
+    position: relative;
+    z-index: 1;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 96px 36px;
+    border-top: 1px solid rgba(232, 228, 223, 0.06);
+  }
+
+  .intro-band {
+    max-width: none;
+    border-top: 1px solid rgba(212, 168, 83, 0.18);
+    border-bottom: 1px solid rgba(212, 168, 83, 0.14);
+    background: linear-gradient(180deg, rgba(212, 168, 83, 0.045), rgba(125, 171, 143, 0.025));
+  }
+
+  .intro-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .eyebrow,
+  .tag {
+    color: var(--accent);
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+  }
+
+  .tag {
+    margin-bottom: 13px;
+  }
+
+  .section-head {
+    max-width: 820px;
+    margin: 0 0 34px;
+  }
+
+  .intro-inner h2,
+  .section-head h2 {
+    color: var(--gold);
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    line-height: 1.12;
+    margin: 0 0 14px;
+  }
+
+  .lead {
+    color: var(--text-dim);
+    font-size: 17px;
+    margin: 0;
+  }
+
+  .intro-inner .lead {
+    margin: 0 auto;
+    max-width: 790px;
+  }
+
+  .release-strip {
+    align-items: center;
+    background: rgba(212, 168, 83, 0.055);
+    border: 1px solid rgba(212, 168, 83, 0.22);
+    border-radius: 16px;
+    display: flex;
+    gap: 18px;
+    justify-content: space-between;
+    margin: 28px auto 0;
+    max-width: 780px;
+    padding: 16px 18px;
+    text-align: left;
+  }
+
+  .release-strip strong,
+  .release-strip b {
+    color: var(--gold);
+  }
+
+  .release-strip em {
+    color: var(--text-dim);
+    display: block;
+    font-size: 14px;
+    font-style: normal;
+    margin-top: 2px;
+  }
+
+  .grid {
+    display: grid;
+    gap: 18px;
+  }
+
+  .four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .card,
+  .feature,
+  .link-card,
+  .wechat-card,
+  .social-preview,
+  .meta-preview,
+  .tree {
+    background: linear-gradient(180deg, rgba(232, 228, 223, 0.055), rgba(232, 228, 223, 0.025));
+    border: 1px solid rgba(232, 228, 223, 0.09);
+    border-radius: 18px;
+    box-shadow: 0 22px 80px rgba(0, 0, 0, 0.18);
+  }
+
+  .card {
+    min-height: 222px;
+    padding: 22px;
+  }
+
+  .card h3,
+  .feature h3,
+  .wechat-card h3 {
+    color: #e8d3a4;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0 0 8px;
+  }
+
+  .card p,
+  .feature p,
+  .wechat-card p,
+  .link-card span {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .contrast .from {
+    color: var(--text-faint);
+    font-size: 13px;
+  }
+
+  .contrast .arrow {
+    color: var(--gold);
+    font-size: 26px;
+    margin: 18px 0 10px;
+  }
+
+  .path-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .path-card a {
+    color: var(--accent);
+    font-weight: 500;
+    margin-top: auto;
+    padding-top: 20px;
+  }
+
+  .product-grid,
+  .community-grid,
+  .seo-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: 0.95fr 1.05fr;
+  }
+
+  .tree,
+  .meta-preview {
+    color: var(--text);
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    margin: 0;
+    overflow: auto;
+    padding: 22px;
+    white-space: pre;
+  }
+
+  .tree code,
+  .meta-preview code {
+    font: inherit;
+  }
+
+  .feature-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .feature {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 38px 1fr;
+    padding: 17px;
+  }
+
+  .glyph {
+    align-items: center;
+    background: rgba(125, 171, 143, 0.09);
+    border: 1px solid rgba(125, 171, 143, 0.18);
+    border-radius: 12px;
+    color: var(--accent);
+    display: flex;
+    height: 38px;
+    justify-content: center;
+    width: 38px;
+  }
+
+  .addons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .addons span {
+    background: rgba(125, 171, 143, 0.055);
+    border: 1px solid rgba(125, 171, 143, 0.25);
+    border-radius: 999px;
+    color: #bedcc8;
+    font-size: 12px;
+    padding: 6px 9px;
+  }
+
+  .community-grid {
+    grid-template-columns: 1.25fr 0.75fr;
+  }
+
+  .link-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .link-card {
+    display: block;
+    padding: 18px;
+  }
+
+  .link-card strong {
+    color: #ead2a1;
+    display: block;
+    font-weight: 400;
+    margin-bottom: 5px;
+  }
+
+  .wechat-card {
+    background: rgba(212, 168, 83, 0.045);
+    border-color: rgba(212, 168, 83, 0.18);
+    padding: 18px;
+    text-align: center;
+  }
+
+  .wechat-card img {
+    background: #fff;
+    border-radius: 12px;
+    height: 168px;
+    object-fit: cover;
+    width: 168px;
+  }
+
+  .wechat-card h3 {
+    margin-top: 14px;
+  }
+
+  .social-preview {
+    background: #f6f1e8;
+    color: #1a1a20;
+    overflow: hidden;
+  }
+
+  .social-art {
+    align-items: center;
+    background: radial-gradient(circle at 50% 35%, rgba(212, 168, 83, 0.38), transparent 34%), linear-gradient(135deg, #1a1a20, #252530);
+    color: var(--gold);
+    display: flex;
+    font-size: 34px;
+    height: 168px;
+    justify-content: center;
+    letter-spacing: 0.16em;
+  }
+
+  .social-body {
+    padding: 18px;
+  }
+
+  .social-body h3 {
+    color: #222;
+    margin: 0 0 6px;
+  }
+
+  .social-body p {
+    color: #5e574e;
+    font-size: 14px;
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .four,
+    .product-grid,
+    .community-grid,
+    .seo-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .home-additive {
+      padding: 76px 22px;
+    }
+
+    .link-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .release-strip {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>
