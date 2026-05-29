@@ -57,6 +57,184 @@ export interface Release {
   links: ReleaseLink[];
 }
 
+
+const v0_8_12_v0_11_0: Release = {
+  id: '20260529-1',
+  version: 'v0.8.12 / v0.11.0',
+  titleEn: 'LingTai TUI/Portal v0.8.12 + Kernel v0.11.0',
+  titleZh: '灵台 TUI/Portal v0.8.12 与内核 v0.11.0',
+  date: '2026-05-29',
+  pkg: 'lingtai-tui + lingtai',
+  tag: 'v0.8.12 / v0.11.0',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui && python -m pip install --upgrade lingtai==0.11.0',
+  summaryEn:
+    'A coordinated release window for the Go TUI/Portal and the Python/Rust kernel. The TUI reaches v0.8.12 with safer first-run recovery, safer Homebrew upgrades, clearer MCP controls, Rust sidecar diagnostics, and dev-runtime protection; the kernel reaches v0.11.0 to mark the Rust-backed rewrite line and ships on PyPI after full release validation.',
+  summaryZh:
+    '一次横跨 Go 侧 TUI/Portal 与 Python/Rust 内核的联合发布窗口。TUI 发布 v0.8.12，重点是 first-run 恢复、Homebrew 升级安全、MCP 控制面、Rust sidecar 诊断与 dev runtime 保护；内核发布 v0.11.0，用 minor 版本标记 Rust-backed rewrite 这一条线，并在完整 release 验证后发布到 PyPI。',
+  features: [
+    {
+      titleEn: 'TUI/Portal v0.8.12: recovery and upgrade paths are safer',
+      titleZh: 'TUI/Portal v0.8.12：恢复与升级路径更安全',
+      leadEn:
+        'The desktop-facing release closes several sharp edges around first-run setup, OAuth/no-key presets, and in-app Homebrew upgrades.',
+      leadZh:
+        '桌面侧这一版集中收掉 first-run setup、OAuth/no-key preset、以及 TUI 内 Homebrew 升级路径上的几个尖角。',
+      bulletsEn: [
+        'First-run and recovery setup now persist `~/.lingtai-tui/config.json`, preventing repeated setup loops for OAuth or no-key presets.',
+        'The in-app Homebrew upgrade prompt now detects other running TUI processes, asks for explicit confirmation, sleeps affected agents, stops old TUIs, and asks the user to relaunch instead of self-execing an old Cellar binary.',
+        'The release keeps the upgrade UX discoverable while avoiding the dangerous multi-window upgrade case that can leave old and new TUI processes fighting each other.',
+      ],
+      bulletsZh: [
+        'first-run / recovery setup 现在会持久化 `~/.lingtai-tui/config.json`，避免 OAuth 或 no-key preset 反复进入 setup loop。',
+        'TUI 内 Homebrew upgrade prompt 现在会检测其它正在运行的 TUI，要求显式确认，先 sleep 受影响 agent、停止旧 TUI，再提示用户重新启动，而不是从旧 Cellar binary 里自我 exec。',
+        '升级入口仍然保留，但避开了多窗口升级时新旧 TUI 进程互相踩状态的危险路径。',
+      ],
+      whyEn:
+        'Install and upgrade paths are the first thing new users touch. They must be boringly reliable before the agent network can feel alive.',
+      whyZh:
+        '安装与升级路径是新用户最先碰到的地方。它们必须足够稳定，后面的 agent network 才有资格显得“活着”。',
+    },
+    {
+      titleEn: 'MCP is now the human-facing control surface',
+      titleZh: 'MCP 成为面向人的控制面',
+      leadEn:
+        'The TUI command surface now says what the system actually is: external integrations are MCP resources and controls, not a separate addon philosophy.',
+      leadZh:
+        'TUI 命令面现在回到系统真实边界：外部集成是 MCP resources 与 control panel，而不是另一套 addon 哲学。',
+      bulletsEn: [
+        '`/mcp` replaces `/addon` as the human-facing command and palette entry.',
+        'The MCP control panel copy is reframed around MCP resources, status, and configuration instead of platform-specific onboarding hard-coded in the TUI.',
+        'Stale `/addon` references were cleaned across command dispatch, i18n, docs, and packaged recipes.',
+      ],
+      bulletsZh: [
+        '`/mcp` 取代 `/addon`，成为面向人的命令与 palette 入口。',
+        '控制面文案改为围绕 MCP resources、status、config，而不是把平台 onboarding 硬编码进 TUI。',
+        '命令分发、i18n、文档与 packaged recipes 中陈旧的 `/addon` 引用已清理。',
+      ],
+      whyEn:
+        'This keeps the TUI thin: MCP packages own their own knowledge, while the TUI gives humans a clear doorway into that knowledge.',
+      whyZh:
+        '这让 TUI 保持薄：MCP 包拥有自己的知识，TUI 只给人一个清楚的入口。',
+    },
+    {
+      titleEn: 'Core capabilities and local dev runtimes are protected',
+      titleZh: '核心能力与本地开发 runtime 得到保护',
+      leadEn:
+        'Setup and preset editing now distinguish the immutable runtime floor from optional model/provider capabilities, while dev-mode kernel installs stay editable and local.',
+      leadZh:
+        'setup 与 preset editor 现在区分不可缺的 runtime floor 和可选模型/提供商能力；dev-mode kernel install 也保持本地 editable。',
+      bulletsEn: [
+        'Core/default capabilities are always included; editable preset checkboxes focus on optional capabilities such as web search and vision.',
+        '`LINGTAI_DEV_ROOT` is the explicit dev-mode contract for keeping runtime virtualenvs pointed at the local `lingtai-kernel` checkout.',
+        'Runtime repair no longer silently turns a developer’s editable install back into a PyPI wheel when the project is meant to test local kernel changes.',
+      ],
+      bulletsZh: [
+        'core/default capabilities 总是包含；preset editor 的可编辑勾选项聚焦 web search、vision 等可选能力。',
+        '`LINGTAI_DEV_ROOT` 成为明确的 dev-mode contract，用来让 runtime venv 指向本地 `lingtai-kernel` checkout。',
+        'runtime repair 不再在开发者本来要测本地 kernel 时，悄悄把 editable install 改回 PyPI wheel。',
+      ],
+      whyEn:
+        'Users get fewer ways to accidentally remove the ground beneath an agent, and developers get a reliable loop for testing kernel changes.',
+      whyZh:
+        '用户更不容易误删 agent 脚下的地基；开发者也有了可靠的 kernel 本地测试闭环。',
+    },
+    {
+      titleEn: 'Rust sidecar diagnostics land in `/doctor`',
+      titleZh: 'Rust sidecar 诊断进入 `/doctor`',
+      leadEn:
+        'The TUI now exposes the packaged Rust file-search sidecar status and local Rust/Cargo readiness instead of hiding Python fallback behind symptoms.',
+      leadZh:
+        'TUI 现在会展示 packaged Rust file-search sidecar 的状态和本地 Rust/Cargo 准备情况，而不是把 Python fallback 藏在症状后面。',
+      bulletsEn: [
+        '`/doctor` reports packaged Rust sidecar status for the file-search path.',
+        'It also reports local Cargo/Rust availability, which matters when rebuilding or diagnosing sidecar fallback.',
+        'Startup can now prompt when the system falls back to Python because Cargo is missing.',
+      ],
+      bulletsZh: [
+        '`/doctor` 会报告 file-search 路径的 packaged Rust sidecar 状态。',
+        '它也会报告本地 Cargo/Rust 是否可用，方便重建或诊断 sidecar fallback。',
+        '当系统因为缺少 Cargo 而 fallback 到 Python 时，启动路径可以给出提示。',
+      ],
+      whyEn:
+        'The Rust-backed line should be diagnosable from the product itself, not only from source checkout archaeology.',
+      whyZh:
+        'Rust-backed 这一条线应该能从产品自己诊断出来，而不是只能靠翻源码与环境考古。',
+    },
+    {
+      titleEn: 'Kernel v0.11.0 marks the Rust-backed runtime line',
+      titleZh: '内核 v0.11.0 标记 Rust-backed runtime 线',
+      leadEn:
+        'The kernel package on PyPI moves to `0.11.0`, not another patch release, because this release window crosses a rewrite boundary for the Rust-backed runtime pieces.',
+      leadZh:
+        'PyPI 上的 kernel 包升级到 `0.11.0`，而不是继续 patch 版本，因为这个发布窗口跨过了 Rust-backed runtime pieces 的 rewrite 边界。',
+      bulletsEn: [
+        'The PyPI package `lingtai==0.11.0` was built from `lingtai-kernel` main commit `3b0758f` and published with both wheel and sdist artifacts.',
+        'Release-blocking kernel tests were triaged: stale path/wording/timer expectations were updated, then the full suite passed with `1969 passed, 2 skipped` before the version bump release.',
+        'A clean virtualenv install from PyPI verified `import lingtai, lingtai_kernel` and distribution version `0.11.0`.',
+      ],
+      bulletsZh: [
+        'PyPI 包 `lingtai==0.11.0` 从 `lingtai-kernel` main commit `3b0758f` 构建发布，包含 wheel 与 sdist。',
+        'kernel release-blocking 测试已经完成归因：陈旧 path / wording / timer 期望被更新后，version bump 前 full suite 通过 `1969 passed, 2 skipped`。',
+        '从 PyPI clean virtualenv 安装后已验证 `import lingtai, lingtai_kernel` 与发行版版本 `0.11.0`。',
+      ],
+      whyEn:
+        'The version number now matches the architectural weight of the change, and the public package is verified rather than merely tagged.',
+      whyZh:
+        '版本号与这次架构变化的重量相匹配；公开包也经过验证，而不是只打了 tag。',
+    },
+    {
+      titleEn: 'Packaged guidance and release discipline were tightened',
+      titleZh: '随包指导与发布纪律补强',
+      leadEn:
+        'This window also updated the guidance agents carry with them: GitHub operations, Claude Code token debugging, and release-log expectations.',
+      leadZh:
+        '这个发布窗口也更新了 agent 随身携带的操作知识：GitHub 操作、Claude Code stale token 调试、以及 release log 约定。',
+      bulletsEn: [
+        'Shipped guidance now teaches agents to use `GH_TOKEN` or existing `gh auth` for GitHub operations instead of asking humans to paste shell commands.',
+        'Swiss-knife Claude Code docs now explain stale `CLAUDE_CODE_OAUTH_TOKEN` sources, safe `env -u` wrappers, shell startup file diagnostics, and inherited environment gotchas.',
+        'The release process now records the two-layer convention: concise GitHub Release notes plus a longer human-facing HTML release log.',
+      ],
+      bulletsZh: [
+        '随包 guidance 现在教 agent 使用 `GH_TOKEN` 或已有 `gh auth` 做 GitHub 操作，而不是要求人类粘贴 shell 命令。',
+        'swiss-knife Claude Code 文档补充 stale `CLAUDE_CODE_OAUTH_TOKEN` 来源、安全 `env -u` wrapper、shell startup file 诊断、以及已运行 agent 继承旧环境的坑。',
+        '发布流程记录了两层 release 约定：简短 GitHub Release notes，加一份更长的人类可读 HTML release log。',
+      ],
+      whyEn:
+        'Operational knowledge should ship with LingTai. Every release should leave the next release easier to do correctly.',
+      whyZh:
+        '操作知识应该随 LingTai 一起发布；每一次 release 都应该让下一次 release 更容易做对。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng', 'JieKiYu', 'TatsuKo-Tsukimi', 'ZigongXu'],
+  validation: {
+    commit: 'a8259ea31bf177f624a50ecacd963cd221fe0b26',
+    items: [
+      { label: 'TUI tests', result: 'go test ./... passed' },
+      { label: 'TUI build/version', result: 'build passed; version v0.8.11-22-ga8259ea before tag' },
+      { label: 'Portal web build', result: 'npm ci && npm run build passed' },
+      { label: 'Portal Go tests', result: 'go test ./... passed' },
+      { label: 'Portal build', result: 'make build passed' },
+      { label: 'Kernel full pytest before v0.11.0', result: '1969 passed, 2 skipped' },
+      { label: 'Kernel package build/check', result: 'build and twine check passed' },
+      { label: 'PyPI verification', result: 'lingtai==0.11.0 latest, wheel + sdist present' },
+      { label: 'Clean virtualenv install', result: 'import lingtai and lingtai_kernel succeeded' },
+    ],
+  },
+  links: [
+    { label: 'TUI/Portal GitHub release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.8.12' },
+    { label: 'Kernel GitHub release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.11.0' },
+    { label: 'Kernel PyPI', href: 'https://pypi.org/project/lingtai/0.11.0/' },
+    {
+      label: 'TUI/Portal release commit',
+      href: 'https://github.com/Lingtai-AI/lingtai/commit/a8259ea31bf177f624a50ecacd963cd221fe0b26',
+    },
+    {
+      label: 'Kernel release commit',
+      href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/3b0758fc7afae5d8007fab34fdfa23e86679c4f1',
+    },
+  ],
+};
+
 const v0_10_10: Release = {
   id: '20260526-1',
   version: 'v0.10.10',
@@ -238,7 +416,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_10_10];
+export const releases: Release[] = [v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
