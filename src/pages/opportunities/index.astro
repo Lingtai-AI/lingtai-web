@@ -92,6 +92,30 @@ import { opportunities } from '../../data/opportunities';
               </section>
             </div>
 
+            <section class="people-section">
+              <h4>People behind this opportunity</h4>
+              <div class="people-grid">
+                {opportunity.people.map((person) => (
+                  <article class="person-card">
+                    <div class="person-heading">
+                      <div>
+                        <strong>{person.name}</strong>
+                        <span>{person.nameZh}</span>
+                      </div>
+                      <em>{person.role}</em>
+                    </div>
+                    <p>{person.profile}</p>
+                    <p class="zh">{person.profileZh}</p>
+                    <div class="person-links">
+                      {person.links.map((link) => (
+                        <a href={link.href} target="_blank" rel="noopener noreferrer">{link.label} ↗</a>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
             <div class="notes">
               {opportunity.notes.map((item, index) => (
                 <p>
@@ -328,6 +352,85 @@ import { opportunities } from '../../data/opportunities';
     display: block;
   }
 
+  .people-section {
+    border-top: 1px solid rgba(138, 134, 128, 0.2);
+    margin-top: 34px;
+    padding-top: 24px;
+  }
+
+  .people-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .person-card {
+    border: 1px solid rgba(138, 134, 128, 0.18);
+    border-radius: 20px;
+    padding: 20px;
+    background: rgba(245, 240, 232, 0.42);
+  }
+
+  :global([data-theme="dark"]) .person-card {
+    background: rgba(14, 14, 20, 0.26);
+  }
+
+  .person-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .person-heading strong,
+  .person-heading span,
+  .person-heading em {
+    display: block;
+  }
+
+  .person-heading strong {
+    color: var(--title-color);
+    font-size: 20px;
+    font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+    font-weight: 300;
+  }
+
+  .person-heading span {
+    color: var(--text-faint);
+    font-size: 13px;
+  }
+
+  .person-heading em {
+    color: var(--accent-warm);
+    font-style: normal;
+    font-size: 12px;
+    text-align: right;
+    max-width: 190px;
+  }
+
+  .person-card p {
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.75;
+    margin-bottom: 10px;
+  }
+
+  .person-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .person-links a {
+    border: 1px solid rgba(125, 171, 143, 0.45);
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
   .notes {
     border-top: 1px solid rgba(138, 134, 128, 0.2);
     margin-top: 30px;
@@ -344,7 +447,8 @@ import { opportunities } from '../../data/opportunities';
 
   @media (max-width: 760px) {
     .meta-grid,
-    .body-grid {
+    .body-grid,
+    .people-grid {
       grid-template-columns: 1fr;
     }
 
