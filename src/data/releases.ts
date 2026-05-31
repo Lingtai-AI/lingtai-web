@@ -224,7 +224,7 @@ const v0_8_13_v0_11_1: Release = {
   ],
   contributors: ['huangzesen'],
   validation: {
-    commit: 'lingtai 30b2a58 / lingtai-kernel 72278e5',
+    commit: 'lingtai v0.8.13 30b2a58 / lingtai-kernel v0.11.1 b2d1bb5',
     items: [
       { label: 'Kernel SQLite log index PR #201', result: 'focused verification passed; merged' },
       { label: 'Kernel chat/daemon SQLite index PR #203', result: 'focused suite passed with 186 tests; merged' },
@@ -232,7 +232,8 @@ const v0_8_13_v0_11_1: Release = {
       { label: 'Post-molt continuation PR #190', result: 'merged with notification wake and deferral fixes' },
       { label: 'Kernel focused readiness suite', result: '242 passed across SQLite, CLI, post-molt, soul, and notification tests' },
       { label: 'WhatsApp MCP package', result: 'lingtai-whatsapp v0.1.0 tagged and published' },
-      { label: 'Final release validation', result: 'pending tag/package release pass before publishing this entry' },
+      { label: 'Kernel v0.11.1 release', result: 'GitHub release, PyPI JSON, and clean venv install verified' },
+      { label: 'TUI/Portal v0.8.13 release', result: 'GitHub release, Homebrew tap update, brew upgrade, and binary versions verified' },
     ],
   },
   links: [
@@ -243,8 +244,12 @@ const v0_8_13_v0_11_1: Release = {
     { label: 'Soul flow exploration defaults PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/204' },
     { label: 'Soul flow voice prompt PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/206' },
     { label: 'WhatsApp MCP package tag', href: 'https://github.com/Lingtai-AI/lingtai-whatsapp/tree/v0.1.0' },
-    { label: 'Kernel main commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/72278e53ca291dbadabbad78108a0792a63f678d' },
-    { label: 'TUI/Portal main commit', href: 'https://github.com/Lingtai-AI/lingtai/commit/30b2a58' },
+    { label: 'Kernel v0.11.1 GitHub release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.11.1' },
+    { label: 'Kernel PyPI package', href: 'https://pypi.org/project/lingtai/0.11.1/' },
+    { label: 'Kernel release commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/b2d1bb59e670c1e17ce3e6519b02674f15d15cc2' },
+    { label: 'TUI/Portal v0.8.13 GitHub release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.8.13' },
+    { label: 'TUI/Portal main commit', href: 'https://github.com/Lingtai-AI/lingtai/commit/30b2a58e6e5e52d781a319567a764426b9259518' },
+    { label: 'Homebrew tap update', href: 'https://github.com/Lingtai-AI/homebrew-lingtai/commit/a1099d7531ee3f7f48e6b01ea9dfc1c1630cdc1a' },
   ],
 };
 
