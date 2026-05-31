@@ -6,22 +6,9 @@ import type { Lang } from '../i18n/translations';
 interface Props {
   title: string;
   lang: Lang;
-  description?: string;
-  image?: string;
 }
 
-const {
-  title,
-  lang,
-  description =
-    lang === 'zh' || lang === 'wen'
-      ? '灵台是文件系统原生的长期运行 Agent OS：记忆、传书、技能、分身、MCP 外部通道与可视化网络。'
-      : 'LingTai is a filesystem-native operating system for long-lived AI agents: memory, mail, skills, avatars, MCP addons, and visualized networks.',
-  image = '/braille/network_graph.png',
-} = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://lingtai.ai').toString();
-const imageUrl = new URL(image, Astro.site ?? 'https://lingtai.ai').toString();
-const pageTitle = `${title} — LingTai AI`;
+const { title, lang } = Astro.props;
 ---
 
 <!doctype html>
@@ -29,22 +16,7 @@ const pageTitle = `${title} — LingTai AI`;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{pageTitle}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={imageUrl} />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={pageTitle} />
-    <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={imageUrl} />
-    <link rel="alternate" hreflang="en" href={new URL('/en/', Astro.site ?? 'https://lingtai.ai').toString()} />
-    <link rel="alternate" hreflang="zh" href={new URL('/zh/', Astro.site ?? 'https://lingtai.ai').toString()} />
-    <link rel="alternate" hreflang="lzh" href={new URL('/wen/', Astro.site ?? 'https://lingtai.ai').toString()} />
-    <link rel="alternate" hreflang="x-default" href={new URL('/en/', Astro.site ?? 'https://lingtai.ai').toString()} />
+    <title>{title} — LingTai AI</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <script is:inline>
       // Apply theme before render to prevent flash
