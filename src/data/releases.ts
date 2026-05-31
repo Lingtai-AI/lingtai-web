@@ -61,6 +61,168 @@ export interface Release {
 }
 
 
+const v0_8_13_v0_11_1: Release = {
+  id: '20260531-1',
+  version: 'v0.8.13 / v0.11.1',
+  titleEn: 'LingTai TUI/Portal v0.8.13 + Kernel v0.11.1',
+  titleZh: '灵台 TUI/Portal v0.8.13 与内核 v0.11.1',
+  date: '2026-05-31',
+  pkg: 'lingtai-tui + lingtai',
+  tag: 'v0.8.13 / v0.11.1',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The kernel/runtime package `lingtai==0.11.1` belongs to the TUI-managed project virtualenv path. Ordinary LingTai projects should upgrade through the TUI/Homebrew flow; bare `pip install` remains a development, diagnostic, or clean-venv validation path rather than the normal user upgrade path.',
+  runtimeNoteZh:
+    '内核/runtime 包 `lingtai==0.11.1` 仍属于 TUI 管理的项目 virtualenv 路径。普通 LingTai 项目应通过 TUI/Homebrew 路径升级；裸 `pip install` 只适合开发、诊断或 clean-venv 验证，不是正常用户升级路径。',
+  summaryEn:
+    'A release window about making long-running LingTai work easier to resume and easier to inspect. Molt continuation now relies on explicit post-molt notifications rather than fragile next-action guessing, while local traces gain a rebuildable SQLite index and optional historical backfill. The same window also brings first-party WhatsApp MCP support, a kernel-owned intrinsic doctor, progressive-disclosure guidance for resident prompts, and product/license documentation polish.',
+  summaryZh:
+    '这次发布窗口的核心是让 LingTai 的长任务更容易续上、更容易检查。molt 后的继续不再依赖脆弱的 next-action 猜测，而是走更明确的 post-molt notification 路径；本地轨迹也获得了可重建的 SQLite 索引与可选历史 backfill。同一窗口还加入了一等 WhatsApp MCP 支持、kernel-owned intrinsic doctor、resident prompt 的 progressive-disclosure 指引，以及产品叙事与 license 文档整理。',
+  features: [
+    {
+      titleEn: 'Molt continuation: less guesswork after shedding context',
+      titleZh: 'Molt continuation：上下文脱落后少一点猜测',
+      leadEn:
+        'Molt is how a LingTai agent survives finite context. This release tightens the continuation path so the post-molt self receives a clearer wake-up signal instead of depending on heuristic prose extraction.',
+      leadZh:
+        'molt 是 LingTai agent 在有限上下文中继续活下去的方式。这一版把 molt 后续接的路径收紧：molt 后的新 self 收到更明确的唤醒信号，而不是依赖从文本里猜测下一步。',
+      bulletsEn: [
+        'Post-molt continuation notices are emitted from the actual molt result instead of a guessed `next_action` heuristic.',
+        'Post-molt notifications now wake after the context shed, so a successor can pick up the summary, pad, and pending work rather than waiting silently.',
+        'Deferral is limited to real molt results, reducing the chance that unrelated notifications are delayed, duplicated, or attached to the wrong turn.',
+        'The improvement is most visible during long development sessions: the agent can deliberately shed context, re-open with a handoff, and continue the release, PR, or investigation thread with less manual reorientation.',
+      ],
+      bulletsZh: [
+        'post-molt continuation notice 现在从真实的 molt result 触发，而不是依赖猜出来的 `next_action` heuristic。',
+        'molt 后 notification 可以在上下文脱落后唤醒 successor，让它读取 summary、pad 与未完成工作，而不是静默停住。',
+        'defer 只发生在真正的 molt result 上，降低无关通知被延迟、重复、或挂到错误 turn 上的概率。',
+        '这个改进在长开发会话里最明显：agent 可以有意识地 shed context，带着 handoff 重新打开，然后继续 release、PR 或调查线程，少一点人工重新定位。',
+      ],
+      whyEn:
+        'LingTai treats conversation as temporary but work as durable. Stronger post-molt continuation makes that memory model feel practical, not ceremonial.',
+      whyZh:
+        'LingTai 把 conversation 视为临时层，把工作状态放进 durable 层。更可靠的 post-molt continuation 让这套记忆模型更像实际生产能力，而不只是仪式。',
+    },
+    {
+      titleEn: 'SQLite trace index: JSONL remains the truth, queries become fast',
+      titleZh: 'SQLite 轨迹索引：JSONL 仍是事实源，查询变快',
+      leadEn:
+        'Local agent traces now have a derived SQLite sidecar that can be rebuilt, inspected, and queried without replacing the append-only JSONL record.',
+      leadZh:
+        '本地 agent 轨迹现在有了一个派生 SQLite sidecar：可以重建、检查、查询，但不取代 append-only JSONL 事实记录。',
+      bulletsEn: [
+        'Kernel PR #201 adds `logs/log.sqlite` as a fail-open, rebuildable index for `logs/events.jsonl`, plus `lingtai-agent log rebuild|doctor|query <agent_dir>`.',
+        'Read-only SQL query support accepts safe `SELECT` / `WITH ... SELECT` / `EXPLAIN` paths and keeps JSONL as the source of truth.',
+        'Kernel PR #203 expands the index to agent chat history, chat archives, daemon events, and daemon chat history through a new `chat_entries` table and source provenance fields.',
+        'TUI PR #221 adds an interactive migration that asks whether to backfill historical SQLite logs, warns that large histories can take time, shows progress when confirmed, and makes skipping safe for normal use.',
+      ],
+      bulletsZh: [
+        'kernel PR #201 新增 `logs/log.sqlite`，作为 `logs/events.jsonl` 的 fail-open、可重建索引，并提供 `lingtai-agent log rebuild|doctor|query <agent_dir>`。',
+        '只读 SQL 查询支持安全的 `SELECT` / `WITH ... SELECT` / `EXPLAIN` 路径，同时保持 JSONL 是事实源。',
+        'kernel PR #203 把索引扩展到 agent chat history、chat archive、daemon events 与 daemon chat history，并新增 `chat_entries` 表和 source provenance 字段。',
+        'TUI PR #221 在 migration 中加入交互式历史 backfill：先询问用户，说明大历史可能耗时，确认后显示进度条；跳过也不影响正常使用。',
+      ],
+      whyEn:
+        'Agents generate a lot of local history. Keeping JSONL durable while adding SQL inspection makes debugging, trajectory mining, and future UI views much less painful.',
+      whyZh:
+        'agent 会生成大量本地历史。保持 JSONL 耐久，同时增加 SQL inspection，让调试、trajectory mining 和未来 UI 视图都少很多痛苦。',
+    },
+    {
+      titleEn: 'WhatsApp joins the first-party MCP channel set',
+      titleZh: 'WhatsApp 进入一等 MCP 通道集合',
+      leadEn:
+        'WhatsApp is now wired like LingTai’s other first-party communication channels: a curated MCP registration, runtime dependency, TUI wiring, and README channel documentation.',
+      leadZh:
+        'WhatsApp 现在按 LingTai 其它一等通讯通道的方式接入：curated MCP registration、runtime dependency、TUI wiring，以及 README channel 文档。',
+      bulletsEn: [
+        'The new `lingtai-whatsapp` package provides a WhatsApp Cloud API MCP server and is tagged at `v0.1.0`.',
+        'Kernel PR #188 registers the curated `whatsapp` MCP, and PR #189 adds the runtime dependency on `lingtai-whatsapp>=0.1.0`.',
+        'TUI PR #216 wires WhatsApp into the MCP setup surface, and PR #220 adds WhatsApp to the documented channel list.',
+        'As with other MCP channels, activation still depends on user-provided provider credentials; registration and packaging are now first-party.',
+      ],
+      bulletsZh: [
+        '新的 `lingtai-whatsapp` 包提供 WhatsApp Cloud API MCP server，并已打 `v0.1.0` tag。',
+        'kernel PR #188 注册 curated `whatsapp` MCP，PR #189 增加 `lingtai-whatsapp>=0.1.0` runtime dependency。',
+        'TUI PR #216 把 WhatsApp 接入 MCP setup surface，PR #220 在 README channel 列表中补上 WhatsApp。',
+        '和其它 MCP 通道一样，真正激活仍取决于用户提供 provider credentials；但注册、打包、文档路径已经进入 first-party。',
+      ],
+      whyEn:
+        'LingTai’s human-facing channels become broader without inventing a separate integration model for every platform.',
+      whyZh:
+        'LingTai 面向人的通道变宽了，同时不需要为每个平台发明一套单独的集成模型。',
+    },
+    {
+      titleEn: 'Diagnostics and resident guidance move toward kernel-owned manuals',
+      titleZh: '诊断与常驻指导继续向 kernel-owned manuals 收拢',
+      leadEn:
+        'This window keeps moving operational knowledge out of scattered UI copies and into intrinsic skills/manuals that agents can load when needed.',
+      leadZh:
+        '这个窗口继续把操作知识从分散的 UI 文案里收拢到 agent 需要时可加载的 intrinsic skills/manuals。',
+      bulletsEn: [
+        'Kernel PR #185 adds the intrinsic `lingtai-doctor` skill and expands read-only diagnostics for agent health, stale paths, heartbeat/process disagreements, and MCP/addon path issues.',
+        'TUI PR #213 wires `/doctor` to the kernel-owned intrinsic doctor instead of maintaining a separate diagnostic script path in the TUI.',
+        'Kernel PR #187 and TUI PR #215 route expanded runtime guidance into `system-manual`, keeping the resident prompt smaller while preserving detailed procedures on demand.',
+        'TUI PR #214 adds the standing guidance that substantial human-facing deliverables should prefer standalone HTML when appropriate.',
+      ],
+      bulletsZh: [
+        'kernel PR #185 新增 intrinsic `lingtai-doctor` skill，并扩展只读诊断：agent health、stale paths、heartbeat/process 分歧、MCP/addon path 问题等。',
+        'TUI PR #213 让 `/doctor` 复用 kernel-owned intrinsic doctor，而不是在 TUI 里维护另一套诊断脚本路径。',
+        'kernel PR #187 与 TUI PR #215 把展开版 runtime guidance 路由到 `system-manual`，让 resident prompt 变小，但详细 procedure 仍可按需加载。',
+        'TUI PR #214 增加 standing guidance：重要 human-facing deliverable 在合适时优先做 standalone HTML。',
+      ],
+      whyEn:
+        'Agents should carry durable operating knowledge with them, while the always-on prompt stays small enough to leave room for actual work.',
+      whyZh:
+        'agent 应该随身携带可持久的操作知识，同时 always-on prompt 要足够小，把空间留给真正的工作。',
+    },
+    {
+      titleEn: 'Product narrative, license alignment, and public documentation polish',
+      titleZh: '产品叙事、license 对齐与公开文档整理',
+      leadEn:
+        'The release also cleans up the public shape of the project: what LingTai is, how it is licensed, and where new users see the supported channels.',
+      leadZh:
+        '这次发布也整理了项目对外形状：LingTai 是什么、用什么 license、以及新用户从哪里看到支持的通道。',
+      bulletsEn: [
+        'TUI PR #212 expands the project README, and PR #219 repositions it as a product entry rather than only a developer note.',
+        'TUI PR #220 adds WhatsApp to the README communication channel list, matching the new first-party MCP path.',
+        'Kernel PR #200 and TUI PR #218 align the repositories on Apache-2.0.',
+        'The release window also includes routine star-count maintenance commits in the web-facing project metadata.',
+      ],
+      bulletsZh: [
+        'TUI PR #212 扩展项目 README，PR #219 把 README 重新定位为产品入口，而不只是开发说明。',
+        'TUI PR #220 在 README 通讯通道列表中加入 WhatsApp，与新的 first-party MCP 路径对齐。',
+        'kernel PR #200 与 TUI PR #218 将仓库 license 对齐到 Apache-2.0。',
+        '这个发布窗口也包含面向网站元数据的日常 star-count 维护提交。',
+      ],
+      whyEn:
+        'As LingTai becomes easier to install and easier to extend, the public entry point needs to explain the system in the same language the product now uses.',
+      whyZh:
+        '当 LingTai 越来越容易安装、也越来越容易扩展时，对外入口也需要用产品当前自己的语言解释这套系统。',
+    },
+  ],
+  contributors: ['huangzesen'],
+  validation: {
+    commit: 'lingtai 30b2a58 / lingtai-kernel 30726dd',
+    items: [
+      { label: 'Kernel SQLite log index PR #201', result: 'focused verification passed; merged' },
+      { label: 'Kernel chat/daemon SQLite index PR #203', result: 'focused suite passed with 186 tests; merged' },
+      { label: 'TUI SQLite backfill migration PR #221', result: 'go test ./... for TUI passed; portal migration package passed' },
+      { label: 'Post-molt continuation PR #190', result: 'merged with notification wake and deferral fixes' },
+      { label: 'WhatsApp MCP package', result: 'lingtai-whatsapp v0.1.0 tagged and published' },
+      { label: 'Final release validation', result: 'pending tag/package release pass before publishing this entry' },
+    ],
+  },
+  links: [
+    { label: 'Post-molt continuation PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/190' },
+    { label: 'Kernel SQLite log index PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/201' },
+    { label: 'Kernel chat/daemon SQLite index PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/203' },
+    { label: 'TUI SQLite backfill migration PR', href: 'https://github.com/Lingtai-AI/lingtai/pull/221' },
+    { label: 'WhatsApp MCP package tag', href: 'https://github.com/Lingtai-AI/lingtai-whatsapp/tree/v0.1.0' },
+    { label: 'Kernel main commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/30726dd7840b5286ad6e65b73dd3b10f86e5af63' },
+    { label: 'TUI/Portal main commit', href: 'https://github.com/Lingtai-AI/lingtai/commit/30b2a58' },
+  ],
+};
+
 const v0_8_12_v0_11_0: Release = {
   id: '20260529-1',
   version: 'v0.8.12 / v0.11.0',
@@ -426,7 +588,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
