@@ -75,9 +75,9 @@ const v0_8_13_v0_11_1: Release = {
   runtimeNoteZh:
     '内核/runtime 包 `lingtai==0.11.1` 仍属于 TUI 管理的项目 virtualenv 路径。普通 LingTai 项目应通过 TUI/Homebrew 路径升级；裸 `pip install` 只适合开发、诊断或 clean-venv 验证，不是正常用户升级路径。',
   summaryEn:
-    'A release window about making long-running LingTai work easier to resume and easier to inspect. Molt continuation now relies on explicit post-molt notifications rather than fragile next-action guessing, while local traces gain a rebuildable SQLite index and optional historical backfill. The same window also brings first-party WhatsApp MCP support, a kernel-owned intrinsic doctor, progressive-disclosure guidance for resident prompts, and product/license documentation polish.',
+    'A release window about making long-running LingTai work easier to resume and easier to inspect. Molt continuation now relies on explicit post-molt notifications rather than fragile next-action guessing, while local traces gain a rebuildable SQLite index and optional historical backfill. Soul flow also becomes more exploratory and voice-aware. The same window brings first-party WhatsApp MCP support, a kernel-owned intrinsic doctor, progressive-disclosure guidance for resident prompts, and product/license documentation polish.',
   summaryZh:
-    '这次发布窗口的核心是让 LingTai 的长任务更容易续上、更容易检查。molt 后的继续不再依赖脆弱的 next-action 猜测，而是走更明确的 post-molt notification 路径；本地轨迹也获得了可重建的 SQLite 索引与可选历史 backfill。同一窗口还加入了一等 WhatsApp MCP 支持、kernel-owned intrinsic doctor、resident prompt 的 progressive-disclosure 指引，以及产品叙事与 license 文档整理。',
+    '这次发布窗口的核心是让 LingTai 的长任务更容易续上、更容易检查。molt 后的继续不再依赖脆弱的 next-action 猜测，而是走更明确的 post-molt notification 路径；本地轨迹也获得了可重建的 SQLite 索引与可选历史 backfill，soul flow 也变得更偏探索、更能使用配置好的 voice prompt。同一窗口还加入了一等 WhatsApp MCP 支持、kernel-owned intrinsic doctor、resident prompt 的 progressive-disclosure 指引，以及产品叙事与 license 文档整理。',
   features: [
     {
       titleEn: 'Molt continuation: less guesswork after shedding context',
@@ -102,6 +102,28 @@ const v0_8_13_v0_11_1: Release = {
         'LingTai treats conversation as temporary but work as durable. Stronger post-molt continuation makes that memory model feel practical, not ceremonial.',
       whyZh:
         'LingTai 把 conversation 视为临时层，把工作状态放进 durable 层。更可靠的 post-molt continuation 让这套记忆模型更像实际生产能力，而不只是仪式。',
+    },
+    {
+      titleEn: 'Soul flow becomes exploratory and voice-aware',
+      titleZh: 'Soul flow 变得更偏探索，也更懂 voice',
+      leadEn:
+        'Two late-window kernel changes make the idle inner voice less like a forced productivity checklist and more like a configurable reflective companion.',
+      leadZh:
+        '这个窗口后段的两项 kernel 改动，让 idle 时的 inner voice 不再像强制 productivity checklist，而更像可配置的反思伙伴。',
+      bulletsEn: [
+        'Kernel PR #204 changes the default soul-flow posture toward exploratory reflection rather than narrow task extraction.',
+        'Kernel PR #206 routes soul-flow consultations through the configured voice prompt, so custom soul voices affect both current-insight and past-self consultations.',
+        'The change fits the same memory model as molt: conversation is temporary, but reflection and handoff should help the next turn notice what the busy self might miss.',
+      ],
+      bulletsZh: [
+        'kernel PR #204 把默认 soul-flow 姿态调成更偏探索式反思，而不是狭窄地提取任务清单。',
+        'kernel PR #206 让 soul-flow consultation 走配置好的 voice prompt；自定义 soul voice 会影响 current-insight 与 past-self consultation。',
+        '这和 molt 的记忆模型相互呼应：conversation 是临时层，但反思与 handoff 应该帮助下一轮注意到忙碌中的 self 可能漏掉的东西。',
+      ],
+      whyEn:
+        'LingTai’s “inner voice” should be something an agent can cultivate and tune, not a hard-coded narrator with one personality.',
+      whyZh:
+        'LingTai 的“内在声音”应该是 agent 可以培养和调音的东西，而不是只有一种性格的硬编码旁白。',
     },
     {
       titleEn: 'SQLite trace index: JSONL remains the truth, queries become fast',
@@ -202,12 +224,13 @@ const v0_8_13_v0_11_1: Release = {
   ],
   contributors: ['huangzesen'],
   validation: {
-    commit: 'lingtai 30b2a58 / lingtai-kernel 30726dd',
+    commit: 'lingtai 30b2a58 / lingtai-kernel 72278e5',
     items: [
       { label: 'Kernel SQLite log index PR #201', result: 'focused verification passed; merged' },
       { label: 'Kernel chat/daemon SQLite index PR #203', result: 'focused suite passed with 186 tests; merged' },
       { label: 'TUI SQLite backfill migration PR #221', result: 'go test ./... for TUI passed; portal migration package passed' },
       { label: 'Post-molt continuation PR #190', result: 'merged with notification wake and deferral fixes' },
+      { label: 'Kernel focused readiness suite', result: '242 passed across SQLite, CLI, post-molt, soul, and notification tests' },
       { label: 'WhatsApp MCP package', result: 'lingtai-whatsapp v0.1.0 tagged and published' },
       { label: 'Final release validation', result: 'pending tag/package release pass before publishing this entry' },
     ],
@@ -217,8 +240,10 @@ const v0_8_13_v0_11_1: Release = {
     { label: 'Kernel SQLite log index PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/201' },
     { label: 'Kernel chat/daemon SQLite index PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/203' },
     { label: 'TUI SQLite backfill migration PR', href: 'https://github.com/Lingtai-AI/lingtai/pull/221' },
+    { label: 'Soul flow exploration defaults PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/204' },
+    { label: 'Soul flow voice prompt PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/206' },
     { label: 'WhatsApp MCP package tag', href: 'https://github.com/Lingtai-AI/lingtai-whatsapp/tree/v0.1.0' },
-    { label: 'Kernel main commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/30726dd7840b5286ad6e65b73dd3b10f86e5af63' },
+    { label: 'Kernel main commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/72278e53ca291dbadabbad78108a0792a63f678d' },
     { label: 'TUI/Portal main commit', href: 'https://github.com/Lingtai-AI/lingtai/commit/30b2a58' },
   ],
 };
