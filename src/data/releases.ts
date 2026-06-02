@@ -61,6 +61,136 @@ export interface Release {
 }
 
 
+const v0_8_14_v0_11_2: Release = {
+  id: '20260602-1',
+  version: 'v0.8.14 / v0.11.2',
+  titleEn: 'LingTai TUI/Portal v0.8.14 + Kernel v0.11.2',
+  titleZh: '灵台 TUI/Portal v0.8.14 与内核 v0.11.2',
+  date: '2026-06-02',
+  pkg: 'lingtai-tui + lingtai',
+  tag: 'v0.8.14 / v0.11.2',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The kernel/runtime package `lingtai==0.11.2` belongs to the TUI-managed project virtualenv path. Ordinary LingTai projects should upgrade through the TUI/Homebrew flow; bare `pip install` remains a development, diagnostic, or clean-venv validation path rather than the normal user upgrade path.',
+  runtimeNoteZh:
+    '内核/runtime 包 `lingtai==0.11.2` 属于 TUI 管理的项目 virtualenv 路径。普通 LingTai 项目应通过 TUI/Homebrew 路径升级；裸 `pip install` 只适合开发、诊断或 clean-venv 验证，不是正常用户升级路径。',
+  summaryEn:
+    'This paired release cleans up the skill and manual surfaces that agents read every day. TUI/Portal v0.8.14 continues the move from large top-level utility documents toward router + reference skill layouts, consolidates research/media helpers under Swiss Knife, and tightens setup/preset reliability. Kernel v0.11.2 mirrors that work inside intrinsic manuals, splits the consequential-molt scaffold into a psyche-manual asset, adds Cursor daemon/backend and validation fixes, and includes a late rescue fix for Codex/gpt-5.5 agents by scrubbing rejected Responses tool schemas and removing the duplicate email scheduler in favor of host cron. Release window: 49 commits, 31 merged PRs, 172 files changed, +10,990 / -5,476 lines.',
+  summaryZh:
+    '这是一轮把 agent 每天会读、会调用、会恢复的技能和手册表面重新收拾干净的联合发布。TUI/Portal v0.8.14 继续把顶层 utility skill 从“大文档”收束成 router + reference，把研究、媒体和小工具统一收进 Swiss Knife，并修补 setup / preset / 凭据可靠性；内核 v0.11.2 在 intrinsic manuals 里同步推进 nested reference，把 consequential molt 模板沉到 psyche-manual asset，补上 Cursor daemon/backend、validator 与 notification 可靠性，并在发布前加入 Codex/gpt-5.5 救火修复：清洗 Responses API 会拒绝的 tool schema，删除重复的 email scheduler，回到 host cron 路径。这个 release window 合计 49 commits、31 个 merged PR、172 个文件、+10,990 / -5,476 行。',
+  features: [
+    {
+      titleEn: 'Skill library cleanup: routers at the top, references at the leaves',
+      titleZh: '技能库清理：顶层是入口，细节沉到 reference',
+      leadEn:
+        'The most visible work is not a command-line feature, but the shape of the manuals agents load. Long utility skills now expose a smaller routing surface and move heavy details into named references or assets.',
+      leadZh:
+        '这次最显眼的变化不在命令行，而在 agent 会按需读取的技能层：长文档被拆成轻量入口，真正沉重、易过期、只在特定任务需要的内容进入明确命名的 reference / asset。',
+      bulletsEn: [
+        '`lingtai-issue-report` now routes to an evidence checklist, report template, and filing flow instead of mixing the whole process into one document.',
+        '`listen`, `academic-research`, `vision`, `dj`, and `find-something-to-do` moved under `swiss-knife/reference/`, making the top-level skill catalog read more like entry points than a flat toolbox.',
+        'Portal guide, tutorial guide, recipe, dev guide, daily reflection, and web-browsing utilities continue the nested-reference pattern introduced in earlier releases.'
+      ],
+      bulletsZh: [
+        '`lingtai-issue-report` 拆成 evidence checklist、report template、filing flow，不再把取证、写报告和 filing 动作混在一份长文档里。',
+        '`listen`、`academic-research`、`vision`、`dj`、`find-something-to-do` 移入 `swiss-knife/reference/`，顶层技能列表更像入口，而不是所有工具的平铺目录。',
+        '`lingtai-portal-guide`、`tutorial-guide`、`lingtai-recipe`、`lingtai-dev-guide`、`daily-reflection`、`web-browsing` 等 utility skills 继续沿用 nested reference 模式。'
+      ],
+      whyEn:
+        'Resident prompts should remember where to go, not carry every procedure. Smaller routers make the system prompt lighter, while leaf references keep detailed workflows available when the task actually needs them.',
+      whyZh:
+        '常驻提示应该记住“去哪里”，而不是背下每一条流程。轻量 router 让系统提示更小，leaf reference 则在任务真正需要时保留完整细节。'
+    },
+    {
+      titleEn: 'Molt and procedures: the full handoff scaffold moves to the right layer',
+      titleZh: 'Molt 与 procedures：完整交接模板放回正确层级',
+      leadEn:
+        'The old `lingtai-molt-template` utility is folded into the kernel-side operating model. The resident procedure now points clearly to `psyche-manual`, and the full nine-section consequential-molt template lives as a packaged asset.',
+      leadZh:
+        '原本有些奇怪的 `lingtai-molt-template` utility 被收回内核运行模型：常驻 procedures 给出明显入口，完整九段式 consequential molt 模板进入 `psyche-manual` 的 packaged asset。',
+      bulletsEn: [
+        'Kernel procedures now make the “read psyche-manual before a consequential molt” route explicit.',
+        '`psyche-manual` became a lighter router with `assets/molt-template.md` as the full scaffold.',
+        'Changed docs replace stale “Codex Cheat Sheet” wording with durable-memory and successor-briefing language.'
+      ],
+      bulletsZh: [
+        'kernel procedures 明确提示：重要 molt 前先读 `psyche-manual`。',
+        '`psyche-manual` 变成更轻的 router，完整模板沉到 `assets/molt-template.md`。',
+        '改动文件把旧的 “Codex Cheat Sheet” 说法换成 durable memory / successor briefing 语言。'
+      ],
+      whyEn:
+        'A molt summary is not a transcript; it is the next self’s operating brief. Keeping the full scaffold in the intrinsic psyche manual makes that rule available to every agent without bloating the always-on prompt.',
+      whyZh:
+        'molt summary 不是聊天记录，而是下一任自己的作战简报。把完整模板放进 intrinsic psyche manual，既让所有 agent 可用，又不膨胀常驻提示。'
+    },
+    {
+      titleEn: 'Release-window rescue: Codex/gpt-5.5 tool schema scrub and scheduler removal',
+      titleZh: '发布前救火：Codex/gpt-5.5 tool schema 清洗与 scheduler 移除',
+      leadEn:
+        'The final kernel rescue commit is included in this release because it directly affects whether Codex-backed gpt-5.5 agents can boot and call tools reliably.',
+      leadZh:
+        '最后合入的 kernel 救火 commit 被纳入本次发布，因为它直接影响 Codex/gpt-5.5 agent 能否稳定启动并调用工具。',
+      bulletsEn: [
+        'Merge `70e7c02` carries commits `3086312` and `adea979`: tool schemas are scrubbed before being sent to the OpenAI/Codex Responses backend, removing JSON Schema shapes that the backend rejects.',
+        'The built-in email recurring-send scheduler was removed from schema/i18n/manager code; recurring work now routes back to host cron / launchd / systemd as documented in `bash-manual`.',
+        'The cleanup touched seven kernel files (`+83 / -460`) and the release tests were aligned to assert that the scheduler surface is absent rather than accidentally still advertised.'
+      ],
+      bulletsZh: [
+        'merge `70e7c02` 包含 `3086312` 与 `adea979`：tool schema 在发给 OpenAI/Codex Responses backend 前先做 scrub，去掉后端会拒绝的 JSON Schema 形状。',
+        '内置 email recurring-send scheduler 从 schema / i18n / manager 里移除；周期任务回到 `bash-manual` 记录的 host cron / launchd / systemd 路径。',
+        '这次清理涉及 7 个内核文件（`+83 / -460`），release 测试也同步改为断言 scheduler surface 不再暴露。'
+      ],
+      whyEn:
+        'The fix reduces a hard availability failure mode: agents should not be blocked before their first real action because the model backend rejects the tool definitions themselves. Removing the duplicate scheduler also leaves one clearer scheduling path.',
+      whyZh:
+        '这个修复减少了一类硬可用性故障：agent 不应在第一次真正行动前，就因为模型后端拒绝工具定义本身而卡死。删除重复 scheduler 也让定时任务只剩一条更清楚的路径。'
+    },
+    {
+      titleEn: 'Reliability polish across setup, presets, validation, and release hygiene',
+      titleZh: 'setup、preset、validation 与 release hygiene 的可靠性修补',
+      leadEn:
+        'Alongside the documentation and skill refactors, this window includes smaller fixes that make setup, testing, and release verification less surprising.',
+      leadZh:
+        '除了文档和技能重构，这个窗口还合入了一批让 setup、测试和 release 验证更少惊喜的小修补。',
+      bulletsEn: [
+        'TUI setup/preset/API-key handling and MiniMax-M3 default updates were validated through Go tests and release builds.',
+        'Portal release validation now explicitly builds `portal/web` before portal Go tests so embedded assets exist.',
+        'The release gate normalized `docs/stars/stars.csv` line endings so `git diff --check` stays clean.'
+      ],
+      bulletsZh: [
+        'TUI setup / preset / API-key 处理和 MiniMax-M3 默认模型更新通过 Go tests 与 release build 验证。',
+        'Portal release validation 明确先 build `portal/web` 再跑 portal Go tests，保证 embedded assets 存在。',
+        'release gate 顺手规范化 `docs/stars/stars.csv` 行尾，让 `git diff --check` 保持干净。'
+      ],
+      whyEn:
+        'Small release-gate fixes are easy to dismiss, but they are exactly what keeps the next release from spending time rediscovering the same failure modes.',
+      whyZh:
+        'release gate 的小修补看起来不起眼，但正是这些细节避免下一次发布重复踩同样的坑。'
+    }
+  ],
+  contributors: ['@huangzesen', '@JieKiYu', '@zhiping0913'],
+  validation: {
+    commit: 'lingtai@dde319e + lingtai-kernel@62315ec',
+    items: [
+      { label: 'TUI Go tests', result: 'passed' },
+      { label: 'Portal web build + Go tests', result: 'passed' },
+      { label: 'TUI/Portal release builds', result: 'passed' },
+      { label: 'Kernel focused release tests', result: '276 passed' },
+      { label: 'Kernel wheel/sdist + twine check', result: 'passed' },
+      { label: 'PyPI visibility', result: 'lingtai 0.11.2 latest' },
+      { label: 'Homebrew tap', result: 'updated to v0.8.14' }
+    ]
+  },
+  links: [
+    { label: 'TUI/Portal v0.8.14 release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.8.14' },
+    { label: 'Kernel v0.11.2 release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.11.2' },
+    { label: 'TUI final commit dde319e', href: 'https://github.com/Lingtai-AI/lingtai/commit/dde319eba439eff056a6e7189a5fe5f89f0f30bc' },
+    { label: 'Kernel final commit 62315ec', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/62315ec96b81452c35dc352773d5f28dd7981ed4' },
+    { label: 'Kernel rescue merge 70e7c02', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/70e7c02200cd8e2c1cfb04fe66364535507114a5' },
+    { label: 'Homebrew tap update c0b0d7c', href: 'https://github.com/Lingtai-AI/homebrew-lingtai/commit/c0b0d7c2e8cef0d178afc3d0fd4ddfead88b56da' }
+  ]
+};
+
 const v0_8_13_v0_11_1: Release = {
   id: '20260531-1',
   version: 'v0.8.13 / v0.11.1',
@@ -618,7 +748,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
