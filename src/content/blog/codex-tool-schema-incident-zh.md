@@ -188,9 +188,47 @@ LingTai 原来的 `_build_responses_tools` 只在 schema root 层 scrub 一些�
 
 而是拿事故现场的真实 payload 回放验证。
 
----
+### 4.2 OpenAI backend 到底“突然改了什么”？
 
-## 5. “可是它 10 分钟前还能用啊？”
+这里需要说得严谨一点：我们看不到 OpenAI 内部 commit，也看不到他们哪一个 validator、schema sanitizer 或 gateway rule 在什么时候被改了。因此不能把这件事写成“OpenAI 某某文件某某行改了”。
+
+我们能确定的是黑盒 contract。
+
+也就是说：从同一个 Codex Responses endpoint、同一个真实 agent payload 的 replay / bisect / A-B matrix 看，外部可观测到的行为变成了——`tools[].parameters` 不再接受一部分过去在 OpenAI / JSON Schema 生态里看起来合理、但嵌套在 tool property 里的 schema 形状。
+
+可以把它理解成 backend 的 tool-schema 接受子集突然变窄了。
+
+更具体地说，它不是“所有 JSON Schema 都不行”，也不是“tools 不能用了”，而是嵌套 schema 里有三个形状会触发同一种 opaque `server_error`：
+
+```text
+工具参数 schema
+└── properties
+    ├── address: oneOf[...] / not ...              # 现在拒绝
+    ├── secondary.args.xxx: description only       # 现在拒绝
+    └── backend_options: { type: object }          # 没有 properties，现在拒绝
+```
+
+而这些形状在普通、简化的 repro 里很容易消失：你手写一个 3 KB prompt、只放一两个干净 tool，backend 就能正常返回；只有把真实 agent 的 62 KB instructions + 21 个真实 tools 全部带上，才会踩到这三个 nested construct。
+
+这也是为什么事故一开始看起来像“Codex / gpt-5.5 整体坏了”：backend 没有返回 “`tools[3].parameters.properties.address.oneOf` is unsupported” 这种可行动错误，而是把不同 schema rejection 都包成同一类 server_error。
+
+所以最准确的表述是：
+
+> OpenAI / Codex backend 的 `/responses` 工具参数校验，在真实 agent payload 下，对嵌套 JSON Schema 的容忍度比之前预期更低；它拒绝 nested `oneOf/not`、typeless property、以及无 `properties` 的 object schema，并且没有给出结构化错误。LingTai 的修复不是绕过模型，而是在发送给 Codex 前把工具 schema 规整成这个 backend 当前实际接受的子集。
+
+这和后面的 email schedule no-op 是两件独立的事。
+
+第一件事发生在请求进入模型之前：backend 直接拒绝整个 Responses request，所以是 0 API calls / 0 tokens / agent stuck。
+
+第二件事发生在 agent 已经能调用模型之后：gpt-5.5 更倾向填满 optional object，触发 LingTai email dispatcher 的优先级 bug，让 send 静默变成 schedule list no-op。
+
+一个是上游 backend contract drift。
+
+一个是本地 tool dispatcher latent bug。
+
+把两者分开，才能避免误判成“模型坏了”或“email 修复能解决 Codex server_error”。
+
+### 4.3 “可是它 10 分钟前还能用啊？”
 
 这个问题也很重要。
 
@@ -210,7 +248,7 @@ LingTai 原来的 `_build_responses_tools` 只在 schema root 层 scrub 一些�
 
 ---
 
-## 6. Root Cause #2：email send 不是失败，而是被 schedule no-op 劫持
+## 5. Root Cause #2：email send 不是失败，而是被 schedule no-op 劫持
 
 修完 tool schema 后，agent 终于能说话了。
 
@@ -273,7 +311,7 @@ if action == "send": ...
 
 ---
 
-## 7. 为什么这个 bug 以前没爆？
+## 6. 为什么这个 bug 以前没爆？
 
 因为以前的模型不会把 optional `schedule` object 填进去。
 
@@ -295,7 +333,7 @@ gpt-5.5 的行为更“完整”：它会倾向于把 optional object 也填上�
 
 ---
 
-## 8. 为什么最后直接移除 email scheduler？
+## 7. 为什么最后直接移除 email scheduler？
 
 这个问题有两种修法。
 
@@ -322,7 +360,7 @@ gpt-5.5 的行为更“完整”：它会倾向于把 optional object 也填上�
 
 ---
 
-## 9. 最终 shipped changes
+## 8. 最终 shipped changes
 
 这次修复进入 kernel PR：
 
@@ -354,7 +392,7 @@ src/lingtai_kernel/intrinsics/email/schema.py   |  22 --
 
 ---
 
-## 10. 验证不是“跑一下就行”
+## 9. 验证不是“跑一下就行”
 
 这次最重要的不是写了修复，而是验证路径足够贴近真实事故。
 
@@ -379,7 +417,7 @@ src/lingtai_kernel/intrinsics/email/schema.py   |  22 --
 
 ---
 
-## 11. 这次事故真正教会我们的事
+## 10. 这次事故真正教会我们的事
 
 我觉得有四条特别重要。
 
@@ -415,7 +453,7 @@ backend 把不同错误都压成同一个 generic server_error + request ID 时�
 
 ---
 
-## 12. 还有哪些 follow-up？
+## 11. 还有哪些 follow-up？
 
 这次 PR 解决了 blocking incident，但还有几个后续点值得继续做。
 
@@ -451,7 +489,7 @@ Codex schema scrub 解决的是 backend rejection。
 
 ---
 
-## 13. 最后的结论
+## 12. 最后的结论
 
 这次事故表面上是 Codex / gpt-5.5 agent 卡死。
 
