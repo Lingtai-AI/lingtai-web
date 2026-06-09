@@ -74,9 +74,9 @@ const v0_8_15_v0_11_3: Release = {
   runtimeNoteZh:
     '这是基于两个仓库候选 `main` 整理的发布候选日志：最终 tag、PyPI 发布与 Homebrew tap 更新尚未完成。内核/runtime 包 `lingtai==0.11.3` 属于 TUI 管理的项目 virtualenv 路径——普通 LingTai 项目通过 TUI/Homebrew 路径升级，裸 `pip install lingtai` 只适合发布、诊断或 clean-venv 验证，不是正常用户升级路径。（候选 commit 上内核 `pyproject` 版本仍为 `0.11.2`，将在 PyPI 发布前升到 `0.11.3`。）',
   summaryEn:
-    'This candidate pairs TUI/Portal v0.8.15 with Kernel v0.11.3 and centers on operating the runtime: more visibility and control from the TUI (a skill-backed, multilingual `/help` command, a daemon browser, daemon counts in kanban, tool-call display controls, adaptive mail input, and `/clear` routed through kernel context clear), and a safer agent runtime under real workloads (the nested secondary tool-call channel is removed and residual stale `secondary` args are ignored/logged, top-level tool calls gain lifecycle tracing, plus a strict relay-compatible avatar schema, repeated-tool-error recovery, OpenAI Responses compact-threshold handling, a stale-notification version guard, refresh recovery from stale processes, MCP stale-stdio restart, and daemon limit / dead-parent cleanup). Knowledge and skill surfaces become more teachable — molt history knowledge entries, a strengthened pre-molt checklist, textbook distillation, a read-only preset-health subskill, optional skill repository remotes, a LICC chat tutorial, and Graphify / cyclic-manifold docs — and research and setup paths get more practical with an authorized-publisher PDF tier, in-house publisher extraction, a Zotero institutional handoff, an academic evidence gate, an install.sh writable-bin fallback, an AED max-attempts setting, and a Codex service-tier preset. Candidate window: 179 files changed, +14,348 / -3,363 lines across 38 first-parent merged PRs (22 TUI/Portal + 16 kernel), plus small direct/doc commits and star-count chores. Final release validation is still to be completed before tag, PyPI, and Homebrew publication.',
+    'This candidate pairs TUI/Portal v0.8.15 with Kernel v0.11.3 and centers on operating the runtime: more visibility and control from the TUI (a skill-backed, multilingual `/help` command, a daemon browser, daemon counts in kanban, tool-call display controls, adaptive mail input, and `/clear` routed through kernel context clear), and a safer agent runtime under real workloads (the nested secondary tool-call channel is removed and residual stale `secondary` args are ignored/logged, top-level tool calls gain lifecycle tracing, plus a strict relay-compatible avatar schema, repeated-tool-error recovery, OpenAI Responses compact-threshold handling, a stale-notification version guard, refresh recovery from stale processes, MCP stale-stdio restart, and daemon limit / dead-parent cleanup). Knowledge and skill surfaces become more teachable — molt history knowledge entries, a strengthened pre-molt checklist, textbook distillation, a read-only preset-health subskill, optional skill repository remotes, a LICC chat tutorial, and Graphify / cyclic-manifold docs — and research and setup paths get more practical with an authorized-publisher PDF tier, in-house publisher extraction, a Zotero institutional handoff, an academic evidence gate, an install.sh writable-bin fallback, an AED max-attempts setting, and a Codex service-tier preset. Candidate window: 180 files changed, +14,438 / -3,363 lines across 39 first-parent merged PRs (23 TUI/Portal + 16 kernel), plus small direct/doc commits and star-count chores. Final release validation is still to be completed before tag, PyPI, and Homebrew publication.',
   summaryZh:
-    '这一候选把 TUI/Portal v0.8.15 与内核 v0.11.3 配对，主题是“把 runtime 真正运行起来”：TUI 侧给出更多可见性与控制（skill-backed 多语言 `/help` 命令、daemon 浏览器、kanban 里的 daemon 计数、tool-call 显示控制、自适应邮件输入、`/clear` 走内核 context clear），内核侧让 agent runtime 在真实负载下更稳（移除嵌套 secondary 工具调用通道、残留的 stale `secondary` 参数被忽略并记录，顶层工具调用新增生命周期 tracing，外加严格 relay 兼容的 avatar schema、重复工具错误恢复、OpenAI Responses compact 阈值处理、stale 通知的版本守卫、从 stale 进程恢复 refresh、MCP stale stdio 重启、daemon 上限 / dead-parent 清理）。知识与技能表面更易教学——molt history 知识条目、强化的 molt 前检查清单、textbook distillation、只读 preset-health 子技能、可选技能仓库 remote、LICC chat 教程、Graphify / cyclic manifold 文档；研究与 setup 路径更实用——授权发布商 PDF 层、in-house publisher 抽取、Zotero 机构全文交接、学术证据 gate、install.sh 可写 bin 回退、AED 最大尝试设置、Codex service tier 预设。候选窗口：179 个文件、+14,348 / -3,363 行，跨 38 个 first-parent merged PR（22 个 TUI/Portal + 16 个内核），外加少量直接 / 文档提交与 star-count 杂务。最终发布验证仍待在打 tag、PyPI 与 Homebrew 发布前完成。',
+    '这一候选把 TUI/Portal v0.8.15 与内核 v0.11.3 配对，主题是“把 runtime 真正运行起来”：TUI 侧给出更多可见性与控制（skill-backed 多语言 `/help` 命令、daemon 浏览器、kanban 里的 daemon 计数、tool-call 显示控制、自适应邮件输入、`/clear` 走内核 context clear），内核侧让 agent runtime 在真实负载下更稳（移除嵌套 secondary 工具调用通道、残留的 stale `secondary` 参数被忽略并记录，顶层工具调用新增生命周期 tracing，外加严格 relay 兼容的 avatar schema、重复工具错误恢复、OpenAI Responses compact 阈值处理、stale 通知的版本守卫、从 stale 进程恢复 refresh、MCP stale stdio 重启、daemon 上限 / dead-parent 清理）。知识与技能表面更易教学——molt history 知识条目、强化的 molt 前检查清单、textbook distillation、只读 preset-health 子技能、可选技能仓库 remote、LICC chat 教程、Graphify / cyclic manifold 文档；研究与 setup 路径更实用——授权发布商 PDF 层、in-house publisher 抽取、Zotero 机构全文交接、学术证据 gate、install.sh 可写 bin 回退、AED 最大尝试设置、Codex service tier 预设。候选窗口：180 个文件、+14,438 / -3,363 行，跨 39 个 first-parent merged PR（23 个 TUI/Portal + 16 个内核），外加少量直接 / 文档提交与 star-count 杂务。最终发布验证仍待在打 tag、PyPI 与 Homebrew 发布前完成。',
   features: [
     {
       titleEn: 'Operators can see and control the runtime better',
@@ -86,13 +86,13 @@ const v0_8_15_v0_11_3: Release = {
       leadZh:
         '这一候选里最贴近用户的改动在 TUI 本身：让操作者无需离开终端，就能看清 agent 网络在做什么并加以引导的命令和界面。',
       bulletsEn: [
-        'A `/help` command renders markdown slash-command docs in the TUI; `tui/internal/tui/help/*.md` becomes the canonical command reference, and recipe prompts now point at `/help` instead of duplicating command lists (#277).',
+        'A `/help` command renders markdown slash-command docs in the TUI; the skill-backed multilingual help assets become the canonical command reference, recipe prompts point at `/help` instead of duplicating command lists, and the viewer now routes key/mouse input correctly so `q`/Esc and scrolling work (#277, #279, #281).',
         'A TUI daemon browser page lets operators see and navigate running daemons (#275), and the kanban view now shows daemon counts (#207).',
         'Tool-call display controls add truncation (off by default) and timestamp settings so noisy tool output can be tamed (#276).',
         'Mail input height adapts to content (#161), and `/clear` is routed through the kernel context clear so the TUI and kernel stay in sync (#222).'
       ],
       bulletsZh: [
-        '`/help` 命令在 TUI 内渲染 markdown 形式的斜杠命令文档；`tui/internal/tui/help/*.md` 成为命令的权威参考，recipe 提示改为指向 `/help`，不再各自重复命令列表（#277）。',
+        '`/help` 命令在 TUI 内渲染 markdown 形式的斜杠命令文档；skill-backed 多语言 help assets 成为命令权威参考，recipe 提示改为指向 `/help`，不再各自重复命令列表，并且 viewer 现在正确接收键盘 / 鼠标输入，`q`/Esc 与滚动都能正常工作（#277、#279、#281）。',
         '新的 TUI daemon 浏览器页面让操作者查看并浏览运行中的 daemon（#275），kanban 视图现在显示 daemon 计数（#207）。',
         'tool-call 显示控制新增截断（默认关闭）与时间戳设置，让吵闹的工具输出可被收拢（#276）。',
         '邮件输入框高度随内容自适应（#161），`/clear` 改走内核 context clear，让 TUI 与内核状态保持一致（#222）。'
@@ -177,21 +177,22 @@ const v0_8_15_v0_11_3: Release = {
   ],
   contributors: ['huangzesen', 'TZZheng', 'ktwu01', 'hao', 'ZacharyHu0', '9s5bz2jvd2-lang', 'antimonyz'],
   validation: {
-    commit: 'lingtai@faa5105 + lingtai-kernel@0f7e59e (candidate main)',
+    commit: 'lingtai@862e053 + lingtai-kernel@0f7e59e (candidate main)',
     items: [
-      { label: 'lingtai v0.8.14..main diff', result: '107 files, +9,596 / -1,660' },
+      { label: 'lingtai v0.8.14..main diff', result: '108 files, +9,686 / -1,660' },
       { label: 'lingtai-kernel v0.11.2..main diff', result: '72 files, +4,752 / -1,703' },
-      { label: 'Combined candidate window', result: '179 files, +14,348 / -3,363 across 38 merged PRs' },
+      { label: 'Combined candidate window', result: '180 files, +14,438 / -3,363 across 39 merged PRs' },
       { label: 'Release status', result: 'candidate log prepared; final tag/PyPI/Homebrew validation pending' }
     ]
   },
   links: [
     { label: 'TUI/Portal v0.8.14...main compare', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.8.14...main' },
-    { label: 'TUI/Portal candidate commit faa5105', href: 'https://github.com/Lingtai-AI/lingtai/commit/faa510585bfb96dc56966f5c511d9d72f7fe5291' },
+    { label: 'TUI/Portal candidate commit 862e053', href: 'https://github.com/Lingtai-AI/lingtai/commit/862e05358dd6e989dfc414b34db351ec0811b097' },
     { label: 'Kernel v0.11.2...main compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.11.2...main' },
     { label: 'Kernel candidate commit 0f7e59e', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/0f7e59e3460ceceabf60fb3829b5c0617c261eec' },
     { label: 'PR #277 — TUI /help command', href: 'https://github.com/Lingtai-AI/lingtai/pull/277' },
     { label: 'PR #279 — Skill-backed multilingual TUI help', href: 'https://github.com/Lingtai-AI/lingtai/pull/279' },
+    { label: 'PR #281 — /help markdown viewer input routing', href: 'https://github.com/Lingtai-AI/lingtai/pull/281' },
     { label: 'PR #276 — Tool call display controls', href: 'https://github.com/Lingtai-AI/lingtai/pull/276' },
     { label: 'PR #275 — TUI daemon browser', href: 'https://github.com/Lingtai-AI/lingtai/pull/275' },
     { label: 'PR #236 — Restrict secondary calls to read-only', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/236' },
