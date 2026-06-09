@@ -82,6 +82,39 @@ const { title, date, lang, tags } = Astro.props;
     font-size: inherit;
     color: inherit;
   }
+
+  .prose :global(table) {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .prose :global(th),
+  .prose :global(td) {
+    border: 1px solid rgba(138, 134, 128, 0.28);
+    padding: 8px 10px;
+    vertical-align: top;
+  }
+  .prose :global(th) {
+    background: var(--bg-alt);
+    font-weight: 600;
+  }
+  .prose :global(details) {
+    border: 1px solid rgba(138, 134, 128, 0.28);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 16px 0;
+    background: var(--bg-alt);
+  }
+  .prose :global(summary) {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
   .prose :global(img) {
     max-width: 100%;
     height: auto;
