@@ -61,6 +61,146 @@ export interface Release {
 }
 
 
+const v0_8_15_v0_11_3: Release = {
+  id: '20260609-1',
+  version: 'v0.8.15 / v0.11.3',
+  titleEn: 'LingTai TUI/Portal v0.8.15 + Kernel v0.11.3 (release candidate)',
+  titleZh: '灵台 TUI/Portal v0.8.15 与内核 v0.11.3（发布候选）',
+  date: '2026-06-09',
+  pkg: 'lingtai-tui + lingtai',
+  tag: 'v0.8.15 / v0.11.3 (candidate — not yet tagged)',
+  runtimeNoteEn:
+    'This is a release-candidate log prepared from the candidate `main` of both repositories; the final tag, PyPI publication, and Homebrew tap update are still pending. The kernel/runtime package `lingtai==0.11.3` belongs to the TUI-managed project virtualenv path: ordinary LingTai projects upgrade through the TUI/Homebrew flow, and bare `pip install lingtai` is a release, diagnostic, or clean-venv validation path rather than the normal user upgrade route. (The kernel `pyproject` version still reads `0.11.2` on the candidate commit and will be bumped to `0.11.3` before PyPI publication.)',
+  runtimeNoteZh:
+    '这是基于两个仓库候选 `main` 整理的发布候选日志：最终 tag、PyPI 发布与 Homebrew tap 更新尚未完成。内核/runtime 包 `lingtai==0.11.3` 属于 TUI 管理的项目 virtualenv 路径——普通 LingTai 项目通过 TUI/Homebrew 路径升级，裸 `pip install lingtai` 只适合发布、诊断或 clean-venv 验证，不是正常用户升级路径。（候选 commit 上内核 `pyproject` 版本仍为 `0.11.2`，将在 PyPI 发布前升到 `0.11.3`。）',
+  summaryEn:
+    'This candidate pairs TUI/Portal v0.8.15 with Kernel v0.11.3 and centers on operating the runtime: more visibility and control from the TUI (a skill-backed, multilingual `/help` command, a daemon browser, daemon counts in kanban, tool-call display controls, adaptive mail input, and `/clear` routed through kernel context clear), and a safer agent runtime under real workloads (read-only nested secondary calls, a strict relay-compatible avatar schema, repeated-tool-error recovery, OpenAI Responses compact-threshold handling, a stale-notification version guard, refresh recovery from stale processes, MCP stale-stdio restart, and daemon limit / dead-parent cleanup). Knowledge and skill surfaces become more teachable — molt history knowledge entries, a strengthened pre-molt checklist, textbook distillation, a read-only preset-health subskill, optional skill repository remotes, a LICC chat tutorial, and Graphify / cyclic-manifold docs — and research and setup paths get more practical with an authorized-publisher PDF tier, in-house publisher extraction, a Zotero institutional handoff, an academic evidence gate, an install.sh writable-bin fallback, an AED max-attempts setting, and a Codex service-tier preset. Candidate window: 173 files changed, +13,489 / -2,110 lines across 33 first-parent merged PRs (22 TUI/Portal + 11 kernel), plus small direct/doc commits and star-count chores. Final release validation is still to be completed before tag, PyPI, and Homebrew publication.',
+  summaryZh:
+    '这一候选把 TUI/Portal v0.8.15 与内核 v0.11.3 配对，主题是“把 runtime 真正运行起来”：TUI 侧给出更多可见性与控制（skill-backed 多语言 `/help` 命令、daemon 浏览器、kanban 里的 daemon 计数、tool-call 显示控制、自适应邮件输入、`/clear` 走内核 context clear），内核侧让 agent runtime 在真实负载下更稳（嵌套 secondary 仅只读、严格 relay 兼容的 avatar schema、重复工具错误恢复、OpenAI Responses compact 阈值处理、stale 通知的版本守卫、从 stale 进程恢复 refresh、MCP stale stdio 重启、daemon 上限 / dead-parent 清理）。知识与技能表面更易教学——molt history 知识条目、强化的 molt 前检查清单、textbook distillation、只读 preset-health 子技能、可选技能仓库 remote、LICC chat 教程、Graphify / cyclic manifold 文档；研究与 setup 路径更实用——授权发布商 PDF 层、in-house publisher 抽取、Zotero 机构全文交接、学术证据 gate、install.sh 可写 bin 回退、AED 最大尝试设置、Codex service tier 预设。候选窗口：173 个文件、+13,489 / -2,110 行，跨 33 个 first-parent merged PR（22 个 TUI/Portal + 11 个内核），外加少量直接 / 文档提交与 star-count 杂务。最终发布验证仍待在打 tag、PyPI 与 Homebrew 发布前完成。',
+  features: [
+    {
+      titleEn: 'Operators can see and control the runtime better',
+      titleZh: '操作者能更好地看见和控制 runtime',
+      leadEn:
+        'The most user-visible work in this candidate is on the TUI itself: commands and surfaces that let an operator inspect what the agent network is doing and steer it without leaving the terminal.',
+      leadZh:
+        '这一候选里最贴近用户的改动在 TUI 本身：让操作者无需离开终端，就能看清 agent 网络在做什么并加以引导的命令和界面。',
+      bulletsEn: [
+        'A `/help` command renders markdown slash-command docs in the TUI; `tui/internal/tui/help/*.md` becomes the canonical command reference, and recipe prompts now point at `/help` instead of duplicating command lists (#277).',
+        'A TUI daemon browser page lets operators see and navigate running daemons (#275), and the kanban view now shows daemon counts (#207).',
+        'Tool-call display controls add truncation (off by default) and timestamp settings so noisy tool output can be tamed (#276).',
+        'Mail input height adapts to content (#161), and `/clear` is routed through the kernel context clear so the TUI and kernel stay in sync (#222).'
+      ],
+      bulletsZh: [
+        '`/help` 命令在 TUI 内渲染 markdown 形式的斜杠命令文档；`tui/internal/tui/help/*.md` 成为命令的权威参考，recipe 提示改为指向 `/help`，不再各自重复命令列表（#277）。',
+        '新的 TUI daemon 浏览器页面让操作者查看并浏览运行中的 daemon（#275），kanban 视图现在显示 daemon 计数（#207）。',
+        'tool-call 显示控制新增截断（默认关闭）与时间戳设置，让吵闹的工具输出可被收拢（#276）。',
+        '邮件输入框高度随内容自适应（#161），`/clear` 改走内核 context clear，让 TUI 与内核状态保持一致（#222）。'
+      ],
+      whyEn:
+        'A multi-agent runtime is only operable if a human can quickly see what is running and reduce noise on demand. These changes make the TUI the single place to inspect and steer daemons, mail, and command help.',
+      whyZh:
+        '多 agent runtime 只有在人能快速看清“在跑什么”、并按需降噪时才真正可操作。这些改动让 TUI 成为查看与引导 daemon、邮件与命令帮助的统一入口。'
+    },
+    {
+      titleEn: 'The agent runtime becomes safer under real workloads',
+      titleZh: 'Agent runtime 在真实负载下更安全',
+      leadEn:
+        'Kernel v0.11.3 concentrates on failure modes that only show up once agents run continuously: stale resources, backend-incompatible payloads, and recursive calls that should never escalate privileges.',
+      leadZh:
+        '内核 v0.11.3 集中处理只有在 agent 持续运行后才会暴露的故障：stale 资源、后端不兼容的载荷，以及不该提权的递归调用。',
+      bulletsEn: [
+        'Nested secondary calls are restricted to read-only: the secondary architecture is kept, but a nested secondary can only read — send/reply from a nested secondary is disabled (#236), with strengthened trigger guidance documented alongside (#234).',
+        'The avatar schema is reshaped for strict API relay compatibility (#226), and repeated tool errors now pair into a hard stop instead of looping (#202).',
+        'OpenAI Responses honors the configured compact threshold (#227); stale notification-channel dismiss is guarded by a version check (#231); refresh recovers from a stale agent process (#224); and stale MCP stdio sessions are restarted instead of left dead (#222, kernel).',
+        'Daemon limits are honored (configured max emanations, #225) and dead-parent daemon records are reaped on startup (#233).'
+      ],
+      bulletsZh: [
+        '嵌套 secondary 调用被限制为只读：保留 secondary 架构，但嵌套 secondary 只能读取——从嵌套 secondary 发送/回复被禁用（#236），并同步强化了触发指引文档（#234）。',
+        'avatar schema 为严格 API relay 兼容做了重塑（#226），重复工具错误现在配对为硬停止，而不是继续循环（#202）。',
+        'OpenAI Responses 遵循配置的 compact 阈值（#227）；stale 通知通道的 dismiss 由版本检查守卫（#231）；refresh 能从 stale agent 进程恢复（#224）；stale MCP stdio 会话被重启而不是留作死链（#222，内核）。',
+        'daemon 上限被遵守（配置的 max emanations，#225），dead-parent 的 daemon 记录在启动时被回收（#233）。'
+      ],
+      whyEn:
+        'Long-running agents accumulate exactly these conditions — dropped sessions, rejected schemas, recursive sends. Closing them reduces silent hangs and privilege surprises, which matters more than any single new feature for an always-on network.',
+      whyZh:
+        '长期运行的 agent 恰恰会累积这些情况——掉线的会话、被拒的 schema、递归发送。把它们堵上能减少静默卡死与权限意外，对一个常驻网络而言，这比任何单一新功能都重要。'
+    },
+    {
+      titleEn: 'Knowledge and skill surfaces become more teachable',
+      titleZh: '知识与技能表面更易教学',
+      leadEn:
+        'Several changes make the manuals and skills agents read either more durable across molts or more directly useful for a specific task.',
+      leadZh:
+        '一批改动让 agent 读取的手册与技能要么在 molt 之间更耐久，要么对特定任务更直接有用。',
+      bulletsEn: [
+        'Molt / session-journal history is documented as knowledge entries under the psyche-manual, with a template asset and a `molt_count` field in entries (#237), and the pre-molt LingTai update checklist plus memory guidance is strengthened (#272).',
+        'A new textbook-distillation guide (#273) and a read-only preset-health diagnostic subskill (#265) are added; skill / library pages can expose an optional repository remote (#271).',
+        'A tutorial explains the LICC chat command flow (#274), and docs cover the Graphify repo-map (#264) and the cyclic-manifold architecture (#267).'
+      ],
+      bulletsZh: [
+        'molt / session-journal 历史以知识条目形式记录在 psyche-manual 下，配套模板 asset 与条目中的 `molt_count` 字段（#237），molt 前的 LingTai 更新检查清单与记忆指引也被强化（#272）。',
+        '新增 textbook-distillation 指南（#273）与只读的 preset-health 诊断子技能（#265）；技能 / library 页面可暴露可选的仓库 remote（#271）。',
+        '新增解释 LICC chat 命令流程的教程（#274），文档覆盖 Graphify repo-map（#264）与 cyclic manifold 架构（#267）。'
+      ],
+      whyEn:
+        'Skills are how a fresh agent learns the system. Recording molt history as structured knowledge and adding focused guides keeps that learning consistent across successors instead of relying on whoever happens to be resident.',
+      whyZh:
+        '技能是新 agent 学习系统的方式。把 molt 历史记录为结构化知识、并补上聚焦的指南，能让这种学习在继任者之间保持一致，而不是依赖当时恰好在场的那一任。'
+    },
+    {
+      titleEn: 'Research and setup paths become more practical',
+      titleZh: '研究与 setup 路径更实用',
+      leadEn:
+        'The academic-research and first-run paths pick up fixes that matter on real machines and against real publishers.',
+      leadZh:
+        '学术研究与首次运行路径补上了在真实机器、面对真实发布商时才会用到的修复。',
+      bulletsEn: [
+        'Academic research gains an authorized publisher PDF tier (#257) and an in-house publisher extractor for publisher metadata (#258), plus a documented Zotero institutional full-text handoff workflow (#266) and an academic evidence verification gate (#269).',
+        '`install.sh` falls back to a writable bin directory instead of aborting on non-Homebrew systems (#240), improving community install reliability, and development prerequisites are documented (#260).',
+        'Setup / first-run exposes an AED max-attempts setting (#253), and a Codex preset service-tier option is added (#256).'
+      ],
+      bulletsZh: [
+        '学术研究新增授权发布商 PDF 层（#257）与抽取发布商元数据的 in-house publisher extractor（#258），并补上记录在案的 Zotero 机构全文交接流程（#266）与学术证据验证 gate（#269）。',
+        '`install.sh` 在非 Homebrew 系统上回退到可写的 bin 目录，而不是直接中止（#240），提升社区安装可靠性；开发前置条件也被写入文档（#260）。',
+        'setup / 首次运行暴露 AED 最大尝试设置（#253），并新增 Codex 预设的 service tier 选项（#256）。'
+      ],
+      whyEn:
+        'These are the paths a new user and a research agent hit first. Making installs survive non-standard machines and letting research reach authorized full text removes early friction that otherwise blocks real use.',
+      whyZh:
+        '这些是新用户和研究 agent 最先碰到的路径。让安装在非标准机器上也能跑通、让研究能取到授权全文，能消除原本会卡住真实使用的早期摩擦。'
+    }
+  ],
+  contributors: ['huangzesen', 'TZZheng', 'ktwu01', 'hao', 'ZacharyHu0', '9s5bz2jvd2-lang', 'antimonyz'],
+  validation: {
+    commit: 'lingtai@faa5105 + lingtai-kernel@da1ccac (candidate main)',
+    items: [
+      { label: 'lingtai v0.8.14..main diff', result: '107 files, +9,596 / -1,660' },
+      { label: 'lingtai-kernel v0.11.2..main diff', result: '66 files, +3,893 / -450' },
+      { label: 'Combined candidate window', result: '173 files, +13,489 / -2,110 across 33 merged PRs' },
+      { label: 'Release status', result: 'candidate log prepared; final tag/PyPI/Homebrew validation pending' }
+    ]
+  },
+  links: [
+    { label: 'TUI/Portal v0.8.14...main compare', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.8.14...main' },
+    { label: 'TUI/Portal candidate commit faa5105', href: 'https://github.com/Lingtai-AI/lingtai/commit/faa510585bfb96dc56966f5c511d9d72f7fe5291' },
+    { label: 'Kernel v0.11.2...main compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.11.2...main' },
+    { label: 'Kernel candidate commit da1ccac', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/da1ccacce15bf215a92b8c595b8a7969946cdd42' },
+    { label: 'PR #277 — TUI /help command', href: 'https://github.com/Lingtai-AI/lingtai/pull/277' },
+    { label: 'PR #279 — Skill-backed multilingual TUI help', href: 'https://github.com/Lingtai-AI/lingtai/pull/279' },
+    { label: 'PR #276 — Tool call display controls', href: 'https://github.com/Lingtai-AI/lingtai/pull/276' },
+    { label: 'PR #275 — TUI daemon browser', href: 'https://github.com/Lingtai-AI/lingtai/pull/275' },
+    { label: 'PR #236 — Restrict secondary calls to read-only', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/236' },
+    { label: 'PR #237 — Document molt history knowledge entries', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/237' },
+    { label: 'Declined PR #228 — filesystem Time Machine proposal', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/228' },
+    { label: 'Declined PR #235 — soul flow past-self routing proposal', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/235' },
+    { label: 'Issue #174 — textbook distillation request', href: 'https://github.com/Lingtai-AI/lingtai/issues/174' },
+    { label: 'Issue #177 — cyclic manifold architecture request', href: 'https://github.com/Lingtai-AI/lingtai/issues/177' },
+    { label: 'Issue #179 — academic evidence gate request', href: 'https://github.com/Lingtai-AI/lingtai/issues/179' },
+    { label: 'Issue #239 — install.sh writable-bin fallback report', href: 'https://github.com/Lingtai-AI/lingtai/issues/239' }
+  ]
+};
+
 const v0_8_14_v0_11_2: Release = {
   id: '20260602-1',
   version: 'v0.8.14 / v0.11.2',
@@ -748,7 +888,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
