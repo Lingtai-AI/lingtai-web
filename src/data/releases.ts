@@ -61,6 +61,184 @@ export interface Release {
 }
 
 
+const v0_8_15_v0_11_3: Release = {
+  id: '20260609-1',
+  version: 'v0.8.15 / v0.11.3',
+  titleEn: 'LingTai TUI/Portal v0.8.15 + Kernel v0.11.3',
+  titleZh: '灵台 TUI/Portal v0.8.15 与内核 v0.11.3',
+  date: '2026-06-09',
+  pkg: 'lingtai-tui + lingtai',
+  tag: 'v0.8.15 / v0.11.3',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'This is the published release log for TUI/Portal `v0.8.15` and Kernel/runtime package `lingtai==0.11.3`. Ordinary LingTai projects upgrade through the TUI/Homebrew flow; bare `pip install lingtai` remains a release, diagnostic, or clean-venv validation path rather than the normal user upgrade route.',
+  runtimeNoteZh:
+    '这是 TUI/Portal `v0.8.15` 与内核/runtime 包 `lingtai==0.11.3` 的正式发布日志。普通 LingTai 项目通过 TUI/Homebrew 路径升级；裸 `pip install lingtai` 仍只适合发布、诊断或 clean-venv 验证，不是正常用户升级路径。',
+  summaryEn:
+    'This release pairs TUI/Portal v0.8.15 with Kernel v0.11.3 and centers on operating the runtime: more visibility and control from the TUI (a skill-backed, multilingual `/help` command, `/notification` for read-only notification inspection, a daemon browser, daemon counts in kanban, tool-call display controls, adaptive mail input, and `/clear` routed through kernel context clear), and a safer agent runtime under real workloads (the nested secondary tool-call channel is removed and residual stale `secondary` args are ignored/logged, notification sync stops leaking diary-looking synthesized text into visible conversation history, top-level tool calls gain lifecycle tracing plus API-call IDs that group tool batches, with enriched error results, plus a strict relay-compatible avatar schema, repeated-tool-error recovery, OpenAI Responses compact-threshold handling, a stale-notification version guard, refresh recovery from stale processes, MCP stale-stdio restart, and daemon limit / dead-parent cleanup). Knowledge and skill surfaces become more teachable — molt history knowledge entries, a strengthened pre-molt checklist, textbook distillation, a read-only preset-health subskill, optional skill repository remotes, a LICC chat tutorial, and Graphify / cyclic-manifold docs — and research and setup paths get more practical with an authorized-publisher PDF tier, in-house publisher extraction, a Zotero institutional handoff, an academic evidence gate, an install.sh writable-bin fallback, an AED max-attempts setting, and a Codex service-tier preset. Candidate window: 189 files changed, +15,541 / -3,428 lines across 44 first-parent merged PRs (25 TUI/Portal + 19 kernel), plus small direct/doc commits and star-count chores. Final release validation is still to be completed before tag, PyPI, and Homebrew publication.',
+  summaryZh:
+    '这轮正式发布把 TUI/Portal v0.8.15 与内核 v0.11.3 配对，主题是“把 runtime 真正运行起来”：TUI 侧给出更多可见性与控制（skill-backed 多语言 `/help` 命令、用于只读检查 notification 的 `/notification`、daemon 浏览器、kanban 里的 daemon 计数、tool-call 显示控制、自适应邮件输入、`/clear` 走内核 context clear），内核侧让 agent runtime 在真实负载下更稳（notification sync 不再把像 diary 的 synthesized 文本漏进可见对话历史，移除嵌套 secondary 工具调用通道、残留的 stale `secondary` 参数被忽略并记录，顶层工具调用新增生命周期 tracing 与用于分组工具批次的 API-call ID，并补强错误结果事件，外加严格 relay 兼容的 avatar schema、重复工具错误恢复、OpenAI Responses compact 阈值处理、stale 通知的版本守卫、从 stale 进程恢复 refresh、MCP stale stdio 重启、daemon 上限 / dead-parent 清理）。知识与技能表面更易教学——molt history 知识条目、强化的 molt 前检查清单、textbook distillation、只读 preset-health 子技能、可选技能仓库 remote、LICC chat 教程、Graphify / cyclic manifold 文档；研究与 setup 路径更实用——授权发布商 PDF 层、in-house publisher 抽取、Zotero 机构全文交接、学术证据 gate、install.sh 可写 bin 回退、AED 最大尝试设置、Codex service tier 预设。候选窗口：189 个文件、+15,541 / -3,428 行，跨 44 个 first-parent merged PR（25 个 TUI/Portal + 19 个内核），外加少量直接 / 文档提交与 star-count 杂务。最终发布验证仍待在打 tag、PyPI 与 Homebrew 发布前完成。',
+  features: [
+    {
+      titleEn: 'Operators can see and control the runtime better',
+      titleZh: '操作者能更好地看见和控制 runtime',
+      leadEn:
+        'The most user-visible work in this release is on the TUI itself: commands and surfaces that let an operator inspect what the agent network is doing and steer it without leaving the terminal.',
+      leadZh:
+        '这轮发布里最贴近用户的改动在 TUI 本身：让操作者无需离开终端，就能看清 agent 网络在做什么并加以引导的命令和界面。',
+      bulletsEn: [
+        'A `/help` command renders markdown slash-command docs in the TUI; the skill-backed multilingual help assets become the canonical command reference, recipe prompts point at `/help` instead of duplicating command lists, and the viewer now routes key/mouse input correctly so `q`/Esc and scrolling work (#277, #279, #281).',
+        'A `/notification` command opens a read-only Markdown viewer over the active agent’s `.notification/*.json`, including an aggregate block plus per-channel entries and `r` reload support (#283).',
+        'A TUI daemon browser page lets operators see and navigate running daemons (#275), and the kanban view now shows daemon counts (#207).',
+        'Tool-call display controls add truncation (off by default), timestamp settings, and API-call batch grouping so noisy tool output can be tamed and separated by LLM round-trip (#276, #282).',
+        'Mail input height adapts to content (#161), and `/clear` is routed through the kernel context clear so the TUI and kernel stay in sync (#222).'
+      ],
+      bulletsZh: [
+        '`/help` 命令在 TUI 内渲染 markdown 形式的斜杠命令文档；skill-backed 多语言 help assets 成为命令权威参考，recipe 提示改为指向 `/help`，不再各自重复命令列表，并且 viewer 现在正确接收键盘 / 鼠标输入，`q`/Esc 与滚动都能正常工作（#277、#279、#281）。',
+        '`/notification` 命令用只读 Markdown viewer 展示当前 agent 的 `.notification/*.json`，包括聚合 block 与逐 channel entry，并支持 `r` reload（#283）。',
+        '新的 TUI daemon 浏览器页面让操作者查看并浏览运行中的 daemon（#275），kanban 视图现在显示 daemon 计数（#207）。',
+        'tool-call 显示控制新增截断（默认关闭）、时间戳设置与按 API call 分组的批次间隔，让吵闹的工具输出可被收拢，并按 LLM 往返分开（#276、#282）。',
+        '邮件输入框高度随内容自适应（#161），`/clear` 改走内核 context clear，让 TUI 与内核状态保持一致（#222）。'
+      ],
+      whyEn:
+        'A multi-agent runtime is only operable if a human can quickly see what is running and reduce noise on demand. These changes make the TUI the single place to inspect and steer daemons, mail, and command help.',
+      whyZh:
+        '多 agent runtime 只有在人能快速看清“在跑什么”、并按需降噪时才真正可操作。这些改动让 TUI 成为查看与引导 daemon、邮件与命令帮助的统一入口。'
+    },
+    {
+      titleEn: 'The agent runtime becomes safer under real workloads',
+      titleZh: 'Agent runtime 在真实负载下更安全',
+      leadEn:
+        'Kernel v0.11.3 concentrates on failure modes that only show up once agents run continuously: stale resources, backend-incompatible payloads, and recursive calls that should never escalate privileges. The nested secondary tool-call channel — first restricted to read-only, then removed outright in this window — is the clearest example; notification sync now uses tool-only synthesized pairs instead of visible diary-looking text; and top-level tool calls now carry lifecycle tracing.',
+      leadZh:
+        '内核 v0.11.3 集中处理只有在 agent 持续运行后才会暴露的故障：stale 资源、后端不兼容的载荷，以及不该提权的递归调用。嵌套 secondary 工具调用通道——先在本窗口被限制为只读、随后被彻底移除——就是最清楚的例子；notification sync 现在改用 tool-only synthesized pair，不再注入像 diary 的可见文本；顶层工具调用现在也带上了生命周期 tracing。',
+      bulletsEn: [
+        'The nested secondary tool-call channel was first narrowed to read-only (#236, with strengthened trigger guidance in #234), then removed entirely: the reserved nested `secondary` schema, module, and execution path are gone, residual stale `secondary` args are ignored and logged rather than dispatched, notification/email guidance moves to top-level reads plus direct acknowledgements, and provider-visible `_secondary` metadata is dropped from spill manifests (#241; focused tests 181 passed, full suite 2072 passed / 2 skipped). Notification sync then changed the normal success path to inject only a synthesized `system(action="notification")` tool-call/result pair, keeping summary text log-only so notification summaries no longer look like diary/user text in visible history (#249).',
+        'Top-level provider tool calls gain Phase 1 lifecycle tracing in the ToolExecutor: a stable `tool_trace_id` threads events across received / normalized / validation / approval / dispatch / durable-log / model-visible stages and into existing tool logs, enriched tool-error results retain model-visible output, and each LLM round-trip now carries an `api_call_id` through LLM and tool events so the TUI can group tool batches from source-of-truth event data (#242, #246, #247).',
+        'The avatar schema is reshaped for strict API relay compatibility (#226), repeated tool errors now pair into a hard stop instead of looping (#202), and tool-loop guard non-dispatch recovery now closes blocked calls explicitly instead of leaving pending tool-call wire state (#217).',
+        'OpenAI Responses honors the configured compact threshold (#227); stale notification-channel dismiss is guarded by a version check (#231); refresh recovers from a stale agent process (#224); and stale MCP stdio sessions are restarted instead of left dead (#222, kernel).',
+        'Daemon limits are honored (configured max emanations, #225) and dead-parent daemon records are reaped on startup (#233).'
+      ],
+      bulletsZh: [
+        '嵌套 secondary 工具调用通道先被收窄为只读（#236，并在 #234 强化触发指引），随后被彻底移除：保留的嵌套 `secondary` schema、模块与执行路径都被删除，残留的 stale `secondary` 参数被忽略并记录、而不再派发，通知/邮件指引改为顶层读取加直接确认，provider 可见的 `_secondary` 元数据从 spill manifest 中移除（#241；focused 测试 181 通过，完整套件 2072 通过 / 2 跳过）。随后 notification sync 把正常成功路径改为只注入 synthesized `system(action="notification")` tool-call/result pair，summary 文本仅保留在 log 中，避免 notification summary 在可见历史里像 diary/user text（#249）。',
+        '顶层 provider 工具调用在 ToolExecutor 中获得 Phase 1 生命周期 tracing：稳定的 `tool_trace_id` 把 received / normalized / validation / approval / dispatch / durable-log / model-visible 各阶段的事件串起来，并写入既有工具日志；工具错误结果保留 model-visible 输出；每次 LLM 往返也会把 `api_call_id` 写入 LLM 与工具事件，让 TUI 可以从源事件数据分组工具批次（#242、#246、#247）。',
+        'avatar schema 为严格 API relay 兼容做了重塑（#226），重复工具错误现在配对为硬停止而不是继续循环（#202），tool-loop guard 未派发恢复也会明确关闭被阻止的调用，避免留下 pending tool-call wire state（#217）。',
+        'OpenAI Responses 遵循配置的 compact 阈值（#227）；stale 通知通道的 dismiss 由版本检查守卫（#231）；refresh 能从 stale agent 进程恢复（#224）；stale MCP stdio 会话被重启而不是留作死链（#222，内核）。',
+        'daemon 上限被遵守（配置的 max emanations，#225），dead-parent 的 daemon 记录在启动时被回收（#233）。'
+      ],
+      whyEn:
+        'Long-running agents accumulate exactly these conditions — dropped sessions, rejected schemas, recursive sends. Closing them reduces silent hangs and privilege surprises, which matters more than any single new feature for an always-on network.',
+      whyZh:
+        '长期运行的 agent 恰恰会累积这些情况——掉线的会话、被拒的 schema、递归发送。把它们堵上能减少静默卡死与权限意外，对一个常驻网络而言，这比任何单一新功能都重要。'
+    },
+    {
+      titleEn: 'Knowledge and skill surfaces become more teachable',
+      titleZh: '知识与技能表面更易教学',
+      leadEn:
+        'Several changes make the manuals and skills agents read either more durable across molts or more directly useful for a specific task.',
+      leadZh:
+        '一批改动让 agent 读取的手册与技能要么在 molt 之间更耐久，要么对特定任务更直接有用。',
+      bulletsEn: [
+        'Molt / session-journal history is documented as knowledge entries under the psyche-manual, with a template asset and a `molt_count` field in entries (#237); session journals themselves are documented as sub-knowledge (kernel #240), and the pre-molt LingTai update checklist plus memory guidance is strengthened (#272).',
+        'A new textbook-distillation guide (#273) and a read-only preset-health diagnostic subskill (#265) are added; skill / library pages can expose an optional repository remote (#271).',
+        'A tutorial explains the LICC chat command flow (#274), and docs cover the Graphify repo-map (#264) and the cyclic-manifold architecture (#267).',
+        'The bash-manual adds a hard rule that long-running agent/coding CLIs (`claude -p`, `codex exec`, `opencode run`, the Cursor agent CLI) must run via bash async + poll rather than synchronous bash, so the agent stays responsive and avoids ACTIVE blockage (kernel #243).'
+      ],
+      bulletsZh: [
+        'molt / session-journal 历史以知识条目形式记录在 psyche-manual 下，配套模板 asset 与条目中的 `molt_count` 字段（#237）；session journal 本身也被记录为 sub-knowledge（内核 #240），molt 前的 LingTai 更新检查清单与记忆指引也被强化（#272）。',
+        '新增 textbook-distillation 指南（#273）与只读的 preset-health 诊断子技能（#265）；技能 / library 页面可暴露可选的仓库 remote（#271）。',
+        '新增解释 LICC chat 命令流程的教程（#274），文档覆盖 Graphify repo-map（#264）与 cyclic manifold 架构（#267）。',
+        'bash-manual 新增硬性规则：长时运行的 agent / coding CLI（`claude -p`、`codex exec`、`opencode run`、Cursor agent CLI）必须走 bash async + 轮询，而不是同步 bash，以保持 agent 响应、避免 ACTIVE 阻塞（内核 #243）。'
+      ],
+      whyEn:
+        'Skills are how a fresh agent learns the system. Recording molt history as structured knowledge and adding focused guides keeps that learning consistent across successors instead of relying on whoever happens to be resident.',
+      whyZh:
+        '技能是新 agent 学习系统的方式。把 molt 历史记录为结构化知识、并补上聚焦的指南，能让这种学习在继任者之间保持一致，而不是依赖当时恰好在场的那一任。'
+    },
+    {
+      titleEn: 'Research and setup paths become more practical',
+      titleZh: '研究与 setup 路径更实用',
+      leadEn:
+        'The academic-research and first-run paths pick up fixes that matter on real machines and against real publishers.',
+      leadZh:
+        '学术研究与首次运行路径补上了在真实机器、面对真实发布商时才会用到的修复。',
+      bulletsEn: [
+        'Academic research gains an authorized publisher PDF tier (#257) and an in-house publisher extractor for publisher metadata (#258), plus a documented Zotero institutional full-text handoff workflow (#266) and an academic evidence verification gate (#269).',
+        '`install.sh` falls back to a writable bin directory instead of aborting on non-Homebrew systems (#240), improving community install reliability, and development prerequisites are documented (#260).',
+        'Setup / first-run exposes an AED max-attempts setting (#253), and a Codex preset service-tier option is added (#256).'
+      ],
+      bulletsZh: [
+        '学术研究新增授权发布商 PDF 层（#257）与抽取发布商元数据的 in-house publisher extractor（#258），并补上记录在案的 Zotero 机构全文交接流程（#266）与学术证据验证 gate（#269）。',
+        '`install.sh` 在非 Homebrew 系统上回退到可写的 bin 目录，而不是直接中止（#240），提升社区安装可靠性；开发前置条件也被写入文档（#260）。',
+        'setup / 首次运行暴露 AED 最大尝试设置（#253），并新增 Codex 预设的 service tier 选项（#256）。'
+      ],
+      whyEn:
+        'These are the paths a new user and a research agent hit first. Making installs survive non-standard machines and letting research reach authorized full text removes early friction that otherwise blocks real use.',
+      whyZh:
+        '这些是新用户和研究 agent 最先碰到的路径。让安装在非标准机器上也能跑通、让研究能取到授权全文，能消除原本会卡住真实使用的早期摩擦。'
+    }
+  ],
+  contributors: ['huangzesen', 'TZZheng', 'ktwu01', 'hao', 'ZacharyHu0', '9s5bz2jvd2-lang', 'antimonyz', 'xczics'],
+  validation: {
+    commit: 'lingtai@d9a96fb + lingtai-kernel@6ff15dd (published tags)',
+    items: [
+      { label: 'lingtai v0.8.14..v0.8.15 diff', result: '111 files, +10,190 / -1,662' },
+      { label: 'lingtai-kernel v0.11.2..v0.11.3 diff', result: '79 files, +5,352 / -1,767' },
+      { label: 'Combined release window', result: '190 files, +15,542 / -3,429 across 44 merged PRs plus the kernel version bump' },
+      { label: 'Release status', result: 'published: GitHub tags/releases, PyPI 0.11.3, and Homebrew tap 0.8.15 verified' }
+    ]
+  },
+  links: [
+    { label: 'TUI/Portal v0.8.14...v0.8.15 compare', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.8.14...v0.8.15' },
+    { label: 'TUI/Portal release v0.8.15', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.8.15' },
+    { label: 'TUI/Portal release commit d9a96fb', href: 'https://github.com/Lingtai-AI/lingtai/commit/d9a96fb14c7f5d797f0a684ed66e90278efc26f3' },
+    { label: 'Kernel v0.11.2...v0.11.3 compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.11.2...v0.11.3' },
+    { label: 'Kernel release v0.11.3', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.11.3' },
+    { label: 'Kernel release commit 6ff15dd', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/6ff15dd4eaf19e031874d91a9158c11926f1347f' },
+    { label: 'PyPI lingtai 0.11.3', href: 'https://pypi.org/project/lingtai/0.11.3/' },
+    { label: 'Homebrew tap commit 2e728a6', href: 'https://github.com/lingtai-ai/homebrew-lingtai/commit/2e728a6607edd8754e92f2920d050e866ca9fcd9' },
+    { label: 'PR #277 — TUI /help command', href: 'https://github.com/Lingtai-AI/lingtai/pull/277' },
+    { label: 'PR #279 — Skill-backed multilingual TUI help', href: 'https://github.com/Lingtai-AI/lingtai/pull/279' },
+    { label: 'PR #281 — /help markdown viewer input routing', href: 'https://github.com/Lingtai-AI/lingtai/pull/281' },
+    { label: 'PR #276 — Tool call display controls', href: 'https://github.com/Lingtai-AI/lingtai/pull/276' },
+    { label: 'PR #282 — Group tool-call display by API call', href: 'https://github.com/Lingtai-AI/lingtai/pull/282' },
+    { label: 'PR #283 — TUI /notification command', href: 'https://github.com/Lingtai-AI/lingtai/pull/283' },
+    { label: 'PR #161 — Adaptive mail input height', href: 'https://github.com/Lingtai-AI/lingtai/pull/161' },
+    { label: 'PR #207 — Show daemon counts in kanban', href: 'https://github.com/Lingtai-AI/lingtai/pull/207' },
+    { label: 'PR #222 — Route TUI clear through kernel context clear', href: 'https://github.com/Lingtai-AI/lingtai/pull/222' },
+    { label: 'PR #256 — Codex preset service-tier option', href: 'https://github.com/Lingtai-AI/lingtai/pull/256' },
+    { label: 'PR #275 — TUI daemon browser', href: 'https://github.com/Lingtai-AI/lingtai/pull/275' },
+    { label: 'PR #240 — install.sh writable-bin fallback', href: 'https://github.com/Lingtai-AI/lingtai/pull/240' },
+    { label: 'PR #236 — Restrict secondary calls to read-only', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/236' },
+    { label: 'PR #237 — Document molt history knowledge entries', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/237' },
+    { label: 'Kernel PR #202 — Repeated tool-error hard stop pairing', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/202' },
+    { label: 'Kernel PR #217 — Tool-loop guard non-dispatch recovery', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/217' },
+    { label: 'Kernel PR #226 — Strict relay-compatible avatar schema', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/226' },
+    { label: 'Kernel PR #231 — Guard stale notification dismiss', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/231' },
+    { label: 'Kernel PR #233 — Reap dead-parent daemon records', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/233' },
+    { label: 'Kernel PR #240 — Document session journals as sub-knowledge', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/240' },
+    { label: 'Kernel PR #241 — Remove secondary nested tool-call channel', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/241' },
+    { label: 'Kernel PR #242 — Trace tool-call lifecycle events', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/242' },
+    { label: 'Kernel PR #243 — Document async bash for agent CLIs', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/243' },
+    { label: 'Kernel PR #246 — Enrich tool error result events', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/246' },
+    { label: 'Kernel PR #247 — Add API-call IDs to LLM/tool events', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/247' },
+    { label: 'Kernel PR #249 — Tool-only synthesized notification sync', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/249' },
+    { label: 'Declined PR #228 — filesystem Time Machine proposal', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/228' },
+    { label: 'Declined PR #235 — soul flow past-self routing proposal', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/235' },
+    { label: 'Issue #174 — textbook distillation request', href: 'https://github.com/Lingtai-AI/lingtai/issues/174' },
+    { label: 'Issue #175 — stronger pre-molt identity guidance request', href: 'https://github.com/Lingtai-AI/lingtai/issues/175' },
+    { label: 'Issue #177 — cyclic manifold architecture request', href: 'https://github.com/Lingtai-AI/lingtai/issues/177' },
+    { label: 'Issue #179 — academic evidence gate request', href: 'https://github.com/Lingtai-AI/lingtai/issues/179' },
+    { label: 'Issue #236 — README development prerequisites report', href: 'https://github.com/Lingtai-AI/lingtai/issues/236' },
+    { label: 'Issue #238 — closed not-planned rewind proposal', href: 'https://github.com/Lingtai-AI/lingtai/issues/238' },
+    { label: 'Issue #239 — install.sh writable-bin fallback report', href: 'https://github.com/Lingtai-AI/lingtai/issues/239' },
+    { label: 'Issue #261 — closed duplicate Cloud Mail MCP addon placeholder', href: 'https://github.com/Lingtai-AI/lingtai/issues/261' },
+    { label: 'Issue #263 — closed not-planned Ctrl+T agent-switching report', href: 'https://github.com/Lingtai-AI/lingtai/issues/263' },
+    { label: 'Kernel Issue #230 — daemon completion notification replacement report', href: 'https://github.com/Lingtai-AI/lingtai-kernel/issues/230' },
+    { label: 'Kernel Issue #232 — orphaned daemon record report', href: 'https://github.com/Lingtai-AI/lingtai-kernel/issues/232' }
+  ]
+};
+
 const v0_8_14_v0_11_2: Release = {
   id: '20260602-1',
   version: 'v0.8.14 / v0.11.2',
@@ -748,7 +926,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
