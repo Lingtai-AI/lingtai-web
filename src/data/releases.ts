@@ -112,14 +112,14 @@ const v0_8_15_v0_11_3: Release = {
       bulletsEn: [
         'The nested secondary tool-call channel was first narrowed to read-only (#236, with strengthened trigger guidance in #234), then removed entirely: the reserved nested `secondary` schema, module, and execution path are gone, residual stale `secondary` args are ignored and logged rather than dispatched, notification/email guidance moves to top-level reads plus direct acknowledgements, and provider-visible `_secondary` metadata is dropped from spill manifests (#241; focused tests 181 passed, full suite 2072 passed / 2 skipped).',
         'Top-level provider tool calls gain Phase 1 lifecycle tracing in the ToolExecutor: a stable `tool_trace_id` threads events across received / normalized / validation / approval / dispatch / durable-log / model-visible stages and into existing tool logs, enriched tool-error results retain model-visible output, and each LLM round-trip now carries an `api_call_id` through LLM and tool events so the TUI can group tool batches from source-of-truth event data (#242, #246, #247).',
-        'The avatar schema is reshaped for strict API relay compatibility (#226), and repeated tool errors now pair into a hard stop instead of looping (#202).',
+        'The avatar schema is reshaped for strict API relay compatibility (#226), repeated tool errors now pair into a hard stop instead of looping (#202), and tool-loop guard non-dispatch recovery now closes blocked calls explicitly instead of leaving pending tool-call wire state (#217).',
         'OpenAI Responses honors the configured compact threshold (#227); stale notification-channel dismiss is guarded by a version check (#231); refresh recovers from a stale agent process (#224); and stale MCP stdio sessions are restarted instead of left dead (#222, kernel).',
         'Daemon limits are honored (configured max emanations, #225) and dead-parent daemon records are reaped on startup (#233).'
       ],
       bulletsZh: [
         '嵌套 secondary 工具调用通道先被收窄为只读（#236，并在 #234 强化触发指引），随后被彻底移除：保留的嵌套 `secondary` schema、模块与执行路径都被删除，残留的 stale `secondary` 参数被忽略并记录、而不再派发，通知/邮件指引改为顶层读取加直接确认，provider 可见的 `_secondary` 元数据从 spill manifest 中移除（#241；focused 测试 181 通过，完整套件 2072 通过 / 2 跳过）。',
         '顶层 provider 工具调用在 ToolExecutor 中获得 Phase 1 生命周期 tracing：稳定的 `tool_trace_id` 把 received / normalized / validation / approval / dispatch / durable-log / model-visible 各阶段的事件串起来，并写入既有工具日志；工具错误结果保留 model-visible 输出；每次 LLM 往返也会把 `api_call_id` 写入 LLM 与工具事件，让 TUI 可以从源事件数据分组工具批次（#242、#246、#247）。',
-        'avatar schema 为严格 API relay 兼容做了重塑（#226），重复工具错误现在配对为硬停止，而不是继续循环（#202）。',
+        'avatar schema 为严格 API relay 兼容做了重塑（#226），重复工具错误现在配对为硬停止而不是继续循环（#202），tool-loop guard 未派发恢复也会明确关闭被阻止的调用，避免留下 pending tool-call wire state（#217）。',
         'OpenAI Responses 遵循配置的 compact 阈值（#227）；stale 通知通道的 dismiss 由版本检查守卫（#231）；refresh 能从 stale agent 进程恢复（#224）；stale MCP stdio 会话被重启而不是留作死链（#222，内核）。',
         'daemon 上限被遵守（配置的 max emanations，#225），dead-parent 的 daemon 记录在启动时被回收（#233）。'
       ],
@@ -175,7 +175,7 @@ const v0_8_15_v0_11_3: Release = {
         '这些是新用户和研究 agent 最先碰到的路径。让安装在非标准机器上也能跑通、让研究能取到授权全文，能消除原本会卡住真实使用的早期摩擦。'
     }
   ],
-  contributors: ['huangzesen', 'TZZheng', 'ktwu01', 'hao', 'ZacharyHu0', '9s5bz2jvd2-lang', 'antimonyz'],
+  contributors: ['huangzesen', 'TZZheng', 'ktwu01', 'hao', 'ZacharyHu0', '9s5bz2jvd2-lang', 'antimonyz', 'xczics'],
   validation: {
     commit: 'lingtai@2a81fcb + lingtai-kernel@f78ac2c (candidate main)',
     items: [
@@ -195,9 +195,19 @@ const v0_8_15_v0_11_3: Release = {
     { label: 'PR #281 — /help markdown viewer input routing', href: 'https://github.com/Lingtai-AI/lingtai/pull/281' },
     { label: 'PR #276 — Tool call display controls', href: 'https://github.com/Lingtai-AI/lingtai/pull/276' },
     { label: 'PR #282 — Group tool-call display by API call', href: 'https://github.com/Lingtai-AI/lingtai/pull/282' },
+    { label: 'PR #161 — Adaptive mail input height', href: 'https://github.com/Lingtai-AI/lingtai/pull/161' },
+    { label: 'PR #207 — Show daemon counts in kanban', href: 'https://github.com/Lingtai-AI/lingtai/pull/207' },
+    { label: 'PR #222 — Route TUI clear through kernel context clear', href: 'https://github.com/Lingtai-AI/lingtai/pull/222' },
+    { label: 'PR #256 — Codex preset service-tier option', href: 'https://github.com/Lingtai-AI/lingtai/pull/256' },
     { label: 'PR #275 — TUI daemon browser', href: 'https://github.com/Lingtai-AI/lingtai/pull/275' },
+    { label: 'PR #240 — install.sh writable-bin fallback', href: 'https://github.com/Lingtai-AI/lingtai/pull/240' },
     { label: 'PR #236 — Restrict secondary calls to read-only', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/236' },
     { label: 'PR #237 — Document molt history knowledge entries', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/237' },
+    { label: 'Kernel PR #202 — Repeated tool-error hard stop pairing', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/202' },
+    { label: 'Kernel PR #217 — Tool-loop guard non-dispatch recovery', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/217' },
+    { label: 'Kernel PR #226 — Strict relay-compatible avatar schema', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/226' },
+    { label: 'Kernel PR #231 — Guard stale notification dismiss', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/231' },
+    { label: 'Kernel PR #233 — Reap dead-parent daemon records', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/233' },
     { label: 'Kernel PR #240 — Document session journals as sub-knowledge', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/240' },
     { label: 'Kernel PR #241 — Remove secondary nested tool-call channel', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/241' },
     { label: 'Kernel PR #242 — Trace tool-call lifecycle events', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/242' },
@@ -207,9 +217,16 @@ const v0_8_15_v0_11_3: Release = {
     { label: 'Declined PR #228 — filesystem Time Machine proposal', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/228' },
     { label: 'Declined PR #235 — soul flow past-self routing proposal', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/235' },
     { label: 'Issue #174 — textbook distillation request', href: 'https://github.com/Lingtai-AI/lingtai/issues/174' },
+    { label: 'Issue #175 — stronger pre-molt identity guidance request', href: 'https://github.com/Lingtai-AI/lingtai/issues/175' },
     { label: 'Issue #177 — cyclic manifold architecture request', href: 'https://github.com/Lingtai-AI/lingtai/issues/177' },
     { label: 'Issue #179 — academic evidence gate request', href: 'https://github.com/Lingtai-AI/lingtai/issues/179' },
-    { label: 'Issue #239 — install.sh writable-bin fallback report', href: 'https://github.com/Lingtai-AI/lingtai/issues/239' }
+    { label: 'Issue #236 — README development prerequisites report', href: 'https://github.com/Lingtai-AI/lingtai/issues/236' },
+    { label: 'Issue #238 — closed not-planned rewind proposal', href: 'https://github.com/Lingtai-AI/lingtai/issues/238' },
+    { label: 'Issue #239 — install.sh writable-bin fallback report', href: 'https://github.com/Lingtai-AI/lingtai/issues/239' },
+    { label: 'Issue #261 — closed duplicate Cloud Mail MCP addon placeholder', href: 'https://github.com/Lingtai-AI/lingtai/issues/261' },
+    { label: 'Issue #263 — closed not-planned Ctrl+T agent-switching report', href: 'https://github.com/Lingtai-AI/lingtai/issues/263' },
+    { label: 'Kernel Issue #230 — daemon completion notification replacement report', href: 'https://github.com/Lingtai-AI/lingtai-kernel/issues/230' },
+    { label: 'Kernel Issue #232 — orphaned daemon record report', href: 'https://github.com/Lingtai-AI/lingtai-kernel/issues/232' }
   ]
 };
 
