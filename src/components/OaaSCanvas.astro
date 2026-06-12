@@ -486,9 +486,11 @@ const { line1, line2, manifesto } = Astro.props;
         const age = now - node.born;
         const pOp = Math.min(1, age / 1500);
 
-        // Birth flash ring
+        // Birth flash ring. Clamp: rAF's vsync timestamp can lag the
+        // performance.now() used at spawn, making birthFlash negative —
+        // a negative arc radius throws and kills the animation loop.
         if (node.birthFlash < 1) {
-          const prog = node.birthFlash;
+          const prog = Math.max(0, node.birthFlash);
           ctx.beginPath();
           ctx.arc(node.x, node.y, prog * BIRTH_RING_MAX, 0, Math.PI * 2);
           ctx.strokeStyle = rgba(GREEN_RGB, (1 - prog) * 0.5);
@@ -527,9 +529,9 @@ const { line1, line2, manifesto } = Astro.props;
       ctx.fillStyle = rgba(CLIENT_RGB, cOp * 0.75);
       ctx.fill();
 
-      // Birth ring
+      // Birth ring (same clamp as above — phase can be momentarily negative)
       if (client.phase < 0.1) {
-        const prog = client.phase / 0.1;
+        const prog = Math.max(0, client.phase / 0.1);
         ctx.beginPath();
         ctx.arc(client.x, client.y, prog * 24, 0, Math.PI * 2);
         ctx.strokeStyle = rgba(CLIENT_RGB, (1 - prog) * 0.4);
@@ -608,18 +610,20 @@ const { line1, line2, manifesto } = Astro.props;
   }
 
   .oaas-divider {
-    width: 36px;
-    height: 1px;
-    background: var(--accent);
-    margin: 20px auto;
+    width: 8px;
+    height: 8px;
+    background: var(--vermilion);
+    border-radius: 1px;
+    transform: rotate(45deg);
+    margin: 22px auto;
   }
 
   .oaas-line {
-    font-size: 16px;
+    font-size: clamp(18px, 2.4vw, 24px);
     color: var(--text-dim);
-    letter-spacing: 2px;
+    letter-spacing: 0.16em;
     font-weight: 300;
-    line-height: 1.8;
+    line-height: 1.9;
   }
 
   .oaas-details {
@@ -652,13 +656,13 @@ const { line1, line2, manifesto } = Astro.props;
   }
 
   .manifesto-text {
-    max-width: 520px;
-    margin: 16px auto 0;
+    max-width: 560px;
+    margin: 18px auto 0;
     font-size: 15px;
-    line-height: 1.9;
-    color: var(--text-faint);
-    border-left: 2px solid var(--accent);
-    padding-left: 16px;
+    line-height: 2.1;
+    color: var(--text-dim);
+    border-left: 2px solid var(--vermilion);
+    padding-left: 18px;
     text-align: left;
   }
 </style>

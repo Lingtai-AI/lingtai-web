@@ -30,14 +30,17 @@ const command = 'brew install lingtai-ai/lingtai/lingtai-tui';
 </script>
 
 <style>
+  /* Ink slab (墨锭) — dark block, single sharp corner, vermilion action */
   .install-pill {
     display: inline-flex;
     align-items: center;
     gap: 12px;
     background: var(--code-bg);
     color: var(--code-text);
-    padding: 10px 20px;
-    border-radius: 6px;
+    padding: 12px 22px;
+    border-radius: 2px;
+    border: 1px solid color-mix(in srgb, var(--vermilion) 30%, transparent);
+    box-shadow: 3px 3px 0 color-mix(in srgb, var(--vermilion) 18%, transparent);
     font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
     font-size: 13px;
     letter-spacing: 0.5px;
@@ -48,18 +51,20 @@ const command = 'brew install lingtai-ai/lingtai/lingtai-tui';
     max-width: 250px;
   }
   .prompt {
-    color: var(--text-faint);
+    color: var(--vermilion);
   }
   .copy-btn {
     background: none;
     border: none;
-    color: var(--accent);
-    font-size: 11px;
+    color: var(--vermilion);
+    font-size: 12px;
     cursor: pointer;
-    opacity: 0.7;
-    font-family: inherit;
+    opacity: 0.85;
+    font-family: "Noto Serif SC", serif;
+    letter-spacing: 0.1em;
   }
   .copy-btn:hover {
     opacity: 1;
+    text-shadow: 0 0 8px color-mix(in srgb, var(--vermilion) 50%, transparent);
   }
 </style>

@@ -4,6 +4,8 @@ import BrailleBackground from '../../components/BrailleBackground.astro';
 import InstallCommand from '../../components/InstallCommand.astro';
 import NetworkCanvas from '../../components/NetworkCanvas.astro';
 import OaaSCanvas from '../../components/OaaSCanvas.astro';
+import InkMountains from '../../components/InkMountains.astro';
+import SealStamp from '../../components/SealStamp.astro';
 import { t, isValidLang, languages, type Lang } from '../../i18n/translations';
 
 export function getStaticPaths() {
@@ -13,33 +15,58 @@ export function getStaticPaths() {
 const { lang } = Astro.params;
 if (!isValidLang(lang)) return Astro.redirect('/en/');
 const tr = t(lang as Lang);
+
+const isCJK = lang !== 'en';
+// 「灵台方寸山 斜月三星洞」→ two columns per poem line, four columns total.
+// In vertical-rl flow the DOM order renders right-to-left — classical reading order.
+const poemColumns = isCJK
+  ? [...tr.hero.poem1.split(' '), ...tr.hero.poem2.split(' ')]
+  : [];
 ---
 
 <BaseLayout title={tr.hero.title} lang={lang as Lang}>
   <BrailleBackground lang={lang as Lang} />
 
   <main class="hero">
-    <h1 class="title serif">{tr.hero.title}</h1>
-    <p class="subtitle">{tr.hero.subtitle}</p>
+    <InkMountains />
 
-    <div class="divider"></div>
+    {isCJK ? (
+      <div class="scroll-composition">
+        <h1 class="title-v serif ink-reveal" style="animation-delay:0.1s">{tr.hero.title}</h1>
+        <div class="poem-cols">
+          {poemColumns.map((col, i) => (
+            <span class="poem-col serif ink-reveal" style={`animation-delay:${0.7 + i * 0.22}s`}>{col}</span>
+          ))}
+        </div>
+        <div class="colophon ink-reveal" style="animation-delay:1.8s">
+          <span class="subtitle-v">{tr.hero.subtitle}</span>
+          <SealStamp size={58} delay="2.1s" />
+        </div>
+      </div>
+    ) : (
+      <div class="latin-composition">
+        <div class="title-row">
+          <h1 class="title-en latin-display ink-reveal" style="animation-delay:0.1s">{tr.hero.title}</h1>
+          <SealStamp size={52} delay="1.8s" />
+        </div>
+        <p class="subtitle-en ink-reveal" style="animation-delay:0.6s">{tr.hero.subtitle}</p>
+        <div class="poem-en">
+          <p class="poem-line latin-display ink-reveal" style="animation-delay:1s">{tr.hero.poem1}</p>
+          <p class="poem-line latin-display ink-reveal" style="animation-delay:1.25s">{tr.hero.poem2}</p>
+        </div>
+      </div>
+    )}
 
-    <p class="poem">{tr.hero.poem1}</p>
-    <p class="poem">{tr.hero.poem2}</p>
-
-    <div class="install">
+    <div class="install ink-reveal" style="animation-delay:2.3s">
       <InstallCommand copyLabel={tr.hero.copy} />
-    </div>
-
-    <div class="links">
-      <a href="https://github.com/Lingtai-AI/lingtai">GitHub</a>
+      <div class="links">
+        <a href="https://github.com/Lingtai-AI/lingtai">GitHub</a>
+      </div>
     </div>
 
     <div class="scroll-hint" aria-hidden="true">
-      <svg width="20" height="32" viewBox="0 0 20 32" fill="none">
-        <rect x="1" y="1" width="18" height="30" rx="9" stroke="var(--text-faint)" stroke-width="1"/>
-        <circle class="scroll-dot" cx="10" cy="10" r="2" fill="var(--text-faint)"/>
-      </svg>
+      <span class="ink-thread"></span>
+      <span class="ink-drop"></span>
     </div>
   </main>
 
@@ -60,60 +87,159 @@ const tr = t(lang as Lang);
     z-index: 1;
     padding: 0 40px;
   }
-  .title {
-    font-size: 48px;
-    font-weight: 300;
-    letter-spacing: 6px;
+
+  /* ── 竖排 hanging-scroll composition (zh / wen) ─────────────────────
+     vertical-rl: block flow runs right→left, so DOM order = classical
+     reading order. flex-direction:column follows the block axis. */
+  .scroll-composition {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(32px, 6vw, 72px);
+    position: relative;
+    z-index: 1;
+  }
+
+  .title-v {
+    font-size: clamp(96px, 19vh, 164px);
+    font-weight: 250;
+    letter-spacing: 0.12em;
+    line-height: 1;
     color: var(--title-color);
   }
-  .subtitle {
-    font-size: 18px;
-    color: var(--text-faint);
-    font-weight: 300;
-    letter-spacing: 3px;
-    margin-top: 4px;
-  }
-  .divider {
-    width: 48px;
-    height: 1px;
-    background: var(--accent);
-    margin: 20px 0;
-  }
-  .poem {
-    color: var(--text-faint);
-    font-size: 14px;
-    letter-spacing: 1px;
-    line-height: 1.8;
-  }
-  .install {
-    margin-top: 36px;
-  }
-  .links {
-    margin-top: 16px;
-    font-size: 12px;
-  }
-  .links a {
-    color: var(--accent);
-  }
-  .dot {
-    color: var(--text-faint);
-    margin: 0 4px;
+
+  .poem-cols {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 2vw, 22px);
+    padding-block-start: 0.4em;
   }
 
+  .poem-col {
+    font-size: clamp(17px, 2.6vh, 23px);
+    font-weight: 300;
+    letter-spacing: 0.42em;
+    color: var(--text-dim);
+    line-height: 1;
+  }
+
+  .colophon {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding-block-start: 0.6em;
+  }
+
+  .subtitle-v {
+    font-size: 13px;
+    letter-spacing: 0.45em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+  }
+
+  /* ── Latin composition (en) ───────────────────────────────────── */
+  .latin-composition {
+    position: relative;
+    z-index: 1;
+  }
+
+  .title-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 26px;
+  }
+
+  .title-en {
+    font-size: clamp(78px, 13vw, 138px);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--title-color);
+  }
+
+  .subtitle-en {
+    margin-top: 18px;
+    font-size: 14px;
+    letter-spacing: 0.55em;
+    text-indent: 0.55em; /* re-center: tracking adds trailing space */
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .poem-en {
+    margin-top: 34px;
+  }
+
+  .poem-line {
+    font-style: italic;
+    font-size: 21px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    line-height: 1.9;
+  }
+
+  /* ── Shared ───────────────────────────────────────────────────── */
+  .install {
+    margin-top: clamp(36px, 6vh, 60px);
+    position: relative;
+    z-index: 1;
+  }
+
+  .links {
+    margin-top: 14px;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+  }
+
+  /* Scroll hint — an ink drop sliding down a hanging thread */
   .scroll-hint {
     position: absolute;
-    bottom: 28px;
+    bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    opacity: 0.4;
+    width: 1px;
+    height: 44px;
+    z-index: 1;
   }
 
-  .scroll-dot {
-    animation: scroll-bounce 2s ease-in-out infinite;
+  .ink-thread {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent, var(--text-faint));
+    opacity: 0.5;
   }
 
-  @keyframes scroll-bounce {
-    0%, 100% { cy: 10; opacity: 1; }
-    50% { cy: 22; opacity: 0.3; }
+  .ink-drop {
+    position: absolute;
+    left: -2px;
+    top: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--vermilion);
+    animation: ink-fall 2.4s ease-in infinite;
+  }
+
+  @keyframes ink-fall {
+    0% { top: 0; opacity: 0; }
+    25% { opacity: 0.9; }
+    78% { top: 39px; opacity: 0.9; }
+    100% { top: 39px; opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ink-drop { animation: none; opacity: 0; }
+  }
+
+  @media (max-width: 720px) {
+    .hero { padding: 0 20px; }
+    .scroll-composition { gap: 26px; }
+    .title-v { font-size: clamp(72px, 19vw, 110px); }
+    .poem-col { letter-spacing: 0.3em; }
+    .title-row { gap: 16px; }
   }
 </style>

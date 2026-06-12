@@ -1,0 +1,72 @@
+---
+// 远山 — three ink-wash ridge lines at the foot of the hero, fading into
+// mist. Pure SVG silhouettes; color follows the theme via --mountain.
+---
+
+<div class="mountains" aria-hidden="true">
+  <svg viewBox="0 0 1440 360" preserveAspectRatio="none">
+    <path
+      class="ridge far"
+      d="M0,252 Q120,196 250,222 T520,198 Q640,168 760,206 T1020,212 Q1180,170 1300,208 T1440,196 L1440,360 L0,360 Z"
+    />
+    <path
+      class="ridge mid"
+      d="M0,300 Q160,238 330,276 T660,260 Q800,224 940,268 T1230,262 Q1340,240 1440,272 L1440,360 L0,360 Z"
+    />
+    <path
+      class="ridge near"
+      d="M0,332 Q200,284 410,316 T820,304 Q1000,278 1160,312 T1440,322 L1440,360 L0,360 Z"
+    />
+  </svg>
+  <div class="mist"></div>
+</div>
+
+<style>
+  .mountains {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 36vh;
+    min-height: 180px;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  .mountains svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ridge {
+    fill: var(--mountain);
+  }
+
+  .ridge.far {
+    opacity: 0.1;
+  }
+
+  .ridge.mid {
+    opacity: 0.16;
+  }
+
+  .ridge.near {
+    opacity: 0.24;
+  }
+
+  /* Mist swallows the ridge bottoms back into the paper */
+  .mist {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 35%,
+      color-mix(in srgb, var(--bg) 55%, transparent) 70%,
+      var(--bg) 100%
+    );
+  }
+</style>
