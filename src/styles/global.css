@@ -1,31 +1,44 @@
 :root {
-  --bg: #f5f0e8;
-  --bg-alt: #ece5d8;
-  --text: #2a2a30;
-  --text-dim: #5a5650;
-  --text-faint: #8a8680;
+  /* Xuan paper (生宣) — warm, slightly aged */
+  --bg: #f2ecdf;
+  --bg-alt: #e9e1cf;
+  --ink: #1c1a17;
+  --text: #2b2723;
+  --text-dim: #5b5347;
+  --text-faint: #8d8372;
+  /* 朱砂 seal vermilion — THE accent */
+  --vermilion: #a93b2a;
+  --vermilion-deep: #8a2d1f;
   --accent: #7dab8f;
   --accent-warm: #c49a6c;
-  --code-bg: #2a2a30;
-  --code-text: #e8e4df;
+  --code-bg: #221f1b;
+  --code-text: #e9e2d3;
   --gold: #d4a853;
-  --title-color: var(--text);
-  --node-r: 42; --node-g: 42; --node-b: 48;
+  --title-color: var(--ink);
+  --mountain: #4a4438;
+  --seal-paper: #f6efe2;
+  --node-r: 43; --node-g: 39; --node-b: 35;
   --link-r: 196; --link-g: 154; --link-b: 108;
 }
 
 [data-theme="dark"] {
-  --bg: #1a1a20;
-  --bg-alt: #252530;
-  --text: #e8e4df;
-  --text-dim: #a0a098;
-  --text-faint: #6a6860;
+  /* Inkstone night (砚) */
+  --bg: #16140f;
+  --bg-alt: #1f1c15;
+  --ink: #e9e2d3;
+  --text: #e9e2d3;
+  --text-dim: #a59c89;
+  --text-faint: #6e675a;
+  --vermilion: #c8523c;
+  --vermilion-deep: #a93b2a;
   --accent: #7dab8f;
   --accent-warm: #d4a853;
-  --code-bg: #0e0e14;
-  --code-text: #e8e4df;
+  --code-bg: #0e0d0a;
+  --code-text: #e9e2d3;
   --gold: #d4a853;
   --title-color: var(--gold);
+  --mountain: #8d8372;
+  --seal-paper: #f6efe2;
   --node-r: 212; --node-g: 168; --node-b: 83;
   --link-r: 196; --link-g: 154; --link-b: 108;
 }
@@ -37,8 +50,7 @@
 }
 
 html {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-family: "Noto Serif SC", Georgia, "Songti SC", "SimSun", serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
@@ -48,19 +60,75 @@ body {
   min-height: 100vh;
 }
 
+/* Paper grain — fixed feTurbulence noise over everything, never intercepts */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] body::after {
+  opacity: 0.07;
+}
+
 a {
-  color: var(--accent);
+  color: var(--vermilion);
   text-decoration: none;
+  transition: color 0.2s;
 }
 
 a:hover {
   color: var(--accent-warm);
 }
 
+::selection {
+  background: var(--vermilion);
+  color: var(--seal-paper);
+}
+
 .serif {
-  font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+  font-family: "Noto Serif SC", Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+}
+
+.latin-display {
+  font-family: "Cormorant Garamond", Georgia, serif;
+}
+
+.brush {
+  font-family: "Ma Shan Zheng", "Kaiti SC", "KaiTi", cursive;
 }
 
 .mono {
   font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+}
+
+/* Ink bleeding onto paper — shared entrance animation.
+   Stagger with inline animation-delay. */
+.ink-reveal {
+  opacity: 0;
+  animation: ink-reveal 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes ink-reveal {
+  from {
+    opacity: 0;
+    filter: blur(7px);
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-reveal {
+    animation: none;
+    opacity: 1;
+  }
 }

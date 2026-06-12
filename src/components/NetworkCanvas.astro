@@ -410,9 +410,11 @@ const { line1a, line1b, line2, line3, quickstart, quickstartLabel, copyLabel } =
         const age = now - p.born;
         const pOp = gOp * Math.min(1, age / 1500);
 
-        // Birth flash — expanding ring
+        // Birth flash — expanding ring. Clamp: rAF's vsync timestamp can
+        // lag the performance.now() used at spawn, making birthFlash
+        // negative — a negative arc radius throws and kills the loop.
         if (p.birthFlash < 1) {
-          const prog = p.birthFlash;
+          const prog = Math.max(0, p.birthFlash);
           ctx.beginPath();
           ctx.arc(p.x, p.y, prog * BIRTH_RING_MAX, 0, Math.PI * 2);
           ctx.strokeStyle = rgba(GREEN_RGB, (1 - prog) * 0.5);
@@ -508,17 +510,19 @@ const { line1a, line1b, line2, line3, quickstart, quickstartLabel, copyLabel } =
   }
 
   .network-line1 {
-    font-size: 32px;
-    font-weight: 300;
-    letter-spacing: 4px;
+    font-size: clamp(34px, 5vw, 52px);
+    font-weight: 250;
+    letter-spacing: 0.18em;
     color: var(--title-color);
   }
 
   .network-divider {
-    width: 36px;
-    height: 1px;
-    background: var(--accent);
-    margin: 16px auto;
+    width: 8px;
+    height: 8px;
+    background: var(--vermilion);
+    border-radius: 1px;
+    transform: rotate(45deg);
+    margin: 20px auto;
   }
 
   .network-line2 {
@@ -555,25 +559,28 @@ const { line1a, line1b, line2, line3, quickstart, quickstartLabel, copyLabel } =
     gap: 10px;
     background: var(--code-bg);
     color: var(--code-text);
-    padding: 8px 20px;
-    border-radius: 6px;
+    padding: 9px 20px;
+    border-radius: 2px;
+    border: 1px solid color-mix(in srgb, var(--vermilion) 30%, transparent);
+    box-shadow: 3px 3px 0 color-mix(in srgb, var(--vermilion) 18%, transparent);
     font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
     font-size: 13px;
     letter-spacing: 0.5px;
   }
 
   .qs-prompt {
-    color: var(--text-faint);
+    color: var(--vermilion);
   }
 
   .qs-copy-btn {
     background: none;
     border: none;
-    color: var(--accent);
-    font-size: 11px;
+    color: var(--vermilion);
+    font-size: 12px;
     cursor: pointer;
-    opacity: 0.7;
-    font-family: inherit;
+    opacity: 0.85;
+    font-family: "Noto Serif SC", serif;
+    letter-spacing: 0.1em;
   }
 
   .qs-copy-btn:hover {
