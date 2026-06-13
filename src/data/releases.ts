@@ -61,6 +61,301 @@ export interface Release {
 }
 
 
+
+const v0_9_0_v0_12_0: Release = {
+  id: '20260613-1',
+  version: 'v0.9.0 / v0.12.0',
+  titleEn: 'LingTai TUI/Portal v0.9.0 + Kernel v0.12.0',
+  titleZh: '灵台 TUI/Portal v0.9.0 与内核 v0.12.0',
+  date: '2026-06-13',
+  pkg: 'lingtai-tui + lingtai',
+  tag: 'v0.9.0 / v0.12.0',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    "This is the release log for TUI/Portal v0.9.0 and Kernel/runtime package lingtai==0.12.0. Ordinary LingTai projects upgrade through the TUI/Homebrew flow; bare pip install lingtai remains a release, diagnostic, or clean-venv validation path rather than the normal user upgrade route.",
+  runtimeNoteZh:
+    "这是 TUI/Portal v0.9.0 与内核/runtime 包 lingtai==0.12.0 的发布日志。普通 LingTai 项目仍通过 TUI/Homebrew 路径升级；裸 pip install lingtai 适合发布、诊断或 clean-venv 验证，不是正常用户升级路径。",
+  summaryEn:
+    "This release log is written from the previous published release log to the current v0.9.0 / v0.12.0 release, not merely from the immediately previous patch tag. The audited window spans LingTai TUI/Portal, lingtai-kernel, and the Telegram addon work that affected the same operating surface: 129 commits, 370 changed files, +31,717 / -2,047 lines, 109 PRs updated in the window (81 merged, 20 closed unmerged), and 48 issues (41 closed). The main theme is operational quality under real load: the TUI becomes a layered cockpit for long agent runs; setup, presets, manifests, and first-run paths become harder to misread; the kernel turns tool execution into a governed and observable surface; daemon/idle-care practices become explicit operations; knowledge, skills, tutorials, and research workflows become more teachable; MCP/chat/mail integrations become more reliable; and release hygiene records the validation, packaging, Homebrew, PyPI, contributors, and lessons for the next release.",
+  summaryZh:
+    "这篇 release log 从上一篇已发布 release log 写到当前 v0.9.0 / v0.12.0，而不是只比较前一个 patch tag。审计窗口覆盖 LingTai TUI/Portal、lingtai-kernel，以及影响同一运行面的 Telegram addon 工作：129 commits、370 个文件、+31,717 / -2,047 行；窗口内 109 个 PR 有更新（81 merged，20 closed unmerged），48 个 issue（41 closed）。主线是“真实负载下的运行质量”：TUI 变成长任务的分层 cockpit；setup、preset、manifest 与首次安装路径更不容易误读；内核把工具执行变成可治理、可观察的执行面；daemon/idle-care 被当成显式运维对象；知识、技能、教程与研究流程更可教学；MCP/聊天/邮件集成更可靠；发布卫生则记录验证、打包、Homebrew、PyPI、贡献者与下一次 release 应继承的流程。",
+  features: [
+    {
+      titleEn: "The release window is much larger than a patch note",
+      titleZh: "这不是一个 patch note，而是一整个发布窗口",
+      leadEn:
+        "This log is written from the previous published release log, not only from the immediately previous tag. The covered window spans TUI/Portal, the kernel, and the Telegram addon work that affected the same operating surface.",
+      leadZh:
+        "这篇日志按上一篇已发布 release log 往后写，而不是只比较前一个 tag。覆盖窗口横跨 TUI/Portal、内核，以及影响同一条通讯面的 Telegram addon 工作。",
+      bulletsEn: [
+        "Across the audited repositories the window contains 129 commits, 370 changed files, +31,717 / -2,047 lines.",
+        "TUI/Portal contributes 58 commits and 108 changed files (+6,443 / -986) from v0.8.15 to v0.9.0.",
+        "Kernel contributes 40 commits and 234 changed files (+22,416 / -676) from v0.11.3 to v0.12.0.",
+        "Telegram addon contributes 31 commits and 28 changed files (+2,858 / -385) from v0.3.0 to current main in the same release-log window.",
+        "The GitHub surface contains 109 PRs updated in the window (81 merged, 20 closed unmerged) plus 48 issues (41 closed).",
+        "The contributor list includes commit authors/co-authors, merged PR authors, closed-unmerged PR authors, issue reporters, assignees/reviewers, and participants whose issue or PR was closed even when the proposal was not adopted.",
+      ],
+      bulletsZh: [
+        "本次审计的相关仓库窗口合计 129 commits、370 个文件变更、+31,717 / -2,047 行。",
+        "TUI/Portal 从 v0.8.15 到 v0.9.0：58 commits，108 个文件，+6,443 / -986。",
+        "Kernel 从 v0.11.3 到 v0.12.0：40 commits，234 个文件，+22,416 / -676。",
+        "Telegram addon 从 v0.3.0 到当前 main：31 commits，28 个文件，+2,858 / -385，属于同一个 release-log 窗口。",
+        "GitHub 侧窗口包含 109 个更新过的 PR（81 merged，20 closed unmerged）和 48 个 issue（41 closed）。",
+        "贡献者不只按 commit 算：merged PR、closed unmerged PR、closed issue 的作者/报告者/协作者/审阅者都纳入；未采纳但被关闭的 issue/PR 也算进贡献窗口。",
+      ],
+      whyEn:
+        "The scale matters because the release blog is the public memory of the project. If the window is counted too narrowly, contributors disappear and operators lose the real shape of the work.",
+      whyZh:
+        "规模本身很重要，因为 release blog 是项目的公开记忆。窗口算窄了，贡献者会消失，使用者也看不到这轮工作的真实形状。",
+    },
+    {
+      titleEn: "TUI becomes an operator cockpit for long runs",
+      titleZh: "TUI 从 transcript 变成长期运行的 cockpit",
+      leadEn:
+        "The strongest user-facing theme is readability under load. Long agent runs now have a layered replay path, quieter defaults, and more places where the UI shows the runtime state instead of hiding it in raw logs.",
+      leadZh:
+        "最外显的主题是负载下的可读性。长时间 agent 运行现在有分层回放路径、更安静的默认界面，以及更多把 runtime state 直接展示出来的入口，而不是把它藏在原始日志里。",
+      bulletsEn: [
+        "Text output and Ctrl+O replay are separated by API call, so multiple model invocations read as distinct steps.",
+        "Tool-call display controls, tool-result payload rendering, tool-result summaries, two Ctrl+O detail levels, and a 100-rune tool-call summary cap make replay usable instead of overwhelming.",
+        "The TUI daemon browser, independent daemon pane scrolling, daemon counts in kanban, and daemon detail layout fixes make background work visible.",
+        "Kanban gained context stats and clearer Ctrl+D detail hints; list views became closer to a decentralized contact book.",
+        "Root-owned layout budgeting, adaptive mail input height, and global status-bar design work make the shell more stable for dense sessions.",
+        "The TUI /clear path is routed through kernel context clear, reducing mismatch between the interface and the runtime operation.",
+      ],
+      bulletsZh: [
+        "文本输出和 Ctrl+O 回放按 API call 分段，多次模型调用读起来是步骤，而不是一整团 transcript。",
+        "tool-call display controls、tool-result payload 渲染、tool-result 摘要、两级 Ctrl+O 详情，以及 100-rune tool-call 摘要封顶，让回放可用而不是淹没人。",
+        "TUI daemon browser、daemon pane 独立滚动、kanban daemon 计数、daemon detail layout 修复，让后台工作真正可见。",
+        "Kanban 增加 context stats 和 Ctrl+D 详情提示；list view 更接近一个去中心化 contact book。",
+        "root-owned layout budget、自适应 mail input 高度、全局 status bar 设计，让高密度会话下的 shell 更稳定。",
+        "TUI /clear 走内核 context clear，减少界面操作与 runtime 实际行为之间的错位。",
+      ],
+      whyEn:
+        "When agents work for a long time, the UI cannot be a text dump. It has to preserve attention: summary first, details on demand, and runtime state where the operator can see it.",
+      whyZh:
+        "agent 长时间工作时，UI 不能只是文本倾倒。它要保护人的注意力：先摘要，需要时展开细节，并把 runtime state 放到操作者能看到的位置。",
+    },
+    {
+      titleEn: "Setup, presets, manifests, and first-run paths are safer",
+      titleZh: "setup、preset、manifest 与首次安装路径更安全",
+      leadEn:
+        "Several fixes close the gap between what the operator selected and what the runtime actually loaded. This section also carries forward the v0.8.16 preset-safety patch that was not given its own release log.",
+      leadZh:
+        "这一组改动修的是“人选择的配置”和“runtime 实际加载的配置”之间的缝。这里也补上没有单独发 release log 的 v0.8.16 preset 安全 patch。",
+      bulletsEn: [
+        "Switching preset models no longer drops skills.paths or other non-model capability overrides; old presets without skills.paths are migrated.",
+        "/setup no longer writes a synthetic keep_current.json placeholder into real preset default/allowed policy.",
+        "The TUI can read resolved manifest artifacts published by the kernel, so the interface can inspect effective runtime state instead of only raw init.json.",
+        "Default agent max_turns increased, and list/max-turns surfaces now describe the actual operating limits more accurately.",
+        "Tutorial language defaulting, adaptive welcome guidance, first-install troubleshooting, README top guidance, and install.sh source helper behavior were repaired.",
+        "Runtime checkout refresh and stale worktree cleanup were added to developer/release procedures so local state does not silently poison future work.",
+      ],
+      bulletsZh: [
+        "切换 preset model 不再丢掉 skills.paths 或其他非模型 capability overrides；缺少 skills.paths 的旧 preset 会迁移补齐。",
+        "/setup 不再把 synthetic keep_current.json placeholder 写进真实 preset default/allowed policy。",
+        "TUI 可以读取内核发布的 resolved manifest artifacts，因此界面能看 effective runtime state，而不是只看 raw init.json。",
+        "默认 agent max_turns 提高；list/max-turns 相关界面更准确地描述真实运行限制。",
+        "Tutorial 语言默认值、adaptive welcome 的 IM 建议、首次安装 troubleshooting、README 顶部指引、install.sh source helper 都做了修复。",
+        "runtime checkout refresh 与 stale worktree cleanup 写进开发/发布流程，避免本地状态静默污染后续工作。",
+      ],
+      whyEn:
+        "Configuration drift is one of the easiest ways to lose trust in an agent system. This release spends real work making effective state inspectable and safer to mutate.",
+      whyZh:
+        "配置漂移最容易损害对 agent 系统的信任。这轮发布花了不少工作，让 effective state 更可检查，也更安全地被修改。",
+    },
+    {
+      titleEn: "Kernel tool execution becomes governed and observable",
+      titleZh: "内核工具执行变得可治理、可观察",
+      leadEn:
+        "Kernel v0.12.0 reshapes tool execution as a structured runtime surface. It removes brittle nested call paths, adds tracing and guard layers, and returns richer recovery information to the model.",
+      leadZh:
+        "内核 v0.12.0 把工具执行重塑成结构化 runtime surface：移除脆弱的嵌套调用路径，加入 tracing 与 guard layer，并把更丰富的 recovery 信息返回给模型。",
+      bulletsEn: [
+        "The nested secondary tool-call channel was removed after transitional read-only restrictions; stale secondary args are no longer a hidden execution path.",
+        "Tool-call lifecycle tracing and api_call_id fields now group LLM/tool events, matching the TUI replay work.",
+        "ToolCallGuard introduces normalized proposal review with structured pass/warn/deny decisions before dispatch.",
+        "Repeated tool-error pairing, tool-loop non-dispatch recovery, formal recovery metadata, active-turn progress meters, and repeated-call advisories make recovery less disruptive.",
+        "Notification sync became tool-only; MCP previews are deduped; goal/system notifications gained protection and atomic dismiss controls.",
+        "OpenAI Responses compact-threshold handling, context-window overflow recovery, strict avatar schema compatibility, and prompt_cache_key support make provider integrations safer.",
+      ],
+      bulletsZh: [
+        "嵌套 secondary tool-call channel 在过渡性 read-only 限制后被移除；stale secondary args 不再是隐藏执行路径。",
+        "tool-call lifecycle tracing 与 api_call_id 字段把 LLM/tool events 分组，和 TUI 回放改动对齐。",
+        "ToolCallGuard 在 dispatch 前引入 normalized proposal review，给出结构化 pass/warn/deny 决策。",
+        "重复工具错误 pairing、tool-loop non-dispatch recovery、正式 recovery metadata、active-turn progress meter、repeated-call advisory，让恢复不再那么破坏性。",
+        "notification sync 改成 tool-only；MCP previews 去重；goal/system notifications 有保护和 atomic dismiss。",
+        "OpenAI Responses compact-threshold、context-window overflow recovery、严格 avatar schema 兼容、prompt_cache_key 支持，让 provider integration 更安全。",
+      ],
+      whyEn:
+        "Future side-effect policy, budget enforcement, and model self-recovery all need a reliable execution ledger. This release builds that ledger into the kernel instead of asking operators to infer it from logs.",
+      whyZh:
+        "未来的副作用策略、预算控制、模型自恢复，都需要可靠的执行账本。这轮发布把账本放进内核，而不是要求操作者从日志里猜。",
+    },
+    {
+      titleEn: "Daemons, avatars, soul/idle care, and long subprocesses are treated as operations",
+      titleZh: "daemon、avatar、心流/idle care 与长 subprocess 被当作运维对象",
+      leadEn:
+        "Many changes are about keeping a running network healthy after the first happy path. Daemon records, dead parents, long CLI subprocesses, and idle timing all became explicit operational surfaces.",
+      leadZh:
+        "很多改动不是为了“第一次能跑”，而是为了网络运行久了仍然健康：daemon records、dead parent、长 CLI subprocess、idle timing 都被当成显式运维面。",
+      bulletsEn: [
+        "Dead-parent daemon records are reaped on startup; daemon max_turns increased to 1000 for larger isolated tasks.",
+        "The experimental interactive Claude backend landed for daemon work while preserving managed-workspace boundaries.",
+        "Async bash guidance now explicitly requires agent/coding CLIs to run asynchronously rather than blocking the active turn.",
+        "Idle-care / watchdog-before-idle is documented: before resting with long subprocess or daemon work pending, arm a wake and later verify logs, processes, outputs, worktree progress, and provider prompts.",
+        "Molt-history and session-journal knowledge entries were documented so recovery after context shedding has a durable trail.",
+        "Avatar schema strictness and provider relay compatibility were tightened for networks running through stricter APIs.",
+      ],
+      bulletsZh: [
+        "dead-parent daemon records 会在 startup 时清理；daemon max_turns 提高到 1000，支持更大的隔离任务。",
+        "experimental interactive Claude backend 落地，用于 daemon work，同时保留 managed-workspace 边界。",
+        "async bash 指南明确要求 agent/coding CLI 走异步，不能阻塞 active turn。",
+        "idle-care / watchdog-before-idle 写入文档：长 subprocess/daemon work pending 前休息要设置自唤醒，醒来检查日志、进程、输出、worktree 与 provider prompt。",
+        "molt-history 与 session-journal knowledge entries 被文档化，凝蜕后的恢复有持久轨迹。",
+        "avatar schema strictness 与 provider relay compatibility 被收紧，适应更严格的 API relay。",
+      ],
+      whyEn:
+        "A LingTai network is not a single request/response. It is a living runtime. These changes reduce the number of failures that only appear after an agent has been working for a while.",
+      whyZh:
+        "LingTai 网络不是一次 request/response，而是持续运行的 runtime。这些改动减少了“跑久了才暴露”的故障。",
+    },
+    {
+      titleEn: "Knowledge, skills, tutorials, and research workflows became more teachable",
+      titleZh: "知识、技能、教程与研究流程更可教学",
+      leadEn:
+        "The release window also expands the methodology layer. Several issues and PRs turned one-off lessons into skills, docs, and reusable guardrails for future agents and human operators.",
+      leadZh:
+        "这轮窗口也扩展了方法论层：不少 issue 和 PR 把一次性的经验沉淀成技能、文档和可复用 guardrail，给未来的 agent 与人类操作者使用。",
+      bulletsEn: [
+        "Skill-backed multilingual /help, markdown viewer routing fixes, notification commands, goal request commands, and community slash-command docs make the TUI easier to teach.",
+        "Optional skill repository remotes, hidden nested-knowledge catalog behavior, preset-health checks, textbook distillation, and ResearchClawBench docs improve reusable knowledge surfaces.",
+        "Academic-research gained Zotero institutional full-text handoff guidance and an evidence-verification gate before academic drafting.",
+        "Graphify repo-map documentation, cyclic manifold architecture docs, and beginner/user-manual issues sharpen the project’s conceptual model.",
+        "Tutorial material now explains the LICC chat command flow; README/install guidance makes first contact with LingTai less brittle.",
+        "Closed community requests around browser-based CLIs, login skills, Feishu/WeChat onboarding, rewind/snapshot inspection, and yolo/permission controls remain part of the public contribution record even when not fully adopted in this release.",
+      ],
+      bulletsZh: [
+        "skill-backed 多语言 /help、markdown viewer routing 修复、notification command、goal request command、社区 slash-command 文档，让 TUI 更容易教学。",
+        "optional skill repository remote、nested knowledge catalog 隐藏规则、preset-health、textbook distillation、ResearchClawBench 文档，改善可复用知识面。",
+        "academic-research 增加 Zotero institutional full-text handoff 与学术写作前的 evidence-verification gate。",
+        "Graphify repo-map 文档、cyclic manifold architecture 文档、beginner/user-manual 相关 issue，让项目概念模型更清晰。",
+        "教程补充 LICC chat command flow；README/install 指引降低第一次接触 LingTai 的脆弱性。",
+        "browser-based CLI、登录技能、飞书/微信 onboarding、rewind/snapshot inspector、yolo/permission control 等社区请求即使没有在本轮完整采纳，也作为公开贡献记录被保留。",
+      ],
+      whyEn:
+        "A feature is more valuable when future people can learn it without rediscovering the story. This release turns more of LingTai’s operating culture into durable teaching material.",
+      whyZh:
+        "功能只有被后来者学得会，价值才稳定。这轮发布把更多 LingTai 的运行文化变成了可持久教学材料。",
+    },
+    {
+      titleEn: "MCP, chat, and mail integrations became more reliable",
+      titleZh: "MCP、聊天与邮件集成更可靠",
+      leadEn:
+        "Communication is the lifeline of an agent network. This window adds Cloud Mail to the curated addon set, strengthens the kernel LICC path, and fixes Telegram polling recovery after real transport failures.",
+      leadZh:
+        "通信是 agent 网络的生命线。这轮窗口把 Cloud Mail 加入 curated addon 集合，强化 kernel LICC 路径，并修复真实 transport failure 后的 Telegram polling recovery。",
+      bulletsEn: [
+        "Kernel v0.12.0 embeds curated MCP servers and adds the Cloud Mail MCP addon for self-hosted maillab/cloud-mail REST deployments.",
+        "Cloud Mail covers check/search/read/send/accounts/add_user plus LICC inbox polling; add_user payload shape was corrected before merge.",
+        "The kernel exposes the LICC client interface, and the Telegram addon now prefers that client path.",
+        "Telegram polling now rebuilds stale httpx/proxy clients after disconnects, closing the MCP _poll_loop failure reported in the window.",
+        "Notification preview dedupe and tool-only notification sync reduce repeated chat replies and diary-looking synthesized text leaks.",
+        "Adaptive welcome now recommends IM channels when they are the right interface for a human operator.",
+      ],
+      bulletsZh: [
+        "Kernel v0.12.0 内嵌 curated MCP servers，并新增 Cloud Mail MCP addon，面向 self-hosted maillab/cloud-mail REST 部署。",
+        "Cloud Mail 覆盖 check/search/read/send/accounts/add_user 与 LICC inbox polling；add_user payload shape 在 merge 前被修正。",
+        "内核暴露 LICC client interface，Telegram addon 现在优先使用该 client path。",
+        "Telegram polling 在 httpx/proxy disconnect 后会重建 stale client，修复窗口里报告的 MCP _poll_loop failure。",
+        "notification preview dedupe 与 tool-only notification sync 减少重复聊天回复和像 diary 的 synthesized 文本泄漏。",
+        "adaptive welcome 在适合时会推荐 IM 通道，帮助人类操作者选对入口。",
+      ],
+      whyEn:
+        "A smart agent that misses or repeats human messages is not operationally trustworthy. The integration work in this release is directly about that trust.",
+      whyZh:
+        "再聪明的 agent，如果漏消息或重复回复，人也很难信任。这轮集成工作直接服务于这种信任。",
+    },
+    {
+      titleEn: "Release hygiene and packaging are part of the delivery",
+      titleZh: "发布卫生与打包验证也是交付的一部分",
+      leadEn:
+        "The release was published before the final blog, as it should be: versions should not be blocked by prose. The blog then records the validation and the corrections made so the next release is easier.",
+      leadZh:
+        "版本已先于最终 blog 发布，这也是正确顺序：release 不应该被 prose 卡住。blog 随后记录验证和流程修正，让下一次发布更容易。",
+      bulletsEn: [
+        "TUI/Portal v0.9.0 was tagged and released on GitHub; the tag workflow updated Homebrew to v0.9.0 with source SHA f811ea3ccf341dd073b8e9728cfa9125bfe578251cc281fac7c90a5837d4a036.",
+        "Kernel v0.12.0 was tagged and released on GitHub; lingtai==0.12.0 was built, twine-checked, uploaded to PyPI, and verified as latest.",
+        "TUI gates passed: diff check after whitespace normalization, TUI Go tests, portal web build, portal Go tests, TUI build, and portal build.",
+        "Kernel gates passed: compileall, 555 focused pytest tests, build of sdist and macOS arm64 wheel, and twine check.",
+        "The release-log workflow is being tightened so future blogs start from commits, LOC, merged PRs, closed unmerged PRs, and closed issues by default instead of relying on a narrow patch-note summary.",
+      ],
+      bulletsZh: [
+        "TUI/Portal v0.9.0 已打 tag 并发布 GitHub release；tag workflow 把 Homebrew 更新到 v0.9.0，source SHA 为 f811ea3ccf341dd073b8e9728cfa9125bfe578251cc281fac7c90a5837d4a036。",
+        "Kernel v0.12.0 已打 tag 并发布 GitHub release；lingtai==0.12.0 已 build、twine check、上传 PyPI，并验证为 latest。",
+        "TUI gates 通过：whitespace normalization 后 diff check、TUI Go tests、portal web build、portal Go tests、TUI build、portal build。",
+        "Kernel gates 通过：compileall、555 个 focused pytest、sdist 与 macOS arm64 wheel 构建、twine check。",
+        "release-log 流程会固化回 release workflow，以后 release blog 默认从 commits、LOC、merged PR、closed unmerged PR、closed issue 开始，而不是只写一个狭义 patch-note 摘要。",
+      ],
+      whyEn:
+        "A release is not complete just because tags exist; it also needs a public record that names the work, the people, the validation, and the lessons for next time.",
+      whyZh:
+        "tag 存在不代表 release 记忆完整；它还需要一份公开记录，写清楚工作、贡献者、验证，以及下次应该继承的流程。",
+    }
+  ],
+  contributors: [
+    "huangzesen",
+    "TZZheng",
+    "9s5bz2jvd2-lang",
+    "ZigongXu",
+    "ZacharyHu0",
+    "a-green-hand-jack",
+    "ktwu01",
+    "antimonyz",
+    "xczics",
+    "888yzbt888",
+    "want2sleeep",
+    "BatalloLu",
+    "vvvhappyvvv",
+    "rawpaper123",
+    "qingyong-hu",
+    "github-actions[bot]",
+    "Claude Fable 5",
+    "Claude Sonnet 4.6",
+    "Claude Opus 4.8",
+    "Claude Opus 4.7",
+  ],
+  validation: {
+    commit:
+      'lingtai@518ab63ef2d550fec9a1f4f868b11bc3692392c3 + lingtai-kernel@a0d5309cf847384333bdab83bf3c59f49cf86bdb + lingtai-telegram@8cf97852fa36',
+    items: [
+      { label: 'Audited release-log window', result: '129 commits; 370 files; +31,717 / -2,047 across TUI/Portal, kernel, and Telegram addon' },
+      { label: 'GitHub participation window', result: '109 PRs updated (81 merged, 20 closed unmerged) and 48 issues (41 closed)' },
+      { label: 'Contributors / participants', result: '20 commit authors, co-authors, PR authors/reviewers/assignees, and issue reporters/assignees counted' },
+      { label: 'TUI diff check', result: 'passed after release whitespace normalization' },
+      { label: 'TUI Go tests', result: 'passed' },
+      { label: 'Portal web build', result: 'passed; npm audit reported 1 moderate vulnerability' },
+      { label: 'Portal Go tests', result: 'passed' },
+      { label: 'TUI and Portal builds', result: 'passed' },
+      { label: 'Kernel compileall', result: 'passed' },
+      { label: 'Kernel focused pytest', result: '555 passed' },
+      { label: 'Kernel build + twine check', result: 'passed for sdist and macOS arm64 wheel' },
+      { label: 'PyPI', result: 'lingtai==0.12.0 visible as latest' },
+      { label: 'Homebrew tap', result: 'updated to v0.9.0 by tag workflow, commit 69aa5c4' },
+    ],
+  },
+  links: [
+    { label: 'Previous release log', href: 'https://lingtai.ai/zh/releases/20260609-1/' },
+    { label: 'TUI/Portal GitHub release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.9.0' },
+    { label: 'Kernel GitHub release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.12.0' },
+    { label: 'PyPI lingtai 0.12.0', href: 'https://pypi.org/project/lingtai/0.12.0/' },
+    { label: 'TUI v0.8.15...v0.9.0 compare', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.8.15...v0.9.0' },
+    { label: 'Kernel v0.11.3...v0.12.0 compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.11.3...v0.12.0' },
+    { label: 'Telegram addon window', href: 'https://github.com/Lingtai-AI/lingtai-telegram/compare/v0.3.0...main' },
+    { label: 'Homebrew tap update', href: 'https://github.com/Lingtai-AI/homebrew-lingtai/commit/69aa5c4' },
+  ],
+};
+
 const v0_8_15_v0_11_3: Release = {
   id: '20260609-1',
   version: 'v0.8.15 / v0.11.3',
@@ -926,7 +1221,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);

@@ -25,7 +25,7 @@ const labels = isEn
       features: 'New features and improvements',
       why: 'Why it matters:',
       contributors: 'Contributors',
-      contributorNote: 'Thanks to everyone whose PRs or reported/closed issues are represented in this release window.',
+      contributorNote: 'Thanks to everyone whose commits, co-authored changes, PRs, reviews, assignments, or reported/closed issues are represented in this release window.',
       validation: 'Validation',
       validationCommit: 'Final release validation was run from a clean release worktree at commit',
       links: 'Links',
@@ -40,7 +40,7 @@ const labels = isEn
       features: '新功能与改进',
       why: '为什么重要：',
       contributors: '贡献者',
-      contributorNote: '感谢本发布窗口中提交 PR、报告问题或推动 issue closure 的贡献者。',
+      contributorNote: '感谢本发布窗口中提交代码、共同完成提交、参与 PR / review / assignment、报告或推动 issue closure 的贡献者。',
       validation: '验证',
       validationCommit: '最终 release validation 来自干净 release worktree，commit',
       links: '链接',
@@ -144,13 +144,20 @@ function splitCode(text: string): Array<{ kind: 'text' | 'code'; value: string }
       <h3 class="section-heading">{labels.contributors}</h3>
       <p class="contributor-note">{labels.contributorNote}</p>
       <ul class="contributor-list">
-        {release.contributors.map((name) => (
-          <li>
-            <a href={`https://github.com/${name}`} target="_blank" rel="noopener">
-              @{name}
-            </a>
-          </li>
-        ))}
+        {release.contributors.map((name) => {
+          const isGithubHandle = /^[A-Za-z0-9-]+$/.test(name);
+          return (
+            <li>
+              {isGithubHandle ? (
+                <a href={`https://github.com/${name}`} target="_blank" rel="noopener">
+                  @{name}
+                </a>
+              ) : (
+                <span>{name}</span>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </section>
 
