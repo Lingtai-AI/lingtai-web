@@ -62,6 +62,143 @@ export interface Release {
 
 
 
+
+const v0_9_1_v0_12_2: Release = {
+  id: '20260613-2',
+  version: 'v0.9.1 / v0.12.2',
+  titleEn: 'LingTai TUI/Portal v0.9.1 + Kernel v0.12.2',
+  titleZh: '灵台 TUI/Portal v0.9.1 与内核 v0.12.2',
+  date: '2026-06-13',
+  pkg: 'lingtai-tui + lingtai',
+  tag: 'v0.9.1 / v0.12.2',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'This small-patch release pairs TUI/Portal v0.9.1 with Kernel/runtime package lingtai==0.12.2. Ordinary LingTai projects upgrade through the TUI/Homebrew flow; bare pip install lingtai remains a release, diagnostic, or clean-venv validation path rather than the normal user upgrade route.',
+  runtimeNoteZh:
+    '这是一篇小版本发布日志，配对 TUI/Portal v0.9.1 与内核/runtime 包 lingtai==0.12.2。普通 LingTai 项目仍通过 TUI/Homebrew 路径升级；裸 pip install lingtai 适合发布、诊断或 clean-venv 验证，不是正常用户升级路径。',
+  summaryEn:
+    'A focused patch after the v0.9.0 / v0.12.0 release train: coding CLIs move out of Swiss Knife into first-class bash-manual harnesses; daemon execution gains MiMo Code, Qwen Code, and Oh-My-Pi backends; the Zhipu picker exposes GLM-5.2; and new agents default to a 300k context window. The release keeps the previous release-log boundary clear: ToolCallGuard, structured tool-error recovery, Ctrl+O cockpit work, /setup keep-current behavior, and Telegram reconnect recovery remain same-window context already covered by 20260613-1, not newly claimed post-tag work here.',
+  summaryZh:
+    '这是 v0.9.0 / v0.12.0 发布列车之后的一次聚焦补丁：coding CLI 从 Swiss Knife 迁出，成为 bash-manual 的一等 harness；daemon 执行新增 MiMo Code、Qwen Code、Oh-My-Pi 后端；Zhipu 模型选择器暴露 GLM-5.2；新 agent 默认 context window 提升到 300k。本文保持清晰的 release-log 边界：ToolCallGuard、结构化工具错误恢复、Ctrl+O cockpit、/setup keep-current 行为与 Telegram 重连恢复，是 20260613-1 已覆盖的同窗口 context，不在此重复声明为 post-tag 新变化。',
+  features: [
+    {
+      titleEn: 'Coding CLIs became first-class bash harnesses',
+      titleZh: 'Coding CLI 成为一等 bash harness',
+      leadEn:
+        'The kernel now owns reusable bash-manual harness pages for coding CLIs, while the TUI trims Swiss Knife back to small utilities and routes operator guidance to the new home.',
+      leadZh:
+        '内核现在承载可复用的 bash-manual coding CLI harness 页面；TUI 则把 Swiss Knife 收回到小工具定位，并把操作指引导向新的归属地。',
+      bulletsEn: [
+        'Kernel #277 adds bash-manual subskills for Claude Code, OpenAI Codex, OpenCode, Cursor Agent, MiMo Code, Qwen Code, and Oh-My-Pi.',
+        'Docs-first candidate pages also reserve space for Gemini CLI, Aider, Goose, OpenHands, Crush, and Zed/ACP without pretending those integrations are release-ready.',
+        'TUI #335 removes the old coding-CLI guidance from Swiss Knife and replaces it with a bash-cli-harnesses redirect, keeping Swiss Knife focused on MiniMax, vision, listen, academic research, HTML reports, Xiaomi MiMo, and Zhipu coding-plan discovery.',
+      ],
+      bulletsZh: [
+        '内核 #277 为 Claude Code、OpenAI Codex、OpenCode、Cursor Agent、MiMo Code、Qwen Code、Oh-My-Pi 新增 bash-manual 子技能。',
+        'Gemini CLI、Aider、Goose、OpenHands、Crush、Zed/ACP 保留为 docs-first 候选页，不把尚未成熟的集成写成已发布能力。',
+        'TUI #335 从 Swiss Knife 移除旧的 coding-CLI 指引，改为 bash-cli-harnesses redirect，让 Swiss Knife 回到 MiniMax、vision、listen、academic research、HTML reports、Xiaomi MiMo、Zhipu coding-plan discovery 等小工具定位。',
+      ],
+      whyEn:
+        'Operator guidance now lives next to the shell tool that actually runs long-lived CLI work, reducing duplicated docs and making future harnesses easier to add safely.',
+      whyZh:
+        '操作指引现在靠近真正执行长时间 CLI 工作的 shell 工具，减少重复文档，也让后续 harness 更容易安全扩展。',
+    },
+    {
+      titleEn: 'Daemon coding backend coverage expanded',
+      titleZh: 'Daemon coding 后端覆盖面扩大',
+      leadEn:
+        'Kernel v0.12.2 adds three more provider-family daemon backends while keeping the higher-level daemon workflow unchanged for agents.',
+      leadZh:
+        '内核 v0.12.2 新增三个 provider-family daemon 后端，同时保持 agent 侧高层 daemon workflow 不变。',
+      bulletsEn: [
+        'Kernel #275 adds MiMo Code as mimocode / mimo and Qwen Code as qwen-code / qwen through the OpenCode-family JSON runner.',
+        'Kernel #276 adds Oh-My-Pi as oh-my-pi / omp, giving agents another coding-agent route when that CLI is the right fit.',
+        'The daemon documentation and i18n strings were updated so the new backends appear in the same operational vocabulary as existing CLI backends.',
+      ],
+      bulletsZh: [
+        '内核 #275 通过 OpenCode-family JSON runner 新增 MiMo Code（mimocode / mimo）与 Qwen Code（qwen-code / qwen）。',
+        '内核 #276 新增 Oh-My-Pi（oh-my-pi / omp），当该 CLI 更合适时，agent 又多一个 coding-agent 路由。',
+        'daemon 文档与 i18n 字符串同步更新，使新后端使用与既有 CLI 后端一致的操作语言。',
+      ],
+      whyEn:
+        'LingTai agents can route isolated coding work to more external agent families without changing the parent workflow or treating each CLI as a one-off exception.',
+      whyZh:
+        'LingTai agent 可以把隔离的 coding 工作路由到更多外部 agent 家族，而不需要改变父层 workflow，也不必把每个 CLI 当作一次性例外。',
+    },
+    {
+      titleEn: 'GLM-5.2 and a larger default context window landed in the TUI',
+      titleZh: 'TUI 纳入 GLM-5.2，并提升默认 context window',
+      leadEn:
+        'The TUI side of this patch is small but user-visible: Zhipu users can pick GLM-5.2, and new/default project agents start with a larger context budget.',
+      leadZh:
+        '这次 TUI 侧改动小但可见：Zhipu 用户可以选择 GLM-5.2，新建/默认项目 agent 则获得更大的上下文预算。',
+      bulletsEn: [
+        'Commit 9e6ae53 adds GLM-5.2 to the Zhipu model picker ahead of the older GLM models and registers its vision capability.',
+        'TUI #339 raises the default agent context window to 300k for new/default project agents.',
+        'Both changes are small release-train polish: they make stronger models and larger work windows available without changing the release workflow.',
+      ],
+      bulletsZh: [
+        'commit 9e6ae53 把 GLM-5.2 加入 Zhipu 模型选择器，排在旧 GLM 模型之前，并登记其 vision 能力。',
+        'TUI #339 将新建/默认项目 agent 的默认 context window 提升到 300k。',
+        '两者都是小版本列车上的体验打磨：更强模型和更大工作窗口可用，但不改变 release workflow。',
+      ],
+      whyEn:
+        'Model choice and context budget are day-to-day operator ergonomics. This patch makes the stronger preset and safer default capacity available before the next larger release train.',
+      whyZh:
+        '模型选择与上下文预算都是日常操作体验。这个补丁在下一轮大版本之前，先把更强 preset 与更稳妥的默认容量交到用户手里。',
+    },
+    {
+      titleEn: 'Same-window reliability work remains context, not double-counted change',
+      titleZh: '同窗口可靠性工作作为 context，不重复计入新变化',
+      leadEn:
+        'This page intentionally separates strict post-tag delta from the broader release window, so the small patch does not over-claim work already documented in 20260613-1.',
+      leadZh:
+        '本文刻意区分严格 post-tag delta 与更宽的 release window，避免把 20260613-1 已写过的工作重复声明为本补丁的新变化。',
+      bulletsEn: [
+        'ToolCallGuard (#270), idle-care/watchdog guidance (#271), and structured tool-error recovery metadata (#273) remain the kernel governance/recovery foundation covered by the previous release log.',
+        'The TUI Ctrl+O tool-noise ladder (#325, #330, #331, #332, #333, #334) and /setup keep-current fix (#327) shipped in v0.9.0 and remain context for the current operator-facing polish.',
+        'Telegram polling disconnect recovery (#35) and README product-positioning work (#219/#220) are referenced as release-window context rather than new v0.9.1/v0.12.2 delta.',
+        'PR #340 is still open and is not included in this release.',
+      ],
+      bulletsZh: [
+        'ToolCallGuard（#270）、idle-care/watchdog 指引（#271）、结构化工具错误恢复元数据（#273）仍是上一篇 release log 已覆盖的内核治理/恢复基础。',
+        'TUI Ctrl+O 工具噪音阶梯（#325、#330、#331、#332、#333、#334）与 /setup keep-current 修复（#327）已在 v0.9.0 交付，是当前操作体验打磨的上下文。',
+        'Telegram polling 断线恢复（#35）和 README 产品定位（#219/#220）作为 release-window context 引用，而不是新的 v0.9.1/v0.12.2 delta。',
+        'PR #340 仍处于 open 状态，不包含在本次发布中。',
+      ],
+      whyEn:
+        'Small patch notes are most useful when they are honest about scope. The context explains why this patch matters without blurring what actually changed after the last tags.',
+      whyZh:
+        '小版本说明最重要的是范围诚实。context 解释本补丁为何重要，但不模糊上一个 tag 之后到底改了什么。',
+    },
+  ],
+  contributors: ['huangzesen'],
+  validation: {
+    commit: 'lingtai d73aaaa6afa042b1080a57f34871194840b3b2b2 / lingtai-kernel c43434f12155c9bb6d20fcecb6b5831dd7852c34',
+    items: [
+      { label: 'TUI diff check', result: 'passed' },
+      { label: 'TUI tests', result: 'go test -count=1 ./... passed' },
+      { label: 'Portal web build', result: 'npm ci + npm run build passed; one known moderate npm audit warning noted' },
+      { label: 'Portal Go tests', result: 'passed' },
+      { label: 'TUI/Portal builds', result: 'lingtai-tui + lingtai-portal built successfully' },
+      { label: 'Kernel diff check', result: 'passed' },
+      { label: 'Kernel compileall', result: 'passed' },
+      { label: 'Kernel pytest release suite', result: '538 passed' },
+      { label: 'Kernel build', result: 'sdist + macOS arm64 wheel built' },
+      { label: 'Twine check', result: 'passed' },
+      { label: 'PyPI JSON verification', result: 'lingtai 0.12.2 files visible' },
+      { label: 'Homebrew tap', result: 'lingtai-tui.rb at version 0.9.1' },
+    ],
+  },
+  links: [
+    { label: 'TUI GitHub release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.9.1' },
+    { label: 'Kernel GitHub release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.12.2' },
+    { label: 'PyPI', href: 'https://pypi.org/project/lingtai/0.12.2/' },
+    { label: 'Homebrew formula', href: 'https://github.com/Lingtai-AI/homebrew-lingtai/blob/main/lingtai-tui.rb' },
+    { label: 'TUI commit', href: 'https://github.com/Lingtai-AI/lingtai/commit/d73aaaa6afa042b1080a57f34871194840b3b2b2' },
+    { label: 'Kernel commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/c43434f12155c9bb6d20fcecb6b5831dd7852c34' },
+  ],
+};
 const v0_9_0_v0_12_0: Release = {
   id: '20260613-1',
   version: 'v0.9.0 / v0.12.0',
@@ -1221,7 +1358,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
