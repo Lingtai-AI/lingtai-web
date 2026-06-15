@@ -148,7 +148,22 @@ const v0_12_3_kernel: Release = {
         '这次发布把一条来之不易的工作习惯变成默认方法：昂贵上下文用于判断，便宜且隔离的 worker 用来处理噪声。',
     },
   ],
-  contributors: ['huangzesen', 'Jason H', 'GLM 5.2', 'MiMo', 'DeepSeek', 'Claude Code'],
+  contributors: [
+    'huangzesen',
+    'Jason H',
+    'TZZheng',
+    'ktwu01',
+    '9s5bz2jvd2-lang',
+    '888yzbt888',
+    'a-green-hand-jack',
+    'antimonyz',
+    'BatalloLu',
+    'qingyong-hu',
+    'vvvhappyvvv',
+    'xczics',
+    'ZacharyHu0',
+    'ZigongXu',
+  ],
   validation: {
     commit: '73253e514888abf26da27e00bb417d2fc12ff054',
     items: [
