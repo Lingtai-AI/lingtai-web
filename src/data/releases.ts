@@ -63,6 +63,112 @@ export interface Release {
 
 
 
+const v0_12_3_kernel: Release = {
+  id: '20260614-1',
+  version: 'v0.12.3',
+  titleEn: 'LingTai kernel v0.12.3',
+  titleZh: '灵台内核 v0.12.3',
+  date: '2026-06-14',
+  pkg: 'lingtai',
+  tag: 'v0.12.3',
+  install: 'python -m pip install --upgrade lingtai==0.12.3',
+  runtimeNoteEn:
+    'This is a kernel-only release for the LingTai runtime package. TUI/Portal and recipe changes are intentionally outside this release scope; normal projects that are managed by the TUI may continue to receive kernel updates through their usual runtime environment, while bare pip install remains useful for release, diagnostic, and clean-venv validation paths.',
+  runtimeNoteZh:
+    '这是一次仅面向灵台内核/runtime 包的发布。TUI/Portal 与 recipe 变更不在本轮范围内；由 TUI 管理的普通项目仍通过既有 runtime 环境获得内核更新，裸 pip install 更适合发布、诊断或 clean-venv 验证路径。',
+  summaryEn:
+    'A focused kernel release after v0.12.2: daemon tasks can now carry explicit one-run MCP registrations, /daemon list gains historical run records with search/filter metadata and lazy data-version migration, and the agent procedures now teach a pad-first daemon workflow that protects the parent context while sending noisy work to disposable workers.',
+  summaryZh:
+    '这是 v0.12.2 之后的一次聚焦内核发布：daemon task 现在可以携带显式的一次性 MCP 注册；/daemon list 获得历史运行记录、搜索/过滤元数据与 data_version 懒迁移；agent procedures 也把“先写 pad、父灵运筹、daemon 处理噪声”的工作流正式沉淀下来，以保护主上下文。',
+  features: [
+    {
+      titleEn: 'Task-scoped MCP tools for daemon work',
+      titleZh: 'daemon 任务级 MCP 工具',
+      leadEn:
+        'Daemon tasks can now declare the MCP servers they need for a single run, instead of assuming the parent agent should expose every integration to every worker.',
+      leadZh:
+        'daemon task 现在可以为单次运行声明自己需要的 MCP server，而不再假设父 agent 要把所有集成暴露给每个 worker。',
+      bulletsEn: [
+        '`tasks[].mcp` accepts one-run registration objects for stdio or HTTP MCP servers, including command/args/env or URL/header configuration.',
+        'The daemon prompt receives redacted YAML context for the task-scoped MCPs; secrets are not copied into the visible transcript.',
+        'LingTai-backed daemon runs launch and clean up task-scoped MCP clients, and CLI-backed daemons can still receive the contract as visible context.',
+      ],
+      bulletsZh: [
+        '`tasks[].mcp` 接受一次性 registration object，可描述 stdio 或 HTTP MCP server，包括 command/args/env 或 URL/header 配置。',
+        'daemon prompt 会收到已脱敏的 YAML 上下文；secret 不会被复制进可见 transcript。',
+        'LingTai 后端 daemon 会启动并清理任务级 MCP client；CLI 后端 daemon 也能以可见上下文接收这份契约。',
+      ],
+      whyEn:
+        'Specialized workers can borrow exactly the integrations needed for their job without widening the parent agent surface or making daemon prompts depend on ambient, hidden tools.',
+      whyZh:
+        '专门的 worker 可以只借用本任务需要的集成，不必扩大父 agent 的工具面，也不让 daemon prompt 依赖隐含的环境工具。',
+    },
+    {
+      titleEn: 'Daemon list becomes a progressive-disclosure index',
+      titleZh: 'daemon list 成为渐进披露索引',
+      leadEn:
+        '`daemon(action="list")` now reads persistent `daemon.json` records instead of forcing the parent to mine raw logs first.',
+      leadZh:
+        '`daemon(action="list")` 现在读取持久化的 `daemon.json` 记录，不再要求父 agent 一上来就挖原始日志。',
+      bulletsEn: [
+        'Historical run records expose ids, backend, task preview, status, result paths, prompt preview paths, group ids, visible call parameters, and search/filter-friendly metadata.',
+        'Missing, invalid, non-object, or stale records are rebuilt best-effort at list time from the run directory, prompt file, result file, and event-log tail.',
+        '`data_version` and `migration` audit fields make rebuilt records explicit while preserving unknown backend-specific fields where possible.',
+      ],
+      bulletsZh: [
+        '历史运行记录会暴露 id、backend、task preview、status、result path、prompt preview path、group id、可见 call 参数，以及便于搜索/过滤的元数据。',
+        '缺失、无效、非 object 或旧版本记录会在 list 时从 run 目录、prompt 文件、result 文件与 event log 尾部 best-effort 重建。',
+        '`data_version` 与 `migration` 审计字段会明确标记重建记录，并尽量保留未知的后端专属字段。',
+      ],
+      whyEn:
+        'The normal inspection path is now list first, read the relevant artifact second, and only grep raw traces when needed; that keeps parent context and human attention clean.',
+      whyZh:
+        '常规排查路径变成先 list、再读相关 artifact、必要时才 grep 原始 trace；这能节省父 agent 上下文，也节省人的注意力。',
+    },
+    {
+      titleEn: 'Daemon workflow discipline is now part of the kernel manuals',
+      titleZh: 'daemon 工作流纪律进入内核手册',
+      leadEn:
+        'The procedures prompt and manual now describe daemon use as a planning pattern, not just a tool call.',
+      leadZh:
+        'procedures prompt 与 manual 现在把 daemon 用法写成一种规划模式，而不只是一个工具调用。',
+      bulletsEn: [
+        'Before substantial daemon work, the parent should record objective, assumptions, daemon split, expected artifacts, stop criteria, and who or what is waiting in the pad or task document.',
+        'The parent agent plans, synthesizes, decides, and verifies; daemon workers handle noisy scans, deterministic transforms, read-only reviews, batch conversion, and log mining.',
+        'The parent reclaims evidence and conclusions, then persists durable results without dragging the full daemon transcript back into the main context.',
+      ],
+      bulletsZh: [
+        '在较大的 daemon 工作开始前，父 agent 应在 pad 或任务文档中记录 objective、assumptions、daemon split、expected artifacts、stop criteria，以及谁/什么在等待。',
+        '父 agent 负责规划、综合、决策与验证；daemon worker 负责嘈杂扫描、确定性转换、只读 review、批处理转换与日志挖掘。',
+        '父 agent 收回证据与结论，并把可持久化结果沉淀下来，而不是把 daemon transcript 全量拖回主上下文。',
+      ],
+      whyEn:
+        'This release turns a hard-won operating habit into the default method: spend the expensive context on judgment, and spend cheap isolated workers on noise.',
+      whyZh:
+        '这次发布把一条来之不易的工作习惯变成默认方法：昂贵上下文用于判断，便宜且隔离的 worker 用来处理噪声。',
+    },
+  ],
+  contributors: ['huangzesen', 'Jason H', 'GLM 5.2', 'MiMo', 'DeepSeek', 'Claude Code'],
+  validation: {
+    commit: '73253e514888abf26da27e00bb417d2fc12ff054',
+    items: [
+      { label: 'Whitespace / diff hygiene', result: '`git diff --check v0.12.2...HEAD` passed' },
+      { label: 'Python compile check', result: '`python -m compileall -q src tests` passed' },
+      { label: 'Focused pytest release suite', result: '448 passed in 46.80s' },
+      { label: 'Kernel build', result: 'sdist + macOS arm64 wheel built for lingtai 0.12.3' },
+      { label: 'Twine package check', result: '`python -m twine check dist/*` passed' },
+      { label: 'PyPI visibility', result: 'PyPI JSON and `pip index --no-cache-dir` show 0.12.3 as latest' },
+    ],
+  },
+  links: [
+    { label: 'Kernel GitHub release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.12.3' },
+    { label: 'PyPI', href: 'https://pypi.org/project/lingtai/0.12.3/' },
+    { label: 'Compare v0.12.2...v0.12.3', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.12.2...v0.12.3' },
+    { label: 'Daemon MCP/list PR #289', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/289' },
+    { label: 'Daemon workflow PR #290', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/290' },
+  ],
+};
+
 const v0_9_1_v0_12_2: Release = {
   id: '20260613-2',
   version: 'v0.9.1 / v0.12.2',
@@ -1358,7 +1464,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
