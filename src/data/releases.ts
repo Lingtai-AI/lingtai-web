@@ -63,6 +63,140 @@ export interface Release {
 
 
 
+const v0_12_4_kernel: Release = {
+  id: '20260620-1',
+  version: 'v0.12.4',
+  titleEn: 'LingTai kernel v0.12.4',
+  titleZh: '灵台内核 v0.12.4',
+  date: '2026-06-20',
+  pkg: 'lingtai',
+  tag: 'v0.12.4',
+  install: 'python -m pip install --upgrade lingtai==0.12.4',
+  runtimeNoteEn:
+    'This is a kernel-only release for the LingTai runtime package. There are no TUI/Portal or recipe changes in this window. Projects managed by the TUI continue to receive kernel updates through their usual runtime environment, while bare pip install remains the release, diagnostic, and clean-venv validation path. The whole release is about one thing: giving the Codex provider path a stable, well-scoped cache identity for root agents and daemon runs.',
+  runtimeNoteZh:
+    '这是一次仅面向灵台内核/runtime 包的发布，本轮不含 TUI/Portal 与 recipe 变更。由 TUI 管理的项目仍通过既有 runtime 环境获得内核更新，裸 pip install 仍是发布、诊断与 clean-venv 验证路径。整轮发布只围绕一件事：为 Codex provider 路径上的 root agent 与 daemon run 提供稳定且作用域清晰的缓存身份。',
+  summaryEn:
+    'A tightly scoped kernel release after v0.12.3 focused entirely on Codex cache identity. Root agents now derive a stable 8-character sha256-prefix hash from the resolved agent/init.json path and present it byte-identically as the Codex session-id, thread-id, and prompt_cache_key, so repeated turns from the same agent look like one continuous conversation to the provider. LingTai-backend daemon runs stop reusing one parent/global identity: each run gets its own daemon-scoped LLMService and a Codex anchor derived from its resolved per-run daemon.json path, and preset daemons keep a dedicated service whose Codex presets also receive daemon anchors. The net effect is a practical improvement in Codex prompt-cache hit opportunity without crossing isolation boundaries between independent runs.',
+  summaryZh:
+    '这是 v0.12.3 之后一次范围极窄的内核发布，全部聚焦于 Codex 缓存身份。root agent 现在从 resolved agent/init.json 路径派生一个稳定的 8 位 sha256 前缀哈希，并将其逐字节一致地用作 Codex session-id、thread-id 与 prompt_cache_key，使同一 agent 的多轮对话在 provider 眼中像一段连续会话。LingTai 后端 daemon run 不再共用一个父级/全局身份：每次 run 获得自己 daemon 作用域的 LLMService，以及从其 resolved per-run daemon.json 路径派生的 Codex anchor；preset daemon 保留专用 service，其 Codex preset 同样获得 daemon anchor。整体效果是在不跨越独立 run 隔离边界的前提下，实际提升 Codex prompt-cache 的命中机会。',
+  features: [
+    {
+      titleEn: 'Root agent cache identity is stable and aligned',
+      titleZh: 'root agent 缓存身份稳定且对齐',
+      leadEn:
+        'A root agent now has a single, deterministic cache identity that it presents to Codex across every turn of its life, instead of values that drifted or were generated fresh per request.',
+      leadZh:
+        'root agent 现在拥有单一、确定性的缓存身份，并在其整个生命周期的每一轮都向 Codex 呈现该身份，而不是逐请求漂移或重新生成。',
+      bulletsEn: [
+        'The kernel derives a stable 8-character hash as the first 8 hex characters of the sha256 of the resolved agent/init.json path; resolving the path first means the same agent maps to the same hash regardless of how it was addressed.',
+        'That single hash is used byte-identically as the Codex session-id, the thread-id, and the prompt_cache_key, so all three routing/cache surfaces agree for the same logical agent.',
+        'Because the identity is derived from a resolved on-disk path rather than per-call state, it is stable across restarts, reconnects, and repeated turns within the same agent.',
+      ],
+      bulletsZh: [
+        '内核取 resolved agent/init.json 路径的 sha256，截取前 8 个十六进制字符作为稳定哈希；先做路径解析意味着同一 agent 无论以何种方式被寻址都映射到同一哈希。',
+        '该哈希被逐字节一致地用作 Codex session-id、thread-id 与 prompt_cache_key，使同一逻辑 agent 的三个路由/缓存面彼此一致。',
+        '由于身份来自 resolved 磁盘路径而非逐调用状态，它在重启、重连与同一 agent 的多轮之间保持稳定。',
+      ],
+      whyEn:
+        'Codex prompt caching rewards a stable, repeated conversation identity. When session-id, thread-id, and prompt_cache_key all agree and persist, the provider can recognize that a new turn continues an existing context, so the shared prefix is served from cache instead of re-billed and re-encoded.',
+      whyZh:
+        'Codex prompt 缓存奖励稳定、重复的会话身份。当 session-id、thread-id 与 prompt_cache_key 三者一致并持续存在时，provider 能识别出新一轮是在延续既有上下文，于是共享前缀从缓存命中，而不是重新计费、重新编码。',
+    },
+    {
+      titleEn: 'Daemon runs get their own scoped cache anchors',
+      titleZh: 'daemon run 获得自己作用域的缓存 anchor',
+      leadEn:
+        'LingTai-backend daemon runs no longer borrow the parent or a single global identity. Each run is given a daemon-scoped service and a per-run Codex anchor, so daemons are both cacheable and isolated.',
+      leadZh:
+        'LingTai 后端 daemon run 不再借用父级或单一全局身份。每次 run 获得 daemon 作用域的 service 与 per-run 的 Codex anchor，使 daemon 既可缓存又彼此隔离。',
+      bulletsEn: [
+        'Each LingTai-backend daemon run now runs through its own daemon-scoped LLMService rather than sharing the parent agent service.',
+        'The Codex anchor for a run is derived from the resolved per-run daemon.json path, using the same resolved-path hashing scheme as the root-agent identity, so each run has a distinct but stable anchor.',
+        'Preset daemons keep their own dedicated service, and the Codex presets they use now also receive daemon anchors, so preset-driven daemon work shares the same identity discipline as ad-hoc runs.',
+      ],
+      bulletsZh: [
+        '每个 LingTai 后端 daemon run 现在通过自己 daemon 作用域的 LLMService 运行，而不是共用父 agent service。',
+        '某次 run 的 Codex anchor 从 resolved per-run daemon.json 路径派生，采用与 root agent 身份相同的 resolved-path 哈希方案，使每次 run 拥有各自独立但稳定的 anchor。',
+        'preset daemon 保留自己专用的 service，它们使用的 Codex preset 现在同样获得 daemon anchor，使 preset 驱动的 daemon 工作与临时 run 共享同一身份纪律。',
+      ],
+      whyEn:
+        'Daemons are how a LingTai agent offloads isolated work. If every daemon reused one parent/global identity, independent runs would collide in the same cache namespace and poison each other; if each generated an unstable identity, none would ever hit cache. Per-run resolved-path anchors give each daemon a stable identity of its own while keeping independent runs cleanly separated.',
+      whyZh:
+        'daemon 是 LingTai agent 卸载隔离工作的方式。如果每个 daemon 都复用一个父级/全局身份，独立 run 会在同一缓存命名空间里相互碰撞、彼此污染；如果各自生成不稳定身份，则谁都无法命中缓存。per-run 的 resolved-path anchor 让每个 daemon 拥有自己稳定的身份，同时让独立 run 保持干净隔离。',
+    },
+    {
+      titleEn: 'Why the cache rate rises, and why hits did not happen before',
+      titleZh: '为什么缓存命中率上升，以及此前为何未命中',
+      leadEn:
+        'This release is small in code but specific in mechanism. It is worth stating plainly what changed in cache behavior and why the previous arrangement left hits on the table.',
+      leadZh:
+        '本轮代码量小，但机制具体。值得明确说明缓存行为到底改了什么，以及此前的安排为何把命中白白浪费掉。',
+      bulletsEn: [
+        'After: repeated turns from the same root agent present one stable, aligned routing/cache identity to Codex, so the provider treats them as a continuing conversation and serves the shared prefix from cache.',
+        'After: daemon runs no longer all reuse a single parent/global identity nor generate unstable per-call identities; within one run, session-id, thread-id, and prompt_cache_key align.',
+        'Before: session-id, thread-id, and prompt_cache_key were not stable or aligned enough for root agents and daemon runs, so equivalent prompts looked unrelated to Codex and missed the cache.',
+        'Before: daemon runs could share a parent service/cache identity or collide and poison each other, so prompts that should have reused a prefix either crossed isolation boundaries or invalidated each other.',
+      ],
+      bulletsZh: [
+        '改动后：同一 root agent 的多轮向 Codex 呈现单一、稳定、对齐的路由/缓存身份，provider 将其视为延续的会话，并从缓存提供共享前缀。',
+        '改动后：daemon run 不再全部复用单一父级/全局身份，也不再生成逐调用的不稳定身份；在一次 run 内，session-id、thread-id 与 prompt_cache_key 对齐。',
+        '改动前：root agent 与 daemon run 的 session-id、thread-id 与 prompt_cache_key 不够稳定或不够对齐，等价 prompt 在 Codex 看来彼此无关，因而错过缓存。',
+        '改动前：daemon run 可能共用父级 service/缓存身份，或相互碰撞、彼此污染，于是本应复用前缀的 prompt 要么越过隔离边界，要么使彼此失效。',
+      ],
+      whyEn:
+        'Prompt caching is a recognition problem: the provider only reuses work when it can recognize that two requests share a logical conversation. The previous identity scheme made that recognition unreliable for exactly the two units that repeat the most — root agents and daemon runs. Fixing identity at those two boundaries is where the hit-rate improvement comes from.',
+      whyZh:
+        'prompt 缓存本质是一个识别问题：只有当 provider 能识别两次请求属于同一逻辑会话时，才会复用已有工作。此前的身份方案恰恰让最常重复的两个单元——root agent 与 daemon run——的识别变得不可靠。在这两个边界上把身份固定下来，正是命中率提升的来源。',
+    },
+    {
+      titleEn: 'How this compares to OpenClaw, Hermes, and Codex CLI',
+      titleZh: '与 OpenClaw、Hermes、Codex CLI 的对比',
+      leadEn:
+        'This is an architectural comparison, not a benchmark claim. The shared lesson across external CLI/proxy systems is that cache reuse follows whoever owns a stable conversation identity; v0.12.4 makes LingTai own that identity at the agent and run level.',
+      leadZh:
+        '这是架构层面的对比，而非基准测试结论。外部 CLI/proxy 系统的共同经验是：缓存复用跟随谁持有稳定的会话身份；v0.12.4 让 LingTai 在 agent 与 run 级别持有该身份。',
+      bulletsEn: [
+        'External coding CLIs and provider proxies (Codex CLI, and CLI/proxy systems in the same family as OpenClaw and Hermes) tend to preserve a stable CLI-side session/thread/conversation identity across turns, which is what lets the provider reuse the cached prefix.',
+        'Before v0.12.4, LingTai did not consistently present such a stable identity for its own repeated units, so it could not benefit from the same provider-side reuse even when the prompts were effectively continuations.',
+        'v0.12.4 gives LingTai its own stable agent/run anchors derived from resolved paths, so Codex sees the same logical unit consistently across turns — the same property that makes CLI-side sessions cache well.',
+        'The difference from a single long-lived CLI session is isolation: LingTai still keeps independent daemons separate via per-run anchors, so it gains the reuse benefit without merging unrelated runs into one shared identity.',
+      ],
+      bulletsZh: [
+        '外部 coding CLI 与 provider proxy（Codex CLI，以及与 OpenClaw、Hermes 同类的 CLI/proxy 系统）通常在多轮之间保持稳定的 CLI 侧 session/thread/conversation 身份，这正是 provider 得以复用缓存前缀的原因。',
+        '在 v0.12.4 之前，LingTai 没有为自己重复的单元一致地呈现这样的稳定身份，因此即便 prompt 实质上是延续，也无法享受同样的 provider 侧复用。',
+        'v0.12.4 让 LingTai 拥有从 resolved 路径派生的、属于自己的稳定 agent/run anchor，于是 Codex 在多轮之间一致地看到同一逻辑单元——这正是 CLI 侧 session 能良好缓存的同一性质。',
+        '与单一长生命周期 CLI session 的区别在于隔离：LingTai 仍通过 per-run anchor 将独立 daemon 分开，因此在获得复用收益的同时，不会把无关 run 合并成一个共享身份。',
+      ],
+      whyEn:
+        'The point of the comparison is to be honest about where the gain comes from. LingTai is not inventing a new caching trick; it is adopting the same stable-identity discipline that well-behaved CLIs already rely on, and applying it at the agent and daemon-run boundaries that are specific to a LingTai network.',
+      whyZh:
+        '这组对比的目的是诚实地说明收益来源。LingTai 并没有发明新的缓存技巧；它采用的是良好 CLI 早已依赖的同一套稳定身份纪律，并把它应用到 LingTai 网络特有的 agent 与 daemon-run 边界上。',
+    },
+  ],
+  contributors: [
+    'huangzesen',
+    'Jason H',
+  ],
+  validation: {
+    commit: 'c6f03785c1d911ce3c549f59aa6fa331c44e8d5e',
+    items: [
+      { label: 'Kernel pytest release suite', result: '2273 passed / 4 skipped' },
+      { label: 'Kernel build', result: '`python -m build` produced sdist + macOS arm64 wheel for lingtai 0.12.4' },
+      { label: 'Twine package check', result: '`python -m twine check dist/*` passed' },
+      { label: 'Clean-venv validation', result: 'fresh venv install and import of lingtai 0.12.4 passed' },
+      { label: 'Release tag', result: 'v0.12.4 at commit c6f03785c1d911ce3c549f59aa6fa331c44e8d5e' },
+      { label: 'PyPI visibility', result: 'lingtai 0.12.4 published and visible on PyPI' },
+    ],
+  },
+  links: [
+    { label: 'Kernel GitHub release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.12.4' },
+    { label: 'PyPI', href: 'https://pypi.org/project/lingtai/0.12.4/' },
+    { label: 'Compare v0.12.3...v0.12.4', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.12.3...v0.12.4' },
+    { label: 'Release commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/c6f03785c1d911ce3c549f59aa6fa331c44e8d5e' },
+  ],
+};
+
 const v0_12_3_kernel: Release = {
   id: '20260614-1',
   version: 'v0.12.3',
@@ -1479,7 +1613,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
