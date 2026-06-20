@@ -114,6 +114,28 @@ The caution isn't theoretical. The `Hermes` runtime lived through an instructive
 
 The lesson generalizes cleanly: there is a real boundary between **body fields** and **HTTP headers**, and they are not interchangeable. Quietly deleting cache-affinity *headers* can blow up cost even when behavior looks unchanged. And tracing the lineage of these runtimes (`OpenClaw` inherits much of its cache/session logic from an internalized `Pi/pi-ai` runtime line) shows stable cache-affinity handling recurring as a theme across the family — inherited and re-derived rather than invented once. It is a standing concern, not a footnote.
 
+## The before/after we wanted to see in our own ledgers
+
+The ecosystem stories above are other people's. What finally made the contract feel urgent was looking at our own anonymized historical token ledgers and finding the same shape staring back. These are aggregate windows from production runs — anonymized, with no session identity worth quoting — but the pattern is consistent enough to be worth showing.
+
+The recurring symptom was a **cached-token plateau**: a long run of consecutive calls reporting the *exact same* positive cached-token count, while the input tokens around it drifted upward as the conversation grew. A few windows we pulled:
+
+| Ledger window (anonymized) | Consecutive calls | Cached tokens (held flat) | Input tokens around it | Cache identity recorded? |
+| --- | --- | --- | --- | --- |
+| One production window | 136 | 33,280 | grew ~53k → ~55k+ | no session/thread/prompt-cache-key |
+| Another long run | 68 | 99,328 | ~149k–151k | no prompt-cache-key |
+| A later, instrumented run | 30 | 194,048 | (wake-style calls) | same session id + thread id; **prompt cache key null/absent** |
+
+The first two windows are the "before" world in its purest form: tens to hundreds of calls pinned to one positive cached-token number, with **no** cache-identity metadata recorded at all. The cache was clearly hitting *something* — the number was positive and stable — but the warm prefix was not growing as the conversation grew, and nothing in the ledger let us tell whether that stability was intentional affinity or an accidentally stale bucket. Raw cache-hit numbers alone simply could not answer the question.
+
+The third window is the more uncomfortable one, because it came *after* we had started recording more. Here we could finally see a stable session id and thread id holding across 30 consecutive wake-style calls — real, observable affinity at the header level — but the body's `prompt_cache_key` was still null/absent in the recorded metadata. So we could see the headers were stable, yet we could not prove the body key was being carried alongside them, and no rotation event appeared even though a plateau this long is exactly what a conservative "rotate after N identical hits" policy is meant to catch. (Other instrumented windows showed the same gap: ~50 consecutive calls flat at 79,872, and ~46 flat at 52,736, each with session/thread visible but the prompt key absent.)
+
+That is the "before": **cached-token plateaus without reliable cache identity.** Sometimes no identity at all; sometimes stable headers but an unrecorded body key; in every case, no way to distinguish a healthy warm cache from a silently stale one, and no rotation signal when a plateau dragged on.
+
+The "after" we want is a contract, not a hope. The intended post-fix signal is that every Codex request carries the *same* current affinity id in three places at once — the body's `prompt_cache_key`, the `session-id` header, and the `thread-id` header — and that the same id is written into usage metadata so it can be audited from the ledger alone. If the cached-token reading stays identical across a bounded run of positive hits (our policy uses 8), the current id rotates persistently and emits a `codex_cache_affinity_rotated` event, and subsequent calls continue on the new id. That turns the old plateau from "mysterious cost behavior" into observable state with a bounded escape hatch.
+
+To be precise about what is and isn't settled: these ledger windows are *exactly* the kind of evidence that made us add both the identity invariants and the rotation observability — they are not a claim that every live path is already fixed. The live investigation that surfaced the third window is, in fact, why we now require the body key and both headers to be recorded *together*: so the next time a plateau like this appears, the ledger can answer in one line whether the contract held.
+
 ## What LingTai does with the contract
 
 We adopted the official baseline and then decided *when* the identity is allowed to change. The identity is anchored to the durable thing — the agent / workstream — and never to anything that churns. Concretely, we do **not** derive it from the latest API-call id, the latest tool-call id, a fresh random UUID per request, or a molt/refresh timestamp. We derive a short, stable hash from the resolved agent identity and reuse it across calls and across molts: molting wipes an agent's conversation, but its identity persists, so its cache affinity should persist too.
