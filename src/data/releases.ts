@@ -63,6 +63,136 @@ export interface Release {
 
 
 
+
+const v0_13_0_kernel_v0_9_3_tui: Release = {
+  id: '20260620-2',
+  version: 'Kernel v0.13.0 · TUI/Portal v0.9.3',
+  titleEn: 'LingTai release day: context hygiene, notification history, and honest backends',
+  titleZh: 'LingTai release day：上下文卫生、通知历史与更诚实的 backend',
+  date: '2026-06-20',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.13.0 · TUI/Portal v0.9.3',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. The kernel package `lingtai` v0.13.0 is published on PyPI as the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。Kernel package `lingtai` v0.13.0 已发布到 PyPI，作为 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。',
+  summaryEn:
+    'A paired kernel and TUI/Portal release that makes long-running agents quieter, more inspectable, and easier to recover: progressive disclosure for large tool results, a dedicated notification tool, mandatory session journals before deliberate molts, persisted notification-block history, Codex header fixes, and operator views with timezone and daemon token context.',
+  summaryZh:
+    '这是一组 kernel 与 TUI/Portal 配套 release：让长时间运行的 agent 更安静、更可审计，也更容易恢复。核心变化包括大型工具结果的渐进披露、独立 notification tool、凝蜕前强制 session journal、持久化 notification-block 历史、Codex header 修复，以及带本地时区和 daemon token context 的操作界面。',
+  features: [
+    {
+      titleEn: 'Progressive disclosure for large tool results',
+      titleZh: '大型工具结果的渐进披露',
+      leadEn:
+        'Kernel v0.13.0 makes result hygiene a first-class runtime habit instead of an optional cleanup chore.',
+      leadZh:
+        'Kernel v0.13.0 把结果卫生变成运行时的一等习惯，而不是事后可做可不做的清理。',
+      bulletsEn: [
+        'Tool results now carry consistent `_tool_result_metadata` with call id, tool name, character count, threshold, and summarization guidance.',
+        '`system.summarize` can replace a context-visible blob with an agent-authored index while the original stays available in the event log.',
+        'Large-result reminders can be acknowledged without deleting the underlying tool result.',
+      ],
+      bulletsZh: [
+        '工具结果现在带稳定的 `_tool_result_metadata`，包含 call id、tool 名、字符数、阈值和摘要提示。',
+        '`system.summarize` 可以把上下文里的大块原始输出替换为 agent 自写的索引式摘要，同时原始结果仍留在 event log。',
+        'large-result reminder 可以被 acknowledge，而不会删除底层 tool result。',
+      ],
+      whyEn:
+        'Agents can keep conclusions, evidence, risks, and next steps in working context without dragging every raw build log or trace forward.',
+      whyZh:
+        'agent 可以把结论、证据、风险和下一步留在工作上下文中，而不必把每段原始 build log 或 trace 都拖着走。',
+    },
+    {
+      titleEn: 'Notification handling becomes explicit and inspectable',
+      titleZh: '通知处理变得明确且可检查',
+      leadEn:
+        'Notification operations now live in the dedicated `notification` capability, and TUI/Portal v0.9.3 can show historical notification blocks.',
+      leadZh:
+        '通知操作现在归独立的 `notification` capability 管；TUI/Portal v0.9.3 也能展示历史 notification block。',
+      bulletsEn: [
+        'The old `system.notification` / `system.dismiss` aliases are removed; lifecycle and notification surfaces are no longer mixed.',
+        'The kernel persists actual canonical notification-block snapshots for later inspection.',
+        '`/notification` can load from the sqlite event log and display those persisted snapshots.',
+      ],
+      bulletsZh: [
+        '旧的 `system.notification` / `system.dismiss` alias 已移除；生命周期操作和通知面不再混在一起。',
+        'kernel 会持久化真实的 canonical notification-block snapshot，供事后检查。',
+        '`/notification` 可以从 sqlite event log 读取并展示这些持久化 snapshot。',
+      ],
+      whyEn:
+        'When an operator asks what an agent saw, the TUI can show the actual notification object instead of reconstructing it from memory.',
+      whyZh:
+        '当操作者问 agent 当时看到了什么时，TUI 可以展示真实 notification object，而不是靠记忆重建。',
+    },
+    {
+      titleEn: 'Safer context shedding and Codex backend affinity',
+      titleZh: '更安全的凝蜕与更稳的 Codex backend affinity',
+      leadEn:
+        'The release tightens the handoff before an agent sheds context and makes the Codex backend path less ambiguous.',
+      leadZh:
+        '这次 release 收紧了 agent 丢弃上下文前的交接，也让 Codex backend 路径更少歧义。',
+      bulletsEn: [
+        'Agent-initiated `psyche.context.molt` calls must provide a valid `session_journal_path`.',
+        'The Codex backend now sends underscore `session_id` / `thread_id` headers to match the Codex CLI path.',
+        'Codex requests also include honest LingTai client-identity metadata for clearer backend-side provenance.',
+      ],
+      bulletsZh: [
+        'agent 主动调用 `psyche.context.molt` 时，必须提供合法的 `session_journal_path`。',
+        'Codex backend 现在发送下划线形式的 `session_id` / `thread_id` header，以匹配 Codex CLI 路径。',
+        'Codex request 也会携带诚实的 LingTai client-identity metadata，让 backend 侧来源更清楚。',
+      ],
+      whyEn:
+        'A molt should leave a durable handoff, and backend cache-affinity should not depend on guesswork about header spelling or client origin.',
+      whyZh:
+        '凝蜕应当留下 durable handoff；backend cache-affinity 也不应靠猜 header 拼写或 client 来源。',
+    },
+    {
+      titleEn: 'Operator views gain local time and daemon cost context',
+      titleZh: '操作者视图补上本地时间与 daemon cost context',
+      leadEn:
+        'TUI/Portal v0.9.3 makes the runtime easier to read while work is still in motion.',
+      leadZh:
+        'TUI/Portal v0.9.3 让运行中的系统更容易被读懂。',
+      bulletsEn: [
+        '`/kanban` timestamps now show local timezone context.',
+        'The daemons view shows timezone context and CLI token usage where available.',
+        'A migration version collision in the TUI metadata/state schema was fixed.',
+      ],
+      bulletsZh: [
+        '`/kanban` 时间戳现在显示本地时区。',
+        'daemons 视图会在可用时显示时区上下文和 CLI token usage。',
+        '修复了 TUI metadata/state schema 的 migration version collision。',
+      ],
+      whyEn:
+        'Small visibility improvements reduce the gap between what agents are doing and what operators can confidently verify.',
+      whyZh:
+        '这些小的可见性改进，会缩短 agent 正在做什么与操作者能确信验证什么之间的距离。',
+    },
+  ],
+  contributors: ['huangzesen'],
+  validation: {
+    commit: '0ba1584fce182463f7de3a6d1e3aa3a196eb2855 / 73d2e3ba72bd59ec8b729dd3b317d14d9ecd5ea8',
+    items: [
+      { label: 'Kernel full pytest', result: '2536 passed, 4 skipped' },
+      { label: 'Kernel build and twine check', result: 'passed; PyPI JSON and pip download verified' },
+      { label: 'TUI Go tests/build', result: 'passed' },
+      { label: 'Portal web npm ci/build', result: 'passed' },
+      { label: 'Portal Go tests/build', result: 'passed' },
+      { label: 'Homebrew tap', result: 'brew update, info, audit, and fetch verified v0.9.3' },
+      { label: 'Web release note', result: 'npm run build passed; production URLs returned HTTP 200' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.13.0' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.9.3' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.13.0/' },
+    { label: 'Homebrew tap audit fix', href: 'https://github.com/Lingtai-AI/homebrew-lingtai/pull/4' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-20/' },
+  ],
+};
+
 const v0_12_4_kernel: Release = {
   id: '20260620-1',
   version: 'v0.12.4',
@@ -1613,7 +1743,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
