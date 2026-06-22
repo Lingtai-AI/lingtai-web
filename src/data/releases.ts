@@ -182,14 +182,12 @@ const v0_14_0_kernel_v0_9_5_tui: Release = {
         '@TZZheng — merged durable tool-result replay (#297), LLM latency telemetry (#366), the dev-guide cache-hit-rate skill (#396), and a duplicate-process fix (#459); the earlier Codex reasoning-effort preset PR (#280) was closed unmerged, then the idea landed via #394.',
         '@BatalloLu — fixed setup so it preserves agent identity / legacy preset fields (#372, merged).',
         '@9s5bz2jvd2-lang (Wang Runyuan) — proposed structured daemon task capsules (#388) and terminal async daemon dispatch (#390), both closed unmerged, plus an open daemon-first policy PR (#389); the accompanying runtime issues (#409 molt keep_last, #422 large-result cleanup latency, #423 post-molt codename retrieval) are included because they framed problems this and future windows act on.',
-        'mimo-1 — LingTai network agent; co-authored TUI changes in the window.',
       ],
       bulletsZh: [
         '@huangzesen（maintainer）—— 完成了窗口的绝大部分（两个 repo 共 86 个合并 PR），涵盖 Codex 诚实化、延迟遥测、工具结果 metadata、summarize/凝蜕纪律，以及 release 本身；另有两个 PR（#369、#340）在被取代后关闭未合并。',
         '@TZZheng —— 合并了持久工具结果重放（#297）、LLM 延迟遥测（#366）、dev-guide cache-hit-rate skill（#396）与重复进程修复（#459）；更早的 Codex reasoning-effort preset PR（#280）被关闭未合并，该想法随后由 #394 落地。',
         '@BatalloLu —— 修复 setup 使其保留 agent identity / legacy preset 字段（#372，已合并）。',
         '@9s5bz2jvd2-lang（Wang Runyuan）—— 提出结构化 daemon task capsule（#388）与终端异步 daemon dispatch（#390），两者均关闭未合并，另有一个开放的 daemon-first 策略 PR（#389）；相关运行时 issue（#409 molt keep_last、#422 large-result 清理延迟、#423 凝蜕后 codename 检索）被纳入，因为它们界定了本窗口及未来窗口要处理的问题。',
-        'mimo-1 —— LingTai 网络 agent；在本窗口中共同完成 TUI 改动。',
       ],
       whyEn:
         'Recording closed-unmerged PRs and the issues behind them keeps the contributor history honest: ideas often arrive before the merge that implements them.',
@@ -197,7 +195,7 @@ const v0_14_0_kernel_v0_9_5_tui: Release = {
         '记录关闭未合并的 PR 以及它们背后的 issue，能让贡献历史保持诚实：想法往往先于实现它的那次合并到来。',
     },
   ],
-  contributors: ['huangzesen', 'TZZheng', 'BatalloLu', '9s5bz2jvd2-lang', 'mimo-1'],
+  contributors: ['huangzesen', 'TZZheng', 'BatalloLu', '9s5bz2jvd2-lang'],
   validation: {
     commit: '48afb27cc99cfdf55e0e09fc843aed0556383019 / 7f13621da5e3f93d2924571849410608973fc889',
     items: [
