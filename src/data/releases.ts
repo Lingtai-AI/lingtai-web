@@ -64,6 +64,135 @@ export interface Release {
 
 
 
+const v0_14_0_kernel_v0_9_5_tui: Release = {
+  id: '20260622-1',
+  version: 'Kernel v0.14.0 · TUI/Portal v0.9.5',
+  titleEn: 'LingTai release day: honest backends, measured latency, and a faster cockpit',
+  titleZh: 'LingTai release day：诚实的 backend、可测量的延迟，与更快的座舱',
+  date: '2026-06-22',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.14.0 · TUI/Portal v0.9.5',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. The kernel package `lingtai` v0.14.0 is published on PyPI as the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story. This entry covers the full window since the last published release log (kernel v0.13.0 / TUI v0.9.3), spanning the v0.13.1 and v0.9.4 point releases as well.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。Kernel package `lingtai` v0.14.0 已发布到 PyPI，作为 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。本条记录覆盖自上一篇发布日志（kernel v0.13.0 / TUI v0.9.3）以来的完整窗口，也包含 v0.13.1 与 v0.9.4 这两次点版本发布。',
+  summaryEn:
+    'A paired kernel and TUI/Portal release window centered on truth and measurement: the kernel sends an honest metadata envelope and the operator\'s own ChatGPT account header to Codex, records end-to-end LLM latency, surfaces long tool results in agent meta, and recovers from wedged turns; the TUI starts faster, renders fuller notification snapshots, and streams the token ledger.',
+  summaryZh:
+    '这是一组围绕「诚实」与「测量」的 kernel 与 TUI/Portal 配套发布窗口：kernel 向 Codex 发送诚实的 metadata envelope 与操作者自己的 ChatGPT 账号 header，记录端到端 LLM 延迟，在 agent meta 中呈现长工具结果，并能从卡住的 turn 中恢复；TUI 启动更快、通知快照渲染更完整，并以流式方式读取 token ledger。',
+  features: [
+    {
+      titleEn: 'Honest Codex metadata and forwarded account identity',
+      titleZh: '诚实的 Codex metadata 与转发的账号身份',
+      leadEn:
+        'Kernel v0.14.0 makes what the runtime tells the Codex backend about itself accurate rather than approximate.',
+      leadZh:
+        'Kernel v0.14.0 让运行时向 Codex backend 声称的关于自己的信息变得准确，而不是近似。',
+      bulletsEn: [
+        'Agents send an honest metadata envelope to the Codex backend so backend-side provenance reflects reality (#461).',
+        'The operator\'s own `ChatGPT-Account-ID` header is forwarded on Codex requests, so attribution and account routing are correct (#454).',
+        'Codex thinking config and the ChatGPT account-id path were repaired across the window (#457).',
+      ],
+      bulletsZh: [
+        'agent 向 Codex backend 发送诚实的 metadata envelope，让 backend 侧来源反映真实情况（#461）。',
+        '在 Codex request 上转发操作者自己的 `ChatGPT-Account-ID` header，让归属与账号路由正确（#454）。',
+        '在本窗口内修复了 Codex thinking 配置与 ChatGPT account-id 路径（#457）。',
+      ],
+      whyEn:
+        'Backend trust and cache affinity should rest on the truth about who is calling, not on guesswork or a stand-in identity.',
+      whyZh:
+        'backend 的信任与 cache affinity 应建立在「谁在调用」的真相上，而不是猜测或替身身份。',
+    },
+    {
+      titleEn: 'Measured latency and tool-result visibility',
+      titleZh: '可测量的延迟与工具结果可见性',
+      leadEn:
+        'A slow turn becomes a measurable fact, and long tool results become visible without flooding the context budget.',
+      leadZh:
+        '一个「慢 turn」变成可测量的事实；长工具结果变得可见，同时不会撑爆 context 预算。',
+      bulletsEn: [
+        'New LLM latency telemetry records provider-wait and per-phase timings (#366).',
+        'Long tool results are surfaced in agent meta with a top-10 preview list and char counts (#451, #452, #453, #465).',
+        'Tool-result metadata is nested under `_meta` and excluded from summarize sizing so it no longer distorts the context budget.',
+      ],
+      bulletsZh: [
+        '新增 LLM 延迟遥测，记录 provider-wait 与各阶段耗时（#366）。',
+        '长工具结果在 agent meta 中以「前 10 条预览列表 + 字符数」呈现（#451、#452、#453、#465）。',
+        '工具结果 metadata 被收纳到 `_meta` 之下，并从 summarize 的大小计算中排除，因此不再扭曲 context 预算。',
+      ],
+      whyEn:
+        'Operators can see where a turn\'s time goes and what evidence exists, without paying for it in working context.',
+      whyZh:
+        '操作者可以看清一个 turn 的时间花在哪里、存在哪些证据，而不必为此付出工作上下文的代价。',
+    },
+    {
+      titleEn: 'Turn recovery and calmer molt discipline',
+      titleZh: 'turn 恢复与更稳的凝蜕纪律',
+      leadEn:
+        'The window hardens recovery so a single stuck turn cannot take down a long session, and retires legacy molt-pressure config.',
+      leadZh:
+        '本窗口加固了恢复能力，让单个卡住的 turn 不会拖垮长会话，并淘汰了 legacy molt-pressure 配置。',
+      bulletsEn: [
+        'Durable tool results are replayed before heal, hardening post-tool continuation recovery (#297).',
+        'Turns poisoned by a stuck worker (`WorkerStillRunning`) now recover instead of wedging (#463).',
+        'Legacy molt-pressure configuration is ignored; molt pressure moved into agent meta (#464, #467).',
+      ],
+      bulletsZh: [
+        '持久 tool result 会在 heal 之前被重放，加固 post-tool continuation 的恢复（#297）。',
+        '被卡住的 worker 毒化的 turn（`WorkerStillRunning`）现在能恢复，而不是整个卡死（#463）。',
+        'legacy molt-pressure 配置被忽略；molt pressure 移入 agent meta（#464、#467）。',
+      ],
+      whyEn:
+        'Long-running agents need to survive a single bad turn and shed context on intent, not on a configured pressure number.',
+      whyZh:
+        '长时间运行的 agent 需要能熬过单个坏 turn，并按意图凝蜕，而不是被某个配置的压力数值牵着走。',
+    },
+    {
+      titleEn: 'A faster cockpit with fuller notifications',
+      titleZh: '更快的座舱与更完整的通知',
+      leadEn:
+        'TUI/Portal v0.9.5 trims the launch path and makes notifications more readable while work is in motion.',
+      leadZh:
+        'TUI/Portal v0.9.5 削减了启动路径，并在系统运行时让通知更易读。',
+      bulletsEn: [
+        'The authoritative session rebuild is deferred off the launch path and the session cache is concurrency-safe, so startup is faster (#397).',
+        'Notification snapshots render their full meta envelope and markdown blocks, are scrollable, and persist (#391, #392, #393).',
+        '`/daemons` lazy-loads run detail, token-ledger reads stream, and the initial mail view shows a loading banner (#395, #390, #398).',
+      ],
+      bulletsZh: [
+        'authoritative session rebuild 被移出启动路径，session cache 并发安全，因此启动更快（#397）。',
+        '通知快照渲染完整 meta envelope 与 markdown block，可滚动并持久化（#391、#392、#393）。',
+        '`/daemons` 懒加载 run detail，token-ledger 流式读取，初始 mail 视图显示 loading 横幅（#395、#390、#398）。',
+      ],
+      whyEn:
+        'Less time waiting on launch, and more of what an agent saw visible exactly where operators look.',
+      whyZh:
+        '启动时少等待，agent 看到的更多内容也恰好出现在操作者会查看的地方。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng', 'BatalloLu', 'mimo-1'],
+  validation: {
+    commit: '48afb27cc99cfdf55e0e09fc843aed0556383019 / 7f13621da5e3f93d2924571849410608973fc889',
+    items: [
+      { label: 'Kernel full pytest', result: '2635 passed, 4 skipped' },
+      { label: 'Kernel build and twine check', result: 'wheel + sdist built; both PASSED' },
+      { label: 'Kernel clean-venv install', result: 'published wheel installed; import lingtai → 0.14.0' },
+      { label: 'TUI Go tests/build', result: 'passed (12 packages)' },
+      { label: 'Portal web npm ci/build', result: 'passed (vite)' },
+      { label: 'Portal Go tests/build', result: 'passed (3 packages)' },
+      { label: 'Homebrew tap', result: 'CI auto-bumped lingtai-tui to 0.9.5' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.14.0' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.9.5' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.14.0/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-22/' },
+  ],
+};
+
 const v0_13_0_kernel_v0_9_3_tui: Release = {
   id: '20260620-2',
   version: 'Kernel v0.13.0 · TUI/Portal v0.9.3',
@@ -1743,7 +1872,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
