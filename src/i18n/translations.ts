@@ -7,7 +7,16 @@ export function isValidLang(lang: string): lang is Lang {
 
 const translations = {
   en: {
-    nav: { logo: 'LingTai AI', home: 'Home', blog: 'Blog', about: 'About', agora: 'Agora', xingtan: 'Xingtan', releases: 'Releases', opportunities: 'Opportunities' },
+    nav: { logo: 'LingTai AI', home: 'Home', blog: 'Blog', about: 'About', agora: 'Agora', xingtan: 'Xingtan', releases: 'Releases', opportunities: 'Opportunities', projects: 'Projects' },
+    projects: {
+      title: 'Projects',
+      eyebrow: 'Built on LingTai',
+      hero: 'Living projects grown on LingTai',
+      subtitle:
+        'A gallery of projects built around LingTai-style agent and model feedback loops — where judgment, validation, and iteration accumulate over time. Each links out to the real thing.',
+      visit: 'Visit project ↗',
+      empty: 'No projects yet.',
+    },
     hero: {
       title: 'LingTai',
       subtitle: 'Agent',
@@ -62,7 +71,16 @@ const translations = {
     },
   },
   zh: {
-    nav: { logo: '灵台AI', home: '首页', blog: '博客', about: '关于', agora: '市集', xingtan: '杏坛', releases: '发布', opportunities: '机会' },
+    nav: { logo: '灵台AI', home: '首页', blog: '博客', about: '关于', agora: '市集', xingtan: '杏坛', releases: '发布', opportunities: '机会', projects: '项目' },
+    projects: {
+      title: '项目',
+      eyebrow: '基于灵台',
+      hero: '生长在灵台之上的项目',
+      subtitle:
+        '一组围绕灵台式智能体与模型反馈回路构建的项目——判断、验证与迭代在时间中不断累积。每个条目都链接到原项目。',
+      visit: '访问项目 ↗',
+      empty: '暂无项目。',
+    },
     agora: {
       title: 'Agent 市集',
       tagline: '数才市场(?)',
@@ -117,7 +135,15 @@ const translations = {
     },
   },
   wen: {
-    nav: { logo: '灵台AI', home: '首页', blog: '文录', about: '自述', agora: '墟', xingtan: '杏坛', releases: '纪', opportunities: '机缘' },
+    nav: { logo: '灵台AI', home: '首页', blog: '文录', about: '自述', agora: '墟', xingtan: '杏坛', releases: '纪', opportunities: '机缘', projects: '录' },
+    projects: {
+      title: '器灵录',
+      eyebrow: '出自灵台',
+      hero: '生于灵台之事',
+      subtitle: '凡藉灵台之器灵、模型相循而成者，录之于此。判、验、演化，积日而成。每条皆指其本。',
+      visit: '阅其事 ↗',
+      empty: '阙。',
+    },
     agora: {
       title: '器灵墟',
       tagline: '下山趁墟',
