@@ -64,6 +64,156 @@ export interface Release {
 
 
 
+
+const v0_14_1_kernel: Release = {
+  id: '20260623-1',
+  version: 'Kernel v0.14.1',
+  titleEn: 'LingTai kernel v0.14.1: Codex Responses state, cache discipline, and honest identity',
+  titleZh: 'LingTai kernel v0.14.1：Codex Responses 状态、cache 纪律与诚实身份',
+  date: '2026-06-23',
+  pkg: 'lingtai',
+  tag: 'kernel v0.14.1',
+  runtimeNoteEn:
+    'The kernel package `lingtai` v0.14.1 is published on PyPI as the runtime package source used by LingTai-managed environments. Existing LingTai projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story.',
+  runtimeNoteZh:
+    'Kernel package `lingtai` v0.14.1 已发布到 PyPI，作为 LingTai-managed environment 使用的 runtime package source。已有 LingTai 项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。',
+  summaryEn:
+    'A Codex-focused runtime release: persistent Responses WebSocket continuation, safer tool-output baselines, explicit fresh-epoch reset, concise summarize/cache guidance, honest LingTai request identity, and refreshed kernel ANATOMY citations.',
+  summaryZh:
+    '一次聚焦 Codex 的 runtime release：持久 Responses WebSocket 延续、更安全的 tool-output baseline、显式 fresh-epoch reset、简洁的 summarize/cache 提醒、诚实的 LingTai 请求身份，以及刷新后的 kernel ANATOMY 引用。',
+  features: [
+    {
+      titleEn: 'Codex Responses can continue incrementally',
+      titleZh: 'Codex Responses 可以增量延续',
+      leadEn:
+        'LingTai now preserves the WebSocket-side state needed to continue a Codex Responses turn through `previous_response_id` when the local history still matches the remote baseline.',
+      leadZh:
+        '当本地 history 仍与远端 baseline 匹配时，LingTai 现在会保留 WebSocket 侧状态，并通过 `previous_response_id` 延续 Codex Responses turn。',
+      bulletsEn: [
+        '`ws_incremental` means LingTai continued the existing remote `previous_response_id` chain instead of replaying the full request.',
+        '`ws_full` means LingTai rebuilt a complete request from local history and started a fresh remote state chain.',
+        'The runtime keeps fallback paths so prefix mismatch, missing baseline, or explicit reset can safely choose a full request.',
+      ],
+      bulletsZh: [
+        '`ws_incremental` 表示 LingTai 继续使用现有远端 `previous_response_id` 链，而不是完整重放请求。',
+        '`ws_full` 表示 LingTai 从本地 history 重建完整请求，并开启新的远端状态链。',
+        '运行时保留 fallback 路径，因此 prefix mismatch、缺少 baseline 或显式 reset 时可以安全选择完整请求。',
+      ],
+      whyEn:
+        'Codex cache affinity depends on the remote Responses state chain, not only on repeating the same prompt bytes.',
+      whyZh:
+        'Codex cache affinity 依赖远端 Responses 状态链，而不只是重复发送相同 prompt 字节。',
+    },
+    {
+      titleEn: 'Tool-output baselines and fresh epochs are explicit',
+      titleZh: 'Tool-output baseline 与 fresh epoch 变得显式',
+      leadEn:
+        'Tool outputs are frozen against the request baseline, and LingTai can intentionally leave stale remote metadata behind by starting a fresh epoch.',
+      leadZh:
+        'Tool output 会按请求 baseline 冻结；LingTai 也可以通过 fresh epoch 主动把旧远端 metadata 留在旧链里。',
+      bulletsEn: [
+        'Frozen tool-output cache prevents later local mutation from changing what an incremental Codex request is replying to.',
+        'Periodic epoch reset defaults to 20 turns and sends one complete request rebuilt from current local `chat_history`.',
+        'A successful local `system(action="summarize")` also triggers a fresh Codex epoch on the next request.',
+      ],
+      bulletsZh: [
+        '冻结 tool-output cache 可以避免后续本地变更悄悄改变增量 Codex 请求正在回复的内容。',
+        '周期性 epoch reset 默认 20 turns，并从当前本地 `chat_history` 重建一次完整请求。',
+        '本地 `system(action="summarize")` 成功后，也会让下一次 Codex 请求进入 fresh epoch。',
+      ],
+      whyEn:
+        'A fresh epoch is the safe way to discard stale remote-state baggage without deleting LingTai local history.',
+      whyZh:
+        'Fresh epoch 是丢弃旧远端状态包袱的安全方式，同时不会删除 LingTai 本地 history。',
+    },
+    {
+      titleEn: 'Summarize guidance now protects Codex cache',
+      titleZh: 'Summarize guidance 现在会保护 Codex cache',
+      leadEn:
+        'Jason noticed that repeated one-by-one summarize calls were repeatedly breaking the Codex cache chain; the runtime comment now makes that cost visible.',
+      leadZh:
+        'Jason 指出逐条连续 summarize 会反复打断 Codex cache 链；运行时 comment 现在会把这个代价显式说出来。',
+      bulletsEn: [
+        'For Codex, each summarize forces the next request to start as `ws_full` instead of continuing as `ws_incremental`.',
+        'The adapter comment strongly discourages consecutive summarize calls within about five turns.',
+        'Ordinary long tool results should be read first and summarized together once their raw payloads are no longer needed.',
+      ],
+      bulletsZh: [
+        '对 Codex 而言，每次 summarize 都会让下一次请求从 `ws_full` fresh epoch 开始，而不是继续 `ws_incremental`。',
+        'adapter comment 明确不建议在大约 5 turns 内连续 summarize。',
+        '普通长 tool result 应先读完，确认 raw payload 不再需要后再批量 summarize。',
+      ],
+      whyEn:
+        'Other providers are less sensitive here, but Codex uses `previous_response_id` state, so unnecessary fresh epochs are real cache misses.',
+      whyZh:
+        '其他 provider 对这里不那么敏感，但 Codex 使用 `previous_response_id` 状态，因此不必要的 fresh epoch 就是真实的 cache miss。',
+    },
+    {
+      titleEn: 'Default Codex identity is honest LingTai',
+      titleZh: '默认 Codex 身份是诚实的 LingTai',
+      leadEn:
+        'The release removes stale comments that described the old official-CLI-shaped experiment as the default.',
+      leadZh:
+        '这次 release 清理了把旧 official-CLI-shaped 实验误写成默认行为的陈旧注释。',
+      bulletsEn: [
+        'Default requests use `originator=lingtai` and `User-Agent=LingTai/<version>`.',
+        'The official Codex CLI-shaped identity remains only as an explicit local comparison switch.',
+        'Comments, tests, and `src/lingtai/llm/openai/ANATOMY.md` were updated to match the shipped behavior.',
+      ],
+      bulletsZh: [
+        '默认请求使用 `originator=lingtai` 与 `User-Agent=LingTai/<version>`。',
+        '官方 Codex CLI 形状的 identity 只保留为显式本地对比开关。',
+        'comments、tests 与 `src/lingtai/llm/openai/ANATOMY.md` 已同步为发布行为。',
+      ],
+      whyEn:
+        'Protocol experiments are valuable, but the shipped runtime should be clear about who it is.',
+      whyZh:
+        '协议实验很有价值，但发布出的 runtime 应清楚说明自己是谁。',
+    },
+    {
+      titleEn: 'Validation and release hygiene',
+      titleZh: '验证与 release hygiene',
+      leadEn:
+        'The release also repairs stale kernel ANATOMY citations and records exact artifact hashes from the published files.',
+      leadZh:
+        '这次 release 也修复了陈旧的 kernel ANATOMY 引用，并记录发布文件的精确 artifact hashes。',
+      bulletsEn: [
+        'Full kernel pytest passed: `2715 passed, 4 skipped in 304.41s`.',
+        'Targeted Codex identity/comment tests passed: `42 passed`.',
+        'Custom all-ANATOMY citation check passed: `599` citations checked, `0` issues.',
+        'Wheel and sdist passed `twine check`, contained no `__pycache__` / `.pyc`, and were verified on PyPI after upload.',
+      ],
+      bulletsZh: [
+        '完整 kernel pytest 通过：`2715 passed, 4 skipped in 304.41s`。',
+        'Codex identity/comment targeted tests 通过：`42 passed`。',
+        '自定义全量 ANATOMY citation check 通过：`599` citations checked，`0` issues。',
+        'wheel 与 sdist 通过 `twine check`，不含 `__pycache__` / `.pyc`，上传后也在 PyPI 上完成校验。',
+      ],
+      whyEn:
+        'This was a small version bump, but the state-machine behavior deserved full validation and durable release evidence.',
+      whyZh:
+        '这是一次小版本 bump，但状态机行为值得完整验证与可追溯的 release evidence。',
+    },
+  ],
+  contributors: ['huangzesen'],
+  validation: {
+    commit: 'd47473b225991b78dd8ff792d8991c95694bf657',
+    items: [
+      { label: 'Kernel full pytest', result: '2715 passed, 4 skipped in 304.41s' },
+      { label: 'Target Codex identity/comment tests', result: '42 passed' },
+      { label: 'ANATOMY citation checker', result: '599 checked, 0 issues' },
+      { label: 'Build and twine check', result: 'wheel + sdist built; both PASSED' },
+      { label: 'Artifact inspection', result: '0 __pycache__ / .pyc entries' },
+      { label: 'PyPI verification', result: '0.14.1 published with matching SHA-256 hashes' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.14.1' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.14.1/' },
+    { label: 'Release report', href: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/main/reports/kernel-release-v0.14.1-20260623' },
+  ],
+};
+
 const v0_14_0_kernel_v0_9_5_tui: Release = {
   id: '20260622-1',
   version: 'Kernel v0.14.0 · TUI/Portal v0.9.5',
@@ -1896,7 +2046,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
