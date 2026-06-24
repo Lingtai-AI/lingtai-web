@@ -65,6 +65,161 @@ export interface Release {
 
 
 
+const v0_14_2_kernel_v0_9_6_tui: Release = {
+  id: '20260624-1',
+  version: 'Kernel v0.14.2 · TUI/Portal v0.9.6',
+  titleEn: 'LingTai release day: multi-account Codex, trend reports, and a calmer cockpit',
+  titleZh: 'LingTai release day：多账号 Codex、趋势报告，与更安静的座舱',
+  date: '2026-06-24',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.14.2 · TUI/Portal v0.9.6',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. The kernel package `lingtai` v0.14.2 is published on PyPI as the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。Kernel package `lingtai` v0.14.2 已发布到 PyPI，作为 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。',
+  summaryEn:
+    'A paired kernel and TUI/Portal release centered on running several Codex identities side by side and seeing how a fleet actually spends its calls: per-agent and per-preset Codex OAuth token files, a multi-OAuth setup UI, swiss-knife tool-call and API-call trend reports, a scrollable `/doctor`, bilingual loading strings, a lower default context cap, cache-miss detail in the kanban call view, and the daemon and bash fixes that keep long-running work honest.',
+  summaryZh:
+    '这是一组围绕「让多个 Codex 身份并行运行」与「看清一支 fleet 的调用究竟花在哪里」的 kernel 与 TUI/Portal 配套发布：按 agent、按 preset 的 Codex OAuth token 文件，多 OAuth 的 setup UI，swiss-knife 的 tool-call / API-call 趋势报告，可滚动的 `/doctor`，双语加载文案，更低的默认 context 上限，看板调用视图里的 cache-miss 细节，以及让长任务保持诚实的 daemon 与 bash 修复。',
+  features: [
+    {
+      titleEn: 'Many Codex identities, one fleet',
+      titleZh: '多个 Codex 身份，一支 fleet',
+      leadEn:
+        'Kernel v0.14.2 and TUI/Portal v0.9.6 let different agents and presets sign in to Codex as different OAuth identities instead of sharing one global token.',
+      leadZh:
+        'Kernel v0.14.2 与 TUI/Portal v0.9.6 让不同 agent、不同 preset 以不同的 Codex OAuth 身份登录，而不是共用一个全局 token。',
+      bulletsEn: [
+        'A new `manifest.llm.codex_auth_path` lets each agent or preset point at its own Codex OAuth token file, so multiple ChatGPT accounts can run side by side (kernel #484).',
+        'TUI/Portal setup gained multi-OAuth UI and preset support, so picking which Codex identity a preset uses is a first-class choice rather than a manual file edit (TUI #415).',
+        'The default falls back to the shared token path, so existing single-account setups keep working untouched.',
+      ],
+      bulletsZh: [
+        '新增的 `manifest.llm.codex_auth_path` 让每个 agent 或 preset 指向自己的 Codex OAuth token 文件，从而让多个 ChatGPT 账号并行运行（kernel #484）。',
+        'TUI/Portal setup 新增多 OAuth 的 UI 与 preset 支持，让「某个 preset 用哪个 Codex 身份」成为一等选择，而不是手动改文件（TUI #415）。',
+        '默认仍回退到共享 token 路径，因此已有的单账号配置无需改动即可继续工作。',
+      ],
+      whyEn:
+        'A fleet that mixes accounts needs each agent to authenticate as itself; one shared token makes attribution and rate limits everyone\'s problem at once.',
+      whyZh:
+        '当一支 fleet 混用多个账号时，每个 agent 都需要以自己的身份认证；共用一个 token 会让归属与限流瞬间变成所有人的共同问题。',
+    },
+    {
+      titleEn: 'Seeing where the calls go',
+      titleZh: '看清调用花在哪里',
+      leadEn:
+        'TUI/Portal v0.9.6 turns raw call logs into trend reports, so a fleet\'s tool-call and API-call behavior becomes something operators can read at a glance.',
+      leadZh:
+        'TUI/Portal v0.9.6 把原始调用日志变成趋势报告，让一支 fleet 的 tool-call 与 API-call 行为变得能一眼读懂。',
+      bulletsEn: [
+        'A new swiss-knife script and skill produce tool-call and API-call trend reports, with wording aligned across the script and the skill (#414).',
+        'The kanban call view now shows cache-miss detail, so a turn that paid full price instead of hitting cache is visible where operators already look (#410).',
+        '`/doctor` is scrollable and has section headers, so a long diagnostic readout is navigable instead of a single wall of text (#413).',
+      ],
+      bulletsZh: [
+        '新增的 swiss-knife 脚本与 skill 产出 tool-call 与 API-call 趋势报告，脚本与 skill 的措辞保持一致（#414）。',
+        '看板调用视图现在显示 cache-miss 细节，让「这个 turn 付了全价而不是命中 cache」出现在操作者本就会看的地方（#410）。',
+        '`/doctor` 变得可滚动并带分节标题，让冗长的诊断输出可以导航，而不是一整面文字墙（#413）。',
+      ],
+      whyEn:
+        'You cannot tune what you cannot see; making call trends and cache misses legible is the first step toward trimming them.',
+      whyZh:
+        '看不见就无法调优；让调用趋势与 cache miss 变得可读，是削减它们的第一步。',
+    },
+    {
+      titleEn: 'A calmer, more legible cockpit',
+      titleZh: '更安静、更易读的座舱',
+      leadEn:
+        'Several smaller TUI changes lower the noise floor and make the default cockpit kinder to readers of more than one language.',
+      leadZh:
+        '几处较小的 TUI 改动降低了噪声底线，也让默认座舱对不止一种语言的读者更友好。',
+      bulletsEn: [
+        'Loading strings are bilingual and i18n-aware, so the cockpit speaks the operator\'s language while it warms up (#412).',
+        'The default context/token cap was lowered to 250k, a more conservative working budget out of the box (#411).',
+        'These defaults can still be raised per setup; the change is about what an unconfigured cockpit does, not a hard ceiling.',
+      ],
+      bulletsZh: [
+        '加载文案改为双语且支持 i18n，让座舱在预热时也用操作者的语言说话（#412）。',
+        '默认 context/token 上限降到 250k，开箱即用时是更保守的工作预算（#411）。',
+        '这些默认值仍可按 setup 调高；这次改的是「未配置的座舱默认怎么做」，而不是一个硬上限。',
+      ],
+      whyEn:
+        'Defaults are what most sessions actually run with, so a saner default cap and language-aware text matter more than any single advanced toggle.',
+      whyZh:
+        '默认值才是大多数会话实际跑的配置，因此更合理的默认上限与感知语言的文案，比任何单个高级开关都更重要。',
+    },
+    {
+      titleEn: 'Daemon and bash fixes that keep long work honest',
+      titleZh: '让长任务保持诚实的 daemon 与 bash 修复',
+      leadEn:
+        'Kernel v0.14.2 repairs two run-directory and working-directory edge cases that previously made long-running daemon work misreport its own state.',
+      leadZh:
+        'Kernel v0.14.2 修复了两处 run-directory 与 working-directory 的边界情况，它们此前会让长时间运行的 daemon 工作误报自己的状态。',
+      bulletsEn: [
+        'A daemon historical check now resolves run directories correctly after a refresh or molt, so prior-run inspection no longer breaks across a context shed (#483).',
+        'An empty `working_dir` in a bash call is now treated as unset and falls back to the default agent directory, instead of running against an ambiguous path (#480).',
+        'Both fixes target the moments — post-molt, empty-field — where a long session is most likely to lose track of where it is.',
+      ],
+      bulletsZh: [
+        'daemon 历史检查现在能在 refresh 或 molt 之后正确解析 run directory，使得跨 context 凝蜕的历史回看不再失效（#483）。',
+        'bash 调用里空的 `working_dir` 现在被视为未设置，并回退到默认 agent 目录，而不是在一个含糊的路径上运行（#480）。',
+        '这两处修复都瞄准最容易让长会话「丢失自己在哪里」的时刻——凝蜕之后、字段为空时。',
+      ],
+      whyEn:
+        'A long-running agent that loses track of its run directory or working directory will quietly act on the wrong place; these fixes keep it honest about where it is.',
+      whyZh:
+        '一个丢失了自己 run directory 或 working directory 的长任务 agent，会悄悄地在错误的位置动手；这两处修复让它对「自己在哪里」保持诚实。',
+    },
+    {
+      titleEn: 'Release hygiene, validation, and contributors',
+      titleZh: 'release hygiene、验证与贡献者',
+      leadEn:
+        'The window also carried release-hygiene work and was validated from clean release worktrees before publication.',
+      leadZh:
+        '本窗口同样包含 release-hygiene 工作，并在发布前从干净的 release worktree 完成验证。',
+      bulletsEn: [
+        'The kernel update command is confirm-gated, and a destructive global preset-split migration was neutralized so it can no longer rewrite operator presets.',
+        'TUI release version comparisons are now classified explicitly (@TZZheng), and the release star CSV was normalized as release hygiene.',
+        'Kernel gates: `compileall` clean; focused/expanded pytest over daemon/bash/notification/preset/deep-refresh/tool-executor/openai/codex/provider/auth surfaces `513 passed`; `python -m build` plus `twine check` PASSED; PyPI reports `info.version=0.14.2`.',
+        'TUI/Portal gates: `git diff --check` clean; TUI and Portal Go tests passed; `portal/web npm ci && npm run build` passed; TUI and Portal `make clean && make build` passed; Homebrew Release workflow succeeded for tag v0.9.6.',
+      ],
+      bulletsZh: [
+        'kernel 更新命令改为 confirm-gated，并中和了一个具破坏性的全局 preset-split migration，使其不再能重写操作者的 preset。',
+        'TUI release 版本比较现在被显式分类（@TZZheng），release star CSV 也作为 release hygiene 做了归一化。',
+        'Kernel 验证：`compileall` 通过；针对 daemon/bash/notification/preset/deep-refresh/tool-executor/openai/codex/provider/auth 面的聚焦/扩展 pytest `513 passed`；`python -m build` 与 `twine check` 均 PASSED；PyPI 报告 `info.version=0.14.2`。',
+        'TUI/Portal 验证：`git diff --check` 干净；TUI 与 Portal Go 测试通过；`portal/web npm ci && npm run build` 通过；TUI 与 Portal `make clean && make build` 通过；tag v0.9.6 的 Homebrew Release workflow 成功。',
+      ],
+      whyEn:
+        'A small version bump still deserves confirm-gated mutations, neutralized destructive migrations, and full gate evidence before it ships.',
+      whyZh:
+        '一次小版本 bump 同样值得在发布前有 confirm-gated 的变更、被中和的破坏性 migration，以及完整的 gate 证据。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng'],
+  validation: {
+    commit: '009f1aa84eb6926f88001ad284d435181e758fa5 / 3460ece328c60b80a2a6a8c5431c96f1cb25e210',
+    items: [
+      { label: 'Kernel compileall', result: 'src + tests compiled clean' },
+      { label: 'Kernel focused/expanded pytest', result: '513 passed' },
+      { label: 'Kernel build and twine check', result: 'wheel + sdist built; both PASSED' },
+      { label: 'PyPI verification', result: 'info.version = 0.14.2' },
+      { label: 'TUI diff-check', result: 'git diff --check clean (v0.9.5...HEAD)' },
+      { label: 'TUI Go tests/build', result: 'go test + make clean && make build passed' },
+      { label: 'Portal web npm ci/build', result: 'passed (npm audit warnings noted, not blocking)' },
+      { label: 'Portal Go tests/build', result: 'go test + make clean && make build passed' },
+      { label: 'Homebrew tap', result: 'Release workflow auto-bumped lingtai-tui to 0.9.6 (sha256 c944…2aca)' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.14.2' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.9.6' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.14.2/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-24/' },
+  ],
+};
+
 const v0_14_1_kernel: Release = {
   id: '20260623-1',
   version: 'Kernel v0.14.1',
@@ -2046,7 +2201,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
