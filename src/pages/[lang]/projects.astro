@@ -50,6 +50,17 @@ const sorted = [...projects].sort((a, b) => {
               <span class="visit-label">{tr.projects.visit}</span>
               <span class="visit-url">{project.urlLabel}</span>
             </a>
+
+            {project.links && project.links.length > 0 && (
+              <div class="secondary-links">
+                {project.links.map((link) => (
+                  <a class="secondary-link" href={link.url} target="_blank" rel="noopener noreferrer">
+                    <span class="secondary-link-label">{pick(link.label, currentLang)}</span>
+                    <span class="secondary-link-url">{link.urlLabel}</span>
+                  </a>
+                ))}
+              </div>
+            )}
           </article>
         ))}
       </section>
@@ -174,6 +185,34 @@ const sorted = [...projects].sort((a, b) => {
   .visit-url {
     color: var(--text-faint);
     font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .secondary-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(138, 134, 128, 0.18);
+  }
+  .secondary-link {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  .secondary-link:hover .secondary-link-label {
+    color: var(--accent);
+  }
+  .secondary-link-label {
+    letter-spacing: 1px;
+    transition: color 160ms ease;
+  }
+  .secondary-link-url {
+    color: var(--text-faint);
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
