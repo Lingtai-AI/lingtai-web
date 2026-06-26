@@ -73,6 +73,10 @@ TUI/Portal v0.10.0 在候选 head `37be28b`（= `origin/main`；构建版本经�
 
 @huangzesen（lead，scope 与验证负责人）、@ktwu01（TUI preset 重构）、@9s5bz2jvd2-lang（TUI 新手工作手册重写）、@TZZheng（kernel 运行时 source-drift 提醒与 MCP inbox 延迟诊断）。
 
+本窗口因 issue 报告而推动落地或完成工作的报告者：@lin-du（kernel #301，已实现并以 PR #488「Expose Telegram rich formatting options」落地；#300 已 closed completed）与 @888yzbt888（TUI #401 preset bug，其中 Bug 1 由窗口内 kernel PR #479 修复；issue 已 closed completed）。
+
+同样感谢 @BrianLiubr（TUI #429/#431）与 @xczics（TUI #437）在窗口内提交的 bug 报告——目前仍在 triage 中，此处作为报告致谢，尚未作为已发布的修复。
+
 ## 方向
 
 主题不变：让运行时诚实、可度量，现在还要默认可读。当按会话的 token 代价摆在操作者面前、token ledger 可被 scope，下一步就是据此行动——削减命中不到 cache 的 turn，让座舱指向花得最多的那个会话。
