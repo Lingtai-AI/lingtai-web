@@ -227,12 +227,16 @@ const v0_15_0_kernel_v0_10_0_tui: Release = {
         'TUI/Portal gates at candidate head `37be28b` (= origin/main, build version injected via `make ... VERSION=v0.10.0`, no source bump): `git diff --check` clean apart from the known generated `docs/stars/stars.csv` CRLF caveat; full TUI and Portal Go tests passed; `portal/web npm ci && npm run build` passed; `make build` produced `lingtai-tui v0.10.0` and `lingtai-portal v0.10.0`.',
         'Noted, non-blocking: the `portal/web` npm-audit advisories affect dev-only tooling, not the embedded `web/dist` the Go binary ships; the locally built kernel wheel is macOS-arm64 platform-tagged, so the portable sdist is the artifact for PyPI unless per-platform wheels are intended.',
         'Contributors in this window: @huangzesen (lead, scope and validation owner), @ktwu01 (TUI preset refactor), @9s5bz2jvd2-lang (TUI beginner work-manual rewrite), and @TZZheng (kernel runtime source-drift nudge and MCP inbox latency diagnostics).',
+        'Issue reporters whose reports drove shipped/completed work this window: @lin-du (kernel #301 → shipped as PR #488 "Expose Telegram rich formatting options", plus #300 completed) and @888yzbt888 (TUI #401 preset bugs; Bug 1 fixed by in-window kernel PR #479, closed COMPLETED).',
+        'Thanks also to @BrianLiubr (TUI #429/#431) and @xczics (TUI #437) for in-window bug reports still under triage — noted here, not yet shipped fixes.',
       ],
       bulletsZh: [
         '在 v0.15.0 bump commit `c365eec`（基于 `0797e93`）上的 kernel gate：`compileall` 通过；完整 `pytest` 2935 passed、4 skipped；`python -m build` 产出 sdist + wheel；`twine check` 两者均 PASSED。',
         '在候选 head `37be28b`（= origin/main，构建版本经由 `make ... VERSION=v0.10.0` 注入，无源码 bump）上的 TUI/Portal gate：除已知生成文件 `docs/stars/stars.csv` 的 CRLF 注脚外 `git diff --check` 干净；完整 TUI 与 Portal Go 测试通过；`portal/web npm ci && npm run build` 通过；`make build` 产出 `lingtai-tui v0.10.0` 与 `lingtai-portal v0.10.0`。',
         '记录在案、不阻塞发布：`portal/web` 的 npm-audit 警告只影响 dev-only 工具链，不影响 Go 二进制实际打包的 `web/dist`；本地构建的 kernel wheel 带 macOS-arm64 平台标签，因此除非有意发布按平台的 wheel，PyPI 的工件应为可移植的 sdist。',
         '本窗口贡献者：@huangzesen（lead，scope 与验证负责人）、@ktwu01（TUI preset 重构）、@9s5bz2jvd2-lang（TUI 新手工作手册重写）、@TZZheng（kernel 运行时 source-drift 提醒与 MCP inbox 延迟诊断）。',
+        '本窗口因 issue 报告而推动落地/完成的报告者：@lin-du（kernel #301 → 以 PR #488「Expose Telegram rich formatting options」落地，另有 #300 completed）与 @888yzbt888（TUI #401 preset bug；Bug 1 由窗口内 kernel PR #479 修复，issue 标记 COMPLETED）。',
+        '同样感谢 @BrianLiubr（TUI #429/#431）与 @xczics（TUI #437）在窗口内提交的 bug 报告——这些仍在 triage 中，此处仅作致谢记录，尚非已发布的修复。',
       ],
       whyEn:
         'A version bump still deserves full gate evidence and an honest contributor list; recording that the publish artifacts and tags are cut from these exact validated commits is part of shipping responsibly.',
@@ -240,7 +244,7 @@ const v0_15_0_kernel_v0_10_0_tui: Release = {
         '一次版本 bump 同样值得有完整的 gate 证据与诚实的贡献者列表；记录「publish 工件与 tag 正是从这些经过验证的 commit 切出」，是负责任地发布的一部分。',
     },
   ],
-  contributors: ['huangzesen', 'ktwu01', '9s5bz2jvd2-lang', 'TZZheng'],
+  contributors: ['huangzesen', 'ktwu01', '9s5bz2jvd2-lang', 'TZZheng', 'lin-du', '888yzbt888'],
   validation: {
     commit: 'c365eec927eb8f0b9d557ced3f127cf4759b8153 (kernel v0.15.0 bump) / 37be28b09b3a9d16b3c9daccb408698b56a38f30 (TUI/Portal v0.10.0 build target)',
     items: [

@@ -73,6 +73,10 @@ For regular users, LingTai's managed project environments remain the normal way 
 
 @huangzesen (lead, scope and validation owner), @ktwu01 (TUI preset refactor), @9s5bz2jvd2-lang (TUI beginner work-manual rewrite), and @TZZheng (kernel runtime source-drift nudge and MCP inbox latency diagnostics).
 
+Issue reporters whose reports drove shipped or completed work this window: @lin-du (kernel #301, implemented and shipped as PR #488 "Expose Telegram rich formatting options"; #300 closed completed) and @888yzbt888 (TUI #401 preset bugs, with Bug 1 fixed by in-window kernel PR #479; issue closed completed).
+
+Thanks also to @BrianLiubr (TUI #429/#431) and @xczics (TUI #437) for in-window bug reports that are still under triage — credited here as reports, not yet as shipped fixes.
+
 ## Direction
 
 The theme holds: make the runtime honest, measurable, and now legible by default. With per-session token cost in front of operators and a token ledger they can scope, the next step is to act on what the numbers show — trim the turns that miss cache, and let the cockpit point at the session that is spending the most.
