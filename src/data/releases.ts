@@ -65,6 +65,205 @@ export interface Release {
 
 
 
+const v0_15_0_kernel_v0_10_0_tui: Release = {
+  id: '20260626-1',
+  version: 'Kernel v0.15.0 · TUI/Portal v0.10.0',
+  titleEn: 'LingTai release day: a cockpit that shows where the tokens go',
+  titleZh: 'LingTai release day：让座舱看清 token 花在哪里',
+  date: '2026-06-26',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.15.0 · TUI/Portal v0.10.0',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface once tag v0.10.0 is published. The kernel package `lingtai` v0.15.0 is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story. This entry was prepared from clean release-worktree gates; the GitHub Releases, PyPI upload, and Homebrew tap bump for v0.10.0 / v0.15.0 are cut as part of the publish step.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令在 tag v0.10.0 发布后用于更新 TUI/Portal。Kernel package `lingtai` v0.15.0 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。本条目由干净的 release-worktree gate 准备；v0.10.0 / v0.15.0 的 GitHub Releases、PyPI 上传与 Homebrew tap bump 在 publish 步骤中完成。',
+  summaryEn:
+    'A paired kernel and TUI/Portal release built around one idea: make the cockpit honest about where a session spends its tokens. The TUI grows home and session token telemetry — a context-percentage bar and per-round usage — followed by a focused copy and layout pass, bilingual status hints, less noisy replay, richer session/kanban observability, and faster SQLite-indexed session loading. The kernel makes bash results report inner failures, routes refresh-watcher events through the secret redactor, indexes the token ledger in SQLite with an explicit reporting scope, writes a per-run daemon artifact manifest, nudges agents when on-disk source drifts from the running runtime, and tunes Codex summarize guidance after framing it as an investment ratio.',
+  summaryZh:
+    '这是一组配套的 kernel 与 TUI/Portal 发布，围绕一个想法：让座舱对「一个会话把 token 花在哪里」保持诚实。TUI 新增了 home 与 session 的 token 遥测——context 百分比条与按轮用量——随后是一轮聚焦的文案与布局打磨、双语状态提示、更安静的回放、更丰富的 session/kanban 可观测性，以及更快的 SQLite 索引会话加载。kernel 让 bash 结果报告内层失败，把 refresh-watcher 事件经由密钥脱敏器写出，用 SQLite 索引 token ledger 并带显式的报告 scope，为每次 daemon run 写出 artifact manifest，在磁盘源码与运行时漂移时提醒 agent，并在把 Codex summarize 引导表述为一个投资比率之后微调了它的阈值。',
+  features: [
+    {
+      titleEn: 'A cockpit that shows where the tokens go',
+      titleZh: '看清 token 花在哪里的座舱',
+      leadEn:
+        'TUI/Portal v0.10.0 brings token and context telemetry into the places operators already look — the home view and the per-round API-call footer — instead of hiding it behind a metadata dump.',
+      leadZh:
+        'TUI/Portal v0.10.0 把 token 与 context 遥测带到操作者本就会看的地方——home 视图与按轮的 API-call 底栏——而不是藏在一段 metadata 转储后面。',
+      bulletsEn: [
+        'API-call group footers now show current-round token usage — input, cache miss, output, and cache rate — so the price of a turn is visible right where the call is (#441).',
+        'The home view bottom row shows current-session token telemetry plus a compact context-percentage bar, so a session\'s budget is legible at a glance (#441).',
+        'Ctrl+O replay hides the bulky `_meta` envelope by default and points to `/notification` when full metadata is actually wanted (#440).',
+      ],
+      bulletsZh: [
+        'API-call 分组底栏现在显示当前轮的 token 用量——input、cache miss、output 与 cache rate——让一个 turn 的代价就出现在调用旁边（#441）。',
+        'home 视图底部一行显示当前会话的 token 遥测与一个紧凑的 context 百分比条，让一个会话的预算一眼可读（#441）。',
+        'Ctrl+O 回放默认隐藏臃肿的 `_meta` 信封，并在真正需要完整 metadata 时指向 `/notification`（#440）。',
+      ],
+      whyEn:
+        'You cannot trim what you cannot see; putting per-round token cost and session context in the default view is the first step toward an operator noticing a session that is quietly burning budget.',
+      whyZh:
+        '看不见就无法削减；把按轮 token 代价与会话 context 放进默认视图，是让操作者注意到「某个会话正在悄悄烧预算」的第一步。',
+    },
+    {
+      titleEn: 'Telemetry copy and layout, made legible (#442–#447)',
+      titleZh: '把遥测文案与布局打磨清楚（#442–#447）',
+      leadEn:
+        'New telemetry is only useful if it reads cleanly, so the home telemetry work was followed by a focused copy-and-layout pass that kept the footer, fixed the layout, and made the status hints bilingual and correct.',
+      leadZh:
+        '新遥测只有读起来干净才有用，因此 home 遥测之后跟着一轮聚焦的文案与布局打磨：保留底栏、修正布局，并让状态提示双语且正确。',
+      bulletsEn: [
+        'The footer is preserved while session telemetry is shown (#442), and session telemetry no longer requires Ctrl+O to appear (#443).',
+        'The home telemetry context row layout is fixed (#444), and the home status hint and zh telemetry copy are cleaned up (#445).',
+        'The home status hint is corrected to say "expand" (#446) and then localized so it speaks the operator\'s language (#447, the TUI candidate head).',
+      ],
+      bulletsZh: [
+        '在显示 session 遥测时保留底栏（#442），且 session 遥测不再需要 Ctrl+O 才出现（#443）。',
+        '修正 home 遥测的 context 行布局（#444），并清理 home 状态提示与中文遥测文案（#445）。',
+        'home 状态提示改正为「expand」（#446），随后被本地化，让它用操作者的语言说话（#447，即 TUI 候选 head）。',
+      ],
+      whyEn:
+        'A telemetry row that overflows, hides the footer, or shows an English-only hint to a Chinese operator undoes the value of the data; this pass is what turns a feature into something readable by default.',
+      whyZh:
+        '一个会溢出、会盖住底栏、或对中文操作者只显示英文提示的遥测行，会抵消数据本身的价值；这一轮打磨，正是把一个功能变成「默认可读」的关键。',
+    },
+    {
+      titleEn: 'Richer session observability and faster loading',
+      titleZh: '更丰富的会话可观测性与更快的加载',
+      leadEn:
+        'Beyond the home row, session and kanban detail panels carry more cached per-session stats, keyed to molt windows so a refresh stops drifting, and session events now load from a SQLite index instead of re-scanning files.',
+      leadZh:
+        '除了 home 行之外，session 与 kanban 详情面板携带更多缓存的按会话统计，并以 molt 窗口为键，使 refresh 不再漂移；会话事件现在从 SQLite 索引加载，而不是重新扫描文件。',
+      bulletsEn: [
+        'Session/kanban detail panels show richer cached per-session stats — API call stats, expanded token breakdowns, and agent paths — keyed to molt windows so refreshes stop drifting (#428, #430, #432, #433, #438, #439).',
+        'Session events load from the SQLite index instead of re-scanning event files, so opening a long session is faster (#435).',
+        'The markdown viewer renders YAML front matter (`name` / `description` / `version`) instead of silently stripping it (#426).',
+      ],
+      bulletsZh: [
+        'session/kanban 详情面板显示更丰富的缓存按会话统计——API 调用统计、展开的 token 拆分与 agent 路径——并以 molt 窗口为键，使 refresh 不再漂移（#428、#430、#432、#433、#438、#439）。',
+        '会话事件从 SQLite 索引加载，而不是重新扫描事件文件，因此打开一个长会话更快（#435）。',
+        'markdown 查看器渲染 YAML front matter（`name` / `description` / `version`），而不是悄悄把它剥掉（#426）。',
+      ],
+      whyEn:
+        'Observability that drifts on every refresh or pays a full re-scan to open a session is observability operators stop trusting; pinning stats to molt windows and reading from the index keeps it both correct and fast.',
+      whyZh:
+        '每次 refresh 都漂移、或每次打开会话都要重新全扫的可观测性，会让操作者逐渐不再信任它；把统计钉在 molt 窗口、从索引读取，让它既正确又快。',
+    },
+    {
+      titleEn: 'Bash results and the token ledger tell the truth',
+      titleZh: 'bash 结果与 token ledger 说真话',
+      leadEn:
+        'Kernel v0.15.0 makes two of the runtime\'s most-trusted signals harder to misread: a completed bash command now reports whether its inner command actually succeeded, and the token ledger is indexed with an explicit reporting scope.',
+      leadZh:
+        'Kernel v0.15.0 让运行时最被信任的两个信号更难被误读：完成的 bash 命令现在会报告它的内层命令是否真的成功，token ledger 也带着显式的报告 scope 被索引。',
+      bulletsEn: [
+        'Completed bash commands carry additive, model-visible `ok` / `command_status` / `warning` fields, so a nonzero inner exit or a Python traceback no longer hides under `status: ok`; the `status` field keeps its old meaning for compatibility.',
+        'The token ledger is indexed in SQLite, and `sum_token_ledger` gains an explicit `scope` — `main_agent` excludes daemon rows, `all` includes them — with parent/child double-count semantics documented and tested.',
+        'Tool-result top-list metadata is trimmed and the latest agent-meta payload is slimmed, so the model spends fewer tokens on its own bookkeeping (#490, #516).',
+      ],
+      bulletsZh: [
+        '完成的 bash 命令携带附加的、模型可见的 `ok` / `command_status` / `warning` 字段，使得非零内层退出或 Python traceback 不再藏在 `status: ok` 之下；`status` 字段为兼容保留旧含义。',
+        'token ledger 在 SQLite 中被索引，`sum_token_ledger` 新增显式 `scope`——`main_agent` 排除 daemon 行，`all` 包含它们——并记录与测试了 parent/child 重复计数语义。',
+        'tool-result 顶部列表 metadata 被精简，最新的 agent-meta 负载被瘦身，让模型在自己的记账上花更少 token（#490、#516）。',
+      ],
+      whyEn:
+        'An agent that reads `status: ok` as success when the inner command failed, or that cannot say whether a token total includes its daemons, makes confidently wrong decisions; these changes make the signal match reality.',
+      whyZh:
+        '一个把 `status: ok` 当成成功（而内层命令其实失败了），或说不清一个 token 总数是否包含它的 daemon 的 agent，会自信地做出错误决定；这些改动让信号与现实一致。',
+    },
+    {
+      titleEn: 'Secret redaction, source drift, and daemon artifacts',
+      titleZh: '密钥脱敏、源码漂移与 daemon 工件',
+      leadEn:
+        'Several kernel changes harden the seams where a long-running fleet is most exposed: a separate-process event log that could leak secrets, source that silently drifts from the running runtime, and daemon runs that were expensive to inspect.',
+      leadZh:
+        '若干 kernel 改动加固了长任务 fleet 最暴露的接缝：一个可能泄露密钥的独立进程事件日志、悄悄与运行时漂移的源码，以及检查代价高昂的 daemon run。',
+      bulletsEn: [
+        'The relaunch/refresh watcher subprocess now routes `events.jsonl` writes through the kernel redactor (key-aware, fail-open with a diagnosable `redaction_unavailable` marker), closing a separate-process gap where stderr tails, cmdlines, or errors could persist secret-shaped values.',
+        'Startup runtime fingerprints (git HEAD + source digest) land in `.status.json`; agents emit `source_drift` nudges when on-disk source diverges from the running runtime, and `lingtai-doctor` reports them — skipped in dev runtimes (closes #178).',
+        'Each daemon run writes a metadata-only `artifacts.json`, so `daemon(action="check")` can surface path, size, mtime, and role without scanning the run directory, with safe fallback for older runs.',
+      ],
+      bulletsZh: [
+        'relaunch/refresh watcher 子进程现在把 `events.jsonl` 写入经由 kernel 脱敏器（key-aware、fail-open，并带可诊断的 `redaction_unavailable` 标记），堵住了一个独立进程里 stderr 尾部、命令行或错误可能持久化密钥状值的缺口。',
+        '启动时的运行时指纹（git HEAD + 源码摘要）写入 `.status.json`；当磁盘源码与运行时分叉时，agent 发出 `source_drift` 提醒，`lingtai-doctor` 也会报告——在 dev 运行时跳过（关闭 #178）。',
+        '每次 daemon run 写出一个仅含 metadata 的 `artifacts.json`，使 `daemon(action="check")` 无需扫描 run directory 即可呈现 path、size、mtime 与 role，并为旧 run 提供安全回退。',
+      ],
+      whyEn:
+        'These are exactly the failure modes a fleet hits only after hours of unattended work — a secret persisted by a side process, an agent acting on stale source, a daemon too costly to audit; fixing them keeps long autonomy trustworthy.',
+      whyZh:
+        '这些正是 fleet 在数小时无人值守后才会撞上的失败模式——被旁路进程持久化的密钥、在陈旧源码上动手的 agent、贵到无法审计的 daemon；修好它们，让长时间自治保持可信。',
+    },
+    {
+      titleEn: 'Codex summarize guidance, framed as an investment ratio',
+      titleZh: '把 Codex summarize 引导表述为一个投资比率',
+      leadEn:
+        'The Codex adapter\'s summarize guidance was reframed from stale wait/countdown fields into an investment ratio, and then its thresholds were tuned — the newest functional change in this release window.',
+      leadZh:
+        'Codex adapter 的 summarize 引导从陈旧的 wait/countdown 字段，被重新表述为一个投资比率，随后它的阈值被微调——这是本发布窗口里最新的功能改动。',
+      bulletsEn: [
+        '`_meta.agent_meta.adapter_comment` now reports full / incremental counts, a `full_to_incremental_ratio`, a target of `1:10`, and dynamic `summarize_economy` maintenance hints instead of stale wait/countdown fields (#518).',
+        'The summarize guidance thresholds were then tuned so the hint fires at the right moment rather than over- or under-prompting (#519) — the newest functional change before the version bump.',
+        'Supporting Codex work decouples continuation from transport, makes session identity molt-aware, rotates and allows overriding the endpoint pool at molt boundaries, and surfaces the WebSocket cache ledger (#486, #495, #498, #502, #504, #517).',
+      ],
+      bulletsZh: [
+        '`_meta.agent_meta.adapter_comment` 现在报告 full / incremental 计数、一个 `full_to_incremental_ratio`、`1:10` 的目标，以及动态的 `summarize_economy` 维护提示，而不是陈旧的 wait/countdown 字段（#518）。',
+        '随后微调了 summarize 引导阈值，让提示在正确的时机触发，而不是过度或不足地催促（#519）——版本 bump 之前最新的功能改动。',
+        '配套的 Codex 工作把 continuation 与 transport 解耦，让 session identity 感知 molt，在 molt 边界轮换并允许覆盖 endpoint pool，并暴露 WebSocket cache ledger（#486、#495、#498、#502、#504、#517）。',
+      ],
+      whyEn:
+        'Summarization is a tax on every long session; framing it as a maintainable ratio with tuned thresholds turns a vague "summarize soon" nag into guidance an agent can actually budget against.',
+      whyZh:
+        'summarize 是每个长会话都要交的税；把它表述为一个可维护的比率并调好阈值，能把含糊的「快 summarize」唠叨变成 agent 真正能据以做预算的引导。',
+    },
+    {
+      titleEn: 'Release hygiene, validation, and contributors',
+      titleZh: 'release hygiene、验证与贡献者',
+      leadEn:
+        'The paired versions were re-targeted to TUI/Portal v0.10.0 and kernel v0.15.0 (kernel bump PR #521) and validated from clean release worktrees before any publish step.',
+      leadZh:
+        '这对版本被重新定位为 TUI/Portal v0.10.0 与 kernel v0.15.0（kernel bump PR #521），并在任何 publish 步骤之前从干净的 release worktree 完成验证。',
+      bulletsEn: [
+        'Kernel gates at the v0.15.0 bump commit `c365eec` (on base `0797e93`): `compileall` clean; full `pytest` 2935 passed, 4 skipped; `python -m build` produced sdist + wheel; `twine check` PASSED on both.',
+        'TUI/Portal gates at candidate head `37be28b` (= origin/main, build version injected via `make ... VERSION=v0.10.0`, no source bump): `git diff --check` clean apart from the known generated `docs/stars/stars.csv` CRLF caveat; full TUI and Portal Go tests passed; `portal/web npm ci && npm run build` passed; `make build` produced `lingtai-tui v0.10.0` and `lingtai-portal v0.10.0`.',
+        'Noted, non-blocking: the `portal/web` npm-audit advisories affect dev-only tooling, not the embedded `web/dist` the Go binary ships; the locally built kernel wheel is macOS-arm64 platform-tagged, so the portable sdist is the artifact for PyPI unless per-platform wheels are intended.',
+        'Contributors in this window: @huangzesen (lead, scope and validation owner), @ktwu01 (TUI preset refactor), @9s5bz2jvd2-lang (TUI beginner work-manual rewrite), and @TZZheng (kernel runtime source-drift nudge and MCP inbox latency diagnostics).',
+      ],
+      bulletsZh: [
+        '在 v0.15.0 bump commit `c365eec`（基于 `0797e93`）上的 kernel gate：`compileall` 通过；完整 `pytest` 2935 passed、4 skipped；`python -m build` 产出 sdist + wheel；`twine check` 两者均 PASSED。',
+        '在候选 head `37be28b`（= origin/main，构建版本经由 `make ... VERSION=v0.10.0` 注入，无源码 bump）上的 TUI/Portal gate：除已知生成文件 `docs/stars/stars.csv` 的 CRLF 注脚外 `git diff --check` 干净；完整 TUI 与 Portal Go 测试通过；`portal/web npm ci && npm run build` 通过；`make build` 产出 `lingtai-tui v0.10.0` 与 `lingtai-portal v0.10.0`。',
+        '记录在案、不阻塞发布：`portal/web` 的 npm-audit 警告只影响 dev-only 工具链，不影响 Go 二进制实际打包的 `web/dist`；本地构建的 kernel wheel 带 macOS-arm64 平台标签，因此除非有意发布按平台的 wheel，PyPI 的工件应为可移植的 sdist。',
+        '本窗口贡献者：@huangzesen（lead，scope 与验证负责人）、@ktwu01（TUI preset 重构）、@9s5bz2jvd2-lang（TUI 新手工作手册重写）、@TZZheng（kernel 运行时 source-drift 提醒与 MCP inbox 延迟诊断）。',
+      ],
+      whyEn:
+        'A version bump still deserves full gate evidence and an honest contributor list; recording that the publish artifacts and tags are cut from these exact validated commits is part of shipping responsibly.',
+      whyZh:
+        '一次版本 bump 同样值得有完整的 gate 证据与诚实的贡献者列表；记录「publish 工件与 tag 正是从这些经过验证的 commit 切出」，是负责任地发布的一部分。',
+    },
+  ],
+  contributors: ['huangzesen', 'ktwu01', '9s5bz2jvd2-lang', 'TZZheng'],
+  validation: {
+    commit: 'c365eec927eb8f0b9d557ced3f127cf4759b8153 (kernel v0.15.0 bump) / 37be28b09b3a9d16b3c9daccb408698b56a38f30 (TUI/Portal v0.10.0 build target)',
+    items: [
+      { label: 'Kernel compileall', result: 'src + tests compiled clean' },
+      { label: 'Kernel full pytest', result: '2935 passed, 4 skipped' },
+      { label: 'Kernel build and twine check', result: 'sdist + wheel built; both PASSED' },
+      { label: 'Kernel diff-check', result: 'only delta vs origin/main is the pyproject.toml version bump to 0.15.0' },
+      { label: 'TUI diff-check', result: 'clean apart from known generated docs/stars/stars.csv CRLF caveat' },
+      { label: 'TUI Go tests/build', result: 'go test passed; make build → lingtai-tui v0.10.0' },
+      { label: 'Portal web npm ci/build', result: 'passed (dev-only npm audit advisories noted, not blocking)' },
+      { label: 'Portal Go tests/build', result: 'go test passed; make build → lingtai-portal v0.10.0' },
+      { label: 'PyPI artifact policy', result: 'portable sdist is the PyPI artifact; local wheel is macOS-arm64 platform-tagged' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.15.0' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.0' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.15.0/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-26/' },
+  ],
+};
+
 const v0_14_2_kernel_v0_9_6_tui: Release = {
   id: '20260624-1',
   version: 'Kernel v0.14.2 · TUI/Portal v0.9.6',
@@ -2201,7 +2400,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
