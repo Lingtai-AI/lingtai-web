@@ -65,6 +65,112 @@ export interface Release {
 
 
 
+const v0_15_2_kernel: Release = {
+  id: '20260627-2',
+  version: 'Kernel v0.15.2',
+  titleEn: 'LingTai kernel v0.15.2: roomier result reads and leaner runtime guidance',
+  titleZh: 'LingTai kernel v0.15.2：更宽的结果阅读，与更轻的运行时指引',
+  date: '2026-06-27',
+  pkg: 'lingtai',
+  tag: 'kernel v0.15.2',
+  runtimeNoteEn:
+    'This is a kernel-only patch release. The `lingtai` PyPI package is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path instead of treating a bare global pip command as the everyday upgrade story.',
+  runtimeNoteZh:
+    '这是一次 kernel-only patch release。`lingtai` PyPI package 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作日常升级故事。',
+  summaryEn:
+    'A compact kernel patch after v0.15.1: Codex summarize/cache behavior now waits for the real reconstruction boundary before resetting websocket continuation, summarize/molt guidance is clearer about local compaction versus provider context, `_meta` exposes current-session token efficiency while shedding duplicated notification prose, and `read` now defaults to a 100k-character page budget while retaining the 200k hard cap for short-lived long-result inspection.',
+  summaryZh:
+    '这是 v0.15.1 之后的一次紧凑 kernel patch：Codex summarize/cache 行为现在等到真正的重建边界再重置 websocket continuation；summarize/molt 指引更清楚地区分本地压缩与 provider 上下文；`_meta` 暴露 current-session token efficiency，同时移除重复的 notification 文案；`read` 默认页预算提高到 100k 字符，并保留 200k hard cap，用于短时查看长结果。',
+  features: [
+    {
+      titleEn: 'Summarize waits for the reconstruction boundary',
+      titleZh: 'summarize 等到重建边界再切换',
+      leadEn:
+        'The Codex path no longer treats every local summarize as an immediate websocket fresh-epoch event. It waits for the runtime point where provider context is actually rebuilt.',
+      leadZh:
+        'Codex 路径不再把每次本地 summarize 都当成 websocket fresh-epoch 事件，而是等到运行时真正重建 provider 上下文的边界。',
+      bulletsEn: [
+        'Codex summarize epoch resets are delayed until provider-side reconstruction is required (#534).',
+        'Summarize/molt guidance now explains that local result compaction is immediate, while provider reconstruction is delayed and task-boundary molt is the stronger completed-work boundary (#535).',
+      ],
+      bulletsZh: [
+        'Codex summarize epoch reset 推迟到确实需要 provider-side reconstruction 时才发生（#534）。',
+        'summarize/molt 指引现在说明：本地工具结果压缩立即生效，但 provider 重建会延迟；任务边界的 molt 是更强的已完成工作边界（#535）。',
+      ],
+      whyEn:
+        'Keeping the incremental Codex websocket chain alive until the real reconstruction point protects cache continuity without hiding the moment when a full context reset becomes necessary.',
+      whyZh:
+        '在真正重建之前保持 Codex websocket incremental 链路，可以保护缓存连续性，同时不隐藏必须完整重建上下文的时刻。',
+    },
+    {
+      titleEn: 'Token efficiency is visible without repeating guidance',
+      titleZh: 'token efficiency 可见，但不重复塞满指引',
+      leadEn:
+        'The runtime now gives agents the compact numbers they need to reason about current-session token economy while moving static instruction text back into resident guidance.',
+      leadZh:
+        '运行时现在给 agent 提供判断 current-session token economy 所需的紧凑数字，同时把静态说明文字移回常驻 guidance。',
+      bulletsEn: [
+        '`_meta.agent_meta.token_efficiency` exposes API calls, input/cached tokens, cache rate, average input tokens, and current context size/window (#537).',
+        'Notification guidance is now a `meta_guidance.notification_handling` hook with source names, per-channel duplicate guidance is removed, and tool-result char leaders are capped to the top five (#538).',
+        'The post-reconstruction reminder now points at `0.6 * context_window` as the summarize-then-molt threshold instead of carrying a separate guiding-average field (#538).',
+      ],
+      bulletsZh: [
+        '`_meta.agent_meta.token_efficiency` 暴露 API calls、input/cached tokens、cache rate、average input tokens，以及当前 context size/window（#537）。',
+        'notification guidance 现在是带 source 名称的 `meta_guidance.notification_handling` hook，移除 per-channel 重复 guidance，并把 tool-result char leaders 收到 top five（#538）。',
+        '重建后的提醒现在指向 `0.6 * context_window` 作为 summarize-then-molt 阈值，不再携带单独的 guiding-average 字段（#538）。',
+      ],
+      whyEn:
+        'A long-running agent needs the live budget numbers, not repeated static prose. This patch keeps the signal and cuts the duplicated context weight.',
+      whyZh:
+        '长时间运行的 agent 需要实时预算数字，而不是重复的静态长文。这次 patch 保留信号，削掉重复上下文重量。',
+    },
+    {
+      titleEn: 'A 100k read default with a 200k hard ceiling',
+      titleZh: 'read 默认 100k，hard cap 保持 200k',
+      leadEn:
+        'With summarize and molt carrying the cleanup path, short-lived long-result inspection can be roomier by default.',
+      leadZh:
+        '有 summarize 与 molt 负责后续清理后，短时间查看长结果可以默认更宽一些。',
+      bulletsEn: [
+        '`read` now defaults to a 100k-character per-call page budget while keeping the 200k runtime hard cap.',
+        'The read manual, English/Chinese/Wen tool descriptions, continuation tests, and stale tool-result-cap comments were aligned with the new budget.',
+        'Release validation covered the full kernel suite, build, `twine check`, archive inspection, PyPI upload, GitHub release, and no-cache pip index verification.',
+      ],
+      bulletsZh: [
+        '`read` 的默认每次调用页预算提高到 100k 字符，同时保持 200k runtime hard cap。',
+        'read manual、英文/中文/文言工具描述、continuation 测试，以及陈旧的 tool-result-cap 注释都已对齐新预算。',
+        'release 验证覆盖完整 kernel suite、build、`twine check`、archive inspection、PyPI 上传、GitHub release 与 no-cache pip index verification。',
+      ],
+      whyEn:
+        'The everyday page size should match the new operating model: inspect enough context to decide, then summarize or molt deliberately instead of losing useful evidence to an overly tight cap.',
+      whyZh:
+        '日常页大小应当匹配新的运行模型：先看到足够上下文做判断，再主动 summarize 或 molt，而不是让过紧的 cap 提前丢掉有用证据。',
+    },
+  ],
+  contributors: ['huangzesen'],
+  validation: {
+    commit: '603e5d854ed7b3752ab59c63cbcd09069e6494ea',
+    items: [
+      { label: 'Kernel release PR', result: '#539 merged at 603e5d854ed7b3752ab59c63cbcd09069e6494ea' },
+      { label: 'git diff --check', result: 'passed' },
+      { label: 'Kernel full pytest', result: '3040 passed, 4 skipped with PYTHONPATH=src' },
+      { label: 'Focused read/cap tests', result: '20 passed' },
+      { label: 'Build and twine check', result: 'sdist + macOS-arm64 wheel built; both PASSED twine check' },
+      { label: 'Archive inspection', result: 'no __pycache__ or .pyc files in wheel or sdist' },
+      { label: 'Artifact hashes', result: 'wheel 2854c7aa…36aa4; sdist 5bd4976b…93ae' },
+      { label: 'PyPI verification', result: 'JSON and pip index --no-cache-dir both show lingtai 0.15.2' },
+      { label: 'GitHub release', result: 'v0.15.2 published at merge commit 603e5d8' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.15.2' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.15.2/' },
+    { label: 'Release report', href: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/main/reports/kernel-release-v0.15.2-20260627' },
+    { label: 'Release PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/539' },
+    { label: 'Compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.15.1...v0.15.2' },
+  ],
+};
+
 const v0_15_1_kernel_v0_10_1_tui: Release = {
   id: '20260627-1',
   version: 'Kernel v0.15.1 · TUI/Portal v0.10.1',
@@ -2598,7 +2704,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
