@@ -66,7 +66,11 @@ For regular users, LingTai's managed project environments remain the normal way 
 
 ## Contributors
 
-@huangzesen (lead, scope and validation owner), @TZZheng (the source self-update epic and the kernel filesystem/recovery refactors), @wchwawa (the live mail-view agent activity indicator), @rawpaper123 (headless readiness and liveness reliability fixes), @LuuOW (review of the `/viz` ghost-avatar fix), and @zechenzhangAGI (who originated the `claude-code` provider).
+Primary contributors in this 6/27 patch window were @huangzesen (release lead, scope and validation owner), @TZZheng (the source self-update epic, doctor/install work, and the kernel filesystem/recovery refactors), @wchwawa (the live mail-view agent activity indicator), and @rawpaper123 (headless readiness and liveness reliability fixes).
+
+Review and provenance credit also count in the release window: @LuuOW reviewed the `/viz` ghost-avatar fix, @zechenzhangAGI originated the `claude-code` provider in a closed kernel PR before the shipped implementation landed through #525, and @9s5bz2jvd2-lang authored the closed/unmerged `/kanban` main/daemon API-call split PR #367, which was reviewed and thanked before closure.
+
+Adjacent-window issue reporters from the prior 6/26 release remain credited there rather than duplicated here.
 
 ## Direction
 

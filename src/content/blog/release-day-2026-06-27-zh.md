@@ -66,7 +66,11 @@ TUI/Portal v0.10.1 在候选 head `418e470`（构建版本经由 `make ... VERSI
 
 ## 贡献者
 
-@huangzesen（lead，scope 与验证负责人）、@TZZheng（source self-update epic 与 kernel 的文件系统/recovery 重构）、@wchwawa（mail 视图实时 agent 活动指示）、@rawpaper123（headless 就绪与存活性可靠性修复）、@LuuOW（`/viz` ghost-avatar 修复的 review），以及 @zechenzhangAGI（最初提出 `claude-code` provider）。
+本次 6/27 patch 窗口的主要贡献者包括 @huangzesen（release lead，scope 与验证负责人）、@TZZheng（source self-update epic、doctor/install 工作，以及 kernel 的文件系统/recovery 重构）、@wchwawa（mail 视图实时 agent 活动指示），以及 @rawpaper123（headless 就绪与存活性可靠性修复）。
+
+release window 内的 review 与来源贡献也计入名单：@LuuOW review 了 `/viz` ghost-avatar 修复；@zechenzhangAGI 在一个 closed kernel PR 中提出 `claude-code` provider，后由 #525 落地；@9s5bz2jvd2-lang 提交了 closed/unmerged 的 `/kanban` main/daemon API-call 拆分 PR #367，该 PR 在窗口内完成 review 与致谢后关闭。
+
+上一轮 6/26 release 的相邻窗口 issue reporters 继续留在 6/26 贡献者名单中，不在这里重复计入。
 
 ## 方向
 

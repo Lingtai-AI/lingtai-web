@@ -220,13 +220,13 @@ const v0_15_1_kernel_v0_10_1_tui: Release = {
         'Kernel gates at the v0.15.1 bump commit `2d23801` (on base `834ce8b`): `compileall` clean; full `pytest` 3034 passing, 4 skipped, 0 genuine failures (three subprocess-import failures proven to be local PYTHONPATH / non-installed-package artifacts, green on re-check with `PYTHONPATH=src`); `python -m build` produced sdist + wheel; `twine check` PASSED on both.',
         'TUI/Portal gates at candidate head `418e470` (build version injected via `make ... VERSION=v0.10.1`, no source bump): `git diff --check` against v0.10.0 clean; full Portal Go tests passed; `portal/web npm ci && npm run build` passed; `make build` produced the TUI and Portal binaries.',
         'Noted, non-blocking: two `internal/config` install-detection tests failed only on the maintainer machine because local `/usr/local`/`/opt/homebrew` dev symlinks resolve out of the Homebrew prefix — classified as host / test-isolation sensitivity, with the underlying classifier verified to return `homebrew` on a clean path; the `portal/web` npm-audit advisories affect dev-only tooling, not the embedded static assets the Go binary ships; the locally built kernel wheel is macOS-arm64 platform-tagged, so the portable sdist is the artifact for PyPI.',
-        'Contributors in this window: @huangzesen (lead, scope and validation owner), @TZZheng (the source self-update epic and the kernel filesystem/recovery refactors), @wchwawa (the live mail-view agent activity indicator), @rawpaper123 (headless readiness and liveness reliability fixes), @LuuOW (review of the `/viz` ghost-avatar fix), and @zechenzhangAGI (who originated the `claude-code` provider).',
+        'Contributors in this window: @huangzesen (lead, scope and validation owner), @TZZheng (the source self-update epic and the kernel filesystem/recovery refactors), @wchwawa (the live mail-view agent activity indicator), @rawpaper123 (headless readiness and liveness reliability fixes), @LuuOW (review of the `/viz` ghost-avatar fix), @zechenzhangAGI (originated the `claude-code` provider in a closed kernel PR before the shipped implementation landed through #525), and @9s5bz2jvd2-lang (closed/unmerged `/kanban` main/daemon API-call split PR #367, reviewed and thanked inside the release window).',
       ],
       bulletsZh: [
         '在 v0.15.1 bump commit `2d23801`（基于 `834ce8b`）上的 kernel gate：`compileall` 通过；完整 `pytest` 3034 passing、4 skipped、0 真实失败（三个 subprocess-import 失败被证明是本地 PYTHONPATH / 包未安装的工件，用 `PYTHONPATH=src` 复查转绿）；`python -m build` 产出 sdist + wheel；`twine check` 两者均 PASSED。',
         '在候选 head `418e470`（构建版本经由 `make ... VERSION=v0.10.1` 注入，无源码 bump）上的 TUI/Portal gate：对比 v0.10.0 的 `git diff --check` 干净；完整 Portal Go 测试通过；`portal/web npm ci && npm run build` 通过；`make build` 产出 TUI 与 Portal 二进制。',
         '记录在案、不阻塞发布：两个 `internal/config` 安装检测测试只在维护者机器上失败，因为本地 `/usr/local`/`/opt/homebrew` dev 符号链接被解析到 Homebrew prefix 之外——归类为 host / 测试隔离敏感性，底层分类器已验证在干净路径上返回 `homebrew`；`portal/web` 的 npm-audit 警告只影响 dev-only 工具链，不影响 Go 二进制实际打包的静态资产；本地构建的 kernel wheel 带 macOS-arm64 平台标签，因此 PyPI 的工件是可移植的 sdist。',
-        '本窗口贡献者：@huangzesen（lead，scope 与验证负责人）、@TZZheng（source self-update epic 与 kernel 的文件系统/recovery 重构）、@wchwawa（mail 视图实时 agent 活动指示）、@rawpaper123（headless 就绪与存活性可靠性修复）、@LuuOW（`/viz` ghost-avatar 修复的 review），以及 @zechenzhangAGI（最初提出 `claude-code` provider）。',
+        '本窗口贡献者：@huangzesen（lead，scope 与验证负责人）、@TZZheng（source self-update epic 与 kernel 的文件系统/recovery 重构）、@wchwawa（mail 视图实时 agent 活动指示）、@rawpaper123（headless 就绪与存活性可靠性修复）、@LuuOW（`/viz` ghost-avatar 修复的 review）、@zechenzhangAGI（在 closed kernel PR 中提出 `claude-code` provider，后由 #525 落地），以及 @9s5bz2jvd2-lang（closed/unmerged `/kanban` main/daemon API-call 拆分 PR #367，在窗口内完成 review 与致谢后关闭）。',
       ],
       whyEn:
         'A patch still deserves full gate evidence and an honest contributor list; recording that the publish artifacts and tags are cut from these exact validated commits is part of shipping responsibly.',
@@ -234,7 +234,7 @@ const v0_15_1_kernel_v0_10_1_tui: Release = {
         '一次 patch 同样值得有完整的 gate 证据与诚实的贡献者列表；记录「publish 工件与 tag 正是从这些经过验证的 commit 切出」，是负责任地发布的一部分。',
     },
   ],
-  contributors: ['huangzesen', 'TZZheng', 'wchwawa', 'rawpaper123', 'LuuOW', 'zechenzhangAGI'],
+  contributors: ['huangzesen', 'TZZheng', 'wchwawa', 'rawpaper123', 'LuuOW', 'zechenzhangAGI', '9s5bz2jvd2-lang'],
   validation: {
     commit:
       '2d2380186ace612770b91d4c93260318618020bf (kernel v0.15.1 bump, base 834ce8b) / 418e4706277bbf12e4366ad81696284cd6160012 (TUI/Portal v0.10.1 build target)',
