@@ -65,6 +65,180 @@ export interface Release {
 
 
 
+const v0_15_1_kernel_v0_10_1_tui: Release = {
+  id: '20260627-1',
+  version: 'Kernel v0.15.1 · TUI/Portal v0.10.1',
+  titleEn: 'LingTai release: a TUI that updates itself',
+  titleZh: 'LingTai release：会自我更新的 TUI',
+  date: '2026-06-27',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.15.1 · TUI/Portal v0.10.1',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. A source / user-local TUI can now also update itself in place (manual command or startup prompt) without Homebrew. The kernel package `lingtai` v0.15.1 is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story. This entry was prepared from clean release-worktree gates; the GitHub Releases, PyPI upload, and Homebrew tap bump for v0.10.1 / v0.15.1 are published.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。source / user-local 的 TUI 现在也可以原地自我更新（手动命令或启动提示），无需 Homebrew。Kernel package `lingtai` v0.15.1 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。本条目由干净的 release-worktree gate 准备；v0.10.1 / v0.15.1 的 GitHub Releases、PyPI 上传与 Homebrew tap bump 已发布。',
+  summaryEn:
+    'A paired patch release that finishes the self-update story the previous window started for Homebrew: the source / user-local TUI can now update itself — manually and on startup — for installs that are not Homebrew-managed. The kernel adds a `claude-code` LLM provider, an MCP manual sidecar contract with bundled manuals for curated MCPs, shared filesystem/JSON/JSONL helpers and a session-recovery refactor that de-risk kernel state writes, and honest spill/refresh failure visibility — plus cockpit, doctor, and mail polish.',
+  summaryZh:
+    '一组配套的 patch release，补完上一轮为 Homebrew 开头的「自我更新」故事：source / user-local 的 TUI 现在可以自我更新——手动地、也在启动时——面向非 Homebrew 管理的安装。kernel 新增 `claude-code` LLM provider、一份为 curated MCP 提供捆绑手册的 MCP manual sidecar 契约、降低 kernel 状态写入风险的共享文件系统/JSON/JSONL helper 与一次 session-recovery 重构，以及对 spill/refresh 失败更诚实的可见性——外加座舱、doctor 与 mail 的打磨。',
+  features: [
+    {
+      titleEn: 'The source / user-local TUI updates itself (#404 complete)',
+      titleZh: 'source / user-local 的 TUI 自我更新（#404 补完）',
+      leadEn:
+        'v0.10.0 shipped the Homebrew updater backend; v0.10.1 completes issue #404 for installs that are not Homebrew-managed, so the TUI can keep itself current however it was installed.',
+      leadZh:
+        'v0.10.0 发布了 Homebrew 更新后端；v0.10.1 为非 Homebrew 管理的安装补完 issue #404，让 TUI 无论怎样安装都能保持最新。',
+      bulletsEn: [
+        'A manual TUI self-update command (#416) and a source-install self-update backend (#417) bring update-in-place to source / user-local installs.',
+        'A startup update prompt (#418) offers the update when the on-disk source drifts behind the published TUI, so an operator is told when they are behind.',
+        'These build on the v0.10.0 foundation — Homebrew updater backend, doctor install-method detection, and source-install metadata — now extended to non-Homebrew installs.',
+      ],
+      bulletsZh: [
+        '一个手动 TUI self-update 命令（#416）与一个 source 安装的 self-update 后端（#417），把原地更新带给 source / user-local 安装。',
+        '一个启动更新提示（#418），在磁盘源码落后于已发布 TUI 时提供更新，让操作者在落后时被告知。',
+        '这些建立在 v0.10.0 的基础之上——Homebrew 更新后端、doctor 安装方式检测与 source 安装元数据——现在扩展到非 Homebrew 安装。',
+      ],
+      whyEn:
+        'A self-update path that only works for Homebrew leaves source and user-local users stranded on stale binaries; finishing #404 means the TUI stays current and honest about its own version regardless of how it was installed.',
+      whyZh:
+        '一条只对 Homebrew 有效的 self-update 路径，会把 source 与 user-local 用户搁浅在陈旧二进制上；补完 #404 意味着 TUI 无论怎样安装都保持最新，并对自己的版本保持诚实。',
+    },
+    {
+      titleEn: 'A `claude-code` provider for the kernel (#525)',
+      titleZh: '给 kernel 的 `claude-code` provider（#525）',
+      leadEn:
+        'The kernel gains a new `claude-code` LLM provider that drives a Claude subscription through the `claude` CLI, widening how an operator can back the runtime without changing the cockpit they already use.',
+      leadZh:
+        'kernel 新增一个 `claude-code` LLM provider，经由 `claude` CLI 驱动一个 Claude 订阅，拓宽操作者在不改动既有座舱的前提下支撑运行时的方式。',
+      bulletsEn: [
+        'The `claude-code` provider drives the `claude` CLI on a Claude subscription as an LLM provider (#525).',
+        'It was originally proposed in closed PR #299 and merged this window — the originating contributor is credited.',
+      ],
+      bulletsZh: [
+        '`claude-code` provider 把 Claude 订阅上的 `claude` CLI 当作 LLM provider 来驱动（#525）。',
+        '它最初由已 closed 的 PR #299 提出，并在本窗口合并——原始贡献者已致谢。',
+      ],
+      whyEn:
+        'More provider choices behind the same runtime mean an operator can back a fleet the way their account and budget allow, without re-learning the cockpit.',
+      whyZh:
+        '同一个运行时背后更多的 provider 选择，意味着操作者可以按自己的账户与预算来支撑 fleet，而无需重新学习座舱。',
+    },
+    {
+      titleEn: 'MCP manual sidecars and bundled curated manuals',
+      titleZh: 'MCP manual sidecar 与捆绑的 curated 手册',
+      leadEn:
+        'The kernel documents a manual sidecar contract for MCP addons and ships bundled manuals for curated MCPs, so an MCP can carry usage guidance the runtime can surface.',
+      leadZh:
+        'kernel 为 MCP addon 记录了一份 manual sidecar 契约，并为 curated MCP 附带捆绑手册，让一个 MCP 能携带运行时可呈现的使用引导。',
+      bulletsEn: [
+        'The MCP manual sidecar anatomy and a minimal sidecar contract are documented (#529, #530).',
+        'Bundled manuals ship for curated MCPs (#528), and a Telegram media guidance manual is added (#526).',
+      ],
+      bulletsZh: [
+        'MCP manual sidecar 的结构与一份最小 sidecar 契约被记录在案（#529、#530）。',
+        '为 curated MCP 附带捆绑手册（#528），并新增一份 Telegram 媒体引导手册（#526）。',
+      ],
+      whyEn:
+        'An MCP that carries its own manual lets the runtime answer "how do I use this addon" from a documented source instead of guesswork, which matters most for media and messaging surfaces.',
+      whyZh:
+        '一个自带手册的 MCP，让运行时能从有据可查的来源回答「我该怎么用这个 addon」，而不是靠猜——这对媒体与消息类接口尤其重要。',
+    },
+    {
+      titleEn: 'Safer kernel state writes and a recovery refactor',
+      titleZh: '更安全的 kernel 状态写入与一次 recovery 重构',
+      leadEn:
+        'Two kernel refactors reduce the number of hand-rolled, slightly-different state writes that a long-running fleet can corrupt: shared filesystem helpers, and a session-recovery / tool-execution consolidation.',
+      leadZh:
+        '两次 kernel 重构减少了那些手写的、各自略有差异、可能被长任务 fleet 写坏的状态写入：共享的文件系统 helper，以及 session-recovery / 工具执行的合并。',
+      bulletsEn: [
+        'Shared `_fsutil` filesystem / JSON / JSONL helpers consolidate how the kernel reads and writes state (#510, #522), with migration references documented.',
+        'Session-recovery and ToolExecutor helpers are consolidated in `turn.py`, renaming `_post_send_housekeeping` to `_turn_boundary_housekeeping` (#511, #523).',
+      ],
+      bulletsZh: [
+        '共享的 `_fsutil` 文件系统 / JSON / JSONL helper 统一了 kernel 读写状态的方式（#510、#522），并记录了迁移引用。',
+        'session-recovery 与 ToolExecutor helper 在 `turn.py` 中合并，把 `_post_send_housekeeping` 重命名为 `_turn_boundary_housekeeping`（#511、#523）。',
+      ],
+      whyEn:
+        'Every slightly-different state-write path is a place a fleet can corrupt a file under load; routing them through shared, tested helpers makes the runtime steadier across long unattended sessions.',
+      whyZh:
+        '每一条略有差异的状态写入路径，都是 fleet 在负载下写坏文件的潜在地点；把它们经由共享且经过测试的 helper，让运行时在长时间无人值守的会话里更稳。',
+    },
+    {
+      titleEn: 'Spill and refresh told truthfully',
+      titleZh: '把 spill 与 refresh 如实说清',
+      leadEn:
+        'Failures that used to pass silently now surface: an expired spill artifact says so, a permanent refresh failure is visible, and headless runtime liveness can be proven.',
+      leadZh:
+        '过去会悄悄通过的失败现在会浮现：过期的 spill 工件会说明、refresh 的永久失败可见，且 headless 运行时存活性可被证明。',
+      bulletsEn: [
+        'Expired-spill artifacts now carry messaging instead of failing opaquely (#192, #291), and a permanent refresh failure is made visible (#292).',
+        'A headless runtime liveness proof confirms an unattended runtime is actually alive (#351).',
+        'Codex pre-molt summarize guidance is made clearer (#531).',
+      ],
+      bulletsZh: [
+        '过期的 spill 工件现在带消息，而不是不透明地失败（#192、#291），refresh 的永久失败被变得可见（#292）。',
+        '一份 headless 运行时存活性证明，确认一个无人值守的运行时确实活着（#351）。',
+        'Codex pre-molt summarize 引导被变得更清晰（#531）。',
+      ],
+      whyEn:
+        'A spill or refresh that fails silently is exactly the kind of fault a long autonomy run discovers too late; surfacing them lets an operator act before the failure compounds.',
+      whyZh:
+        '一个悄悄失败的 spill 或 refresh，正是长时间自治运行会发现得太晚的那类故障；把它们浮现出来，让操作者能在失败累积之前行动。',
+    },
+    {
+      titleEn: 'Cockpit polish, validation, and contributors',
+      titleZh: '座舱打磨、验证与贡献者',
+      leadEn:
+        'Around the headline work, the cockpit and doctor got a polish pass, and both patch versions were validated from clean release worktrees before publish.',
+      leadZh:
+        '围绕主线工作，座舱与 doctor 经过一轮打磨，两个 patch 版本都在发布前从干净的 release worktree 完成验证。',
+      bulletsEn: [
+        'Cockpit: a live agent-activity indicator on the mail view footer (#422), mail view copy mode (#402), and the live `/viz` ghost-avatar visibility fix (#354).',
+        'Doctor: a saved redacted report bundle with a privacy notice and export hint, install-method detection, and a diagnostic-section layout clarification (#406, #407, #409, #449, #450); plus a headless agent-readiness reliability fix (#365).',
+        'Kernel v0.15.1 gates at bump commit `2d23801` (base `834ce8b`): compileall clean; `pytest` 3034 passing, 4 skipped, 0 genuine failures (three subprocess-import failures proven to be local PYTHONPATH/non-installed-package artifacts, green on re-check); `python -m build` produced sdist + wheel; `twine check` PASSED on both.',
+        'TUI/Portal v0.10.1 gates at candidate head `418e470` (build version injected via `make ... VERSION=v0.10.1`): `git diff --check` against v0.10.0 clean; Portal web `npm ci && npm run build` passed; Portal Go tests passed; `make build` produced the TUI and Portal binaries.',
+        'Non-blocking caveats: two `internal/config` install-detection tests failed only on the maintainer machine because local `/usr/local`/`/opt/homebrew` dev symlinks resolve out of the Homebrew prefix — classified as host/test-isolation sensitivity, with the underlying classifier verified to return `homebrew` on a clean path; the `portal/web` toolchain reports dev/build-time npm-audit advisories that are not in the shipped static assets; the local kernel wheel is macOS-arm64 platform-tagged, so the portable sdist is the PyPI artifact.',
+      ],
+      bulletsZh: [
+        '座舱：mail 视图底栏的实时 agent 活动指示（#422）、mail 视图复制模式（#402），以及实时 `/viz` ghost-avatar 可见性修复（#354）。',
+        'doctor：保存一份脱敏的报告 bundle，带隐私提示与导出提示、安装方式检测，以及诊断分区布局澄清（#406、#407、#409、#449、#450）；外加一个 headless agent 就绪可靠性修复（#365）。',
+        'Kernel v0.15.1 在 bump commit `2d23801`（基于 `834ce8b`）上的 gate：compileall 通过；`pytest` 3034 passing、4 skipped、0 真实失败（三个 subprocess-import 失败被证明是本地 PYTHONPATH / 包未安装的工件，复查转绿）；`python -m build` 产出 sdist + wheel；`twine check` 两者均 PASSED。',
+        'TUI/Portal v0.10.1 在候选 head `418e470`（构建版本经由 `make ... VERSION=v0.10.1` 注入）上的 gate：对比 v0.10.0 的 `git diff --check` 干净；Portal web `npm ci && npm run build` 通过；Portal Go 测试通过；`make build` 产出 TUI 与 Portal 二进制。',
+        '不阻塞的注脚：两个 `internal/config` 安装检测测试只在维护者机器上失败，因为本地 `/usr/local`/`/opt/homebrew` dev 符号链接被解析到 Homebrew prefix 之外——归类为 host / 测试隔离敏感性，底层分类器已验证在干净路径上返回 `homebrew`；`portal/web` 工具链报告 dev / 构建期的 npm-audit 警告，不在打包的静态资产里；本地 kernel wheel 带 macOS-arm64 平台标签，因此 PyPI 工件是可移植的 sdist。',
+      ],
+      whyEn:
+        'A patch still deserves full gate evidence and an honest contributor list; recording that the publish artifacts and tags are cut from these exact validated commits is part of shipping responsibly.',
+      whyZh:
+        '一次 patch 同样值得有完整的 gate 证据与诚实的贡献者列表；记录「publish 工件与 tag 正是从这些经过验证的 commit 切出」，是负责任地发布的一部分。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng', 'wchwawa', 'rawpaper123', 'LuuOW', 'zechenzhangAGI'],
+  validation: {
+    commit:
+      '2d2380186ace612770b91d4c93260318618020bf (kernel v0.15.1 bump, base 834ce8b) / 418e4706277bbf12e4366ad81696284cd6160012 (TUI/Portal v0.10.1 build target)',
+    items: [
+      { label: 'Kernel compileall', result: 'src + tests compiled clean' },
+      { label: 'Kernel full pytest', result: '3034 passing, 4 skipped, 0 genuine failures (3 subprocess-import failures proven local-env artifacts, green on re-check with PYTHONPATH=src)' },
+      { label: 'Kernel build and twine check', result: 'sdist + wheel built; both PASSED' },
+      { label: 'Kernel version bump', result: 'single pyproject.toml line, 0.15.0 → 0.15.1' },
+      { label: 'TUI diff-check', result: 'clean against v0.10.0' },
+      { label: 'TUI Go tests/build', result: 'go test passed (2 install-detection tests failed only on host dev-symlinks, non-blocking); make build → lingtai-tui v0.10.1' },
+      { label: 'Portal web npm ci/build', result: 'passed (dev-only npm audit advisories noted, not in shipped static assets)' },
+      { label: 'Portal Go tests/build', result: 'go test passed; make build → lingtai-portal v0.10.1' },
+      { label: 'PyPI artifact policy', result: 'portable sdist is the PyPI artifact; local wheel is macOS-arm64 platform-tagged' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.15.1' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.1' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.15.1/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-27/' },
+  ],
+};
+
 const v0_15_0_kernel_v0_10_0_tui: Release = {
   id: '20260626-1',
   version: 'Kernel v0.15.0 · TUI/Portal v0.10.0',
@@ -2404,7 +2578,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
