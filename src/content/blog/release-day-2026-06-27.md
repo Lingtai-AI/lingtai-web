@@ -64,14 +64,6 @@ Note on artifacts: the locally built kernel wheel is macOS-arm64 platform-tagged
 
 For regular users, LingTai's managed project environments remain the normal way the runtime package is resolved. The PyPI page is the published runtime package source and a useful verification point, not the primary end-user upgrade story.
 
-## Contributors
-
-Primary contributors in this 6/27 patch window were @huangzesen (release lead, scope and validation owner), @TZZheng (the source self-update epic, doctor/install work, and the kernel filesystem/recovery refactors), @wchwawa (the live mail-view agent activity indicator), and @rawpaper123 (headless readiness and liveness reliability fixes).
-
-Review and provenance credit also count in the release window: @LuuOW reviewed the `/viz` ghost-avatar fix, @zechenzhangAGI originated the `claude-code` provider in a closed kernel PR before the shipped implementation landed through #525, and @9s5bz2jvd2-lang authored the closed/unmerged `/kanban` main/daemon API-call split PR #367, which was reviewed and thanked before closure.
-
-Adjacent-window issue reporters from the prior 6/26 release remain credited there rather than duplicated here.
-
 ## Direction
 
 With self-update finished across install methods and the kernel's state writes routed through shared, tested helpers, the runtime is steadier under long unattended sessions. The next steps build on the telemetry the previous window surfaced — act on what the numbers show, and keep widening provider choice without disturbing the cockpit operators already know.

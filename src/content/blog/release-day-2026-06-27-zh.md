@@ -31,7 +31,7 @@ description: "一次把「自我更新」补完的 patch：source / user-local �
 - 对 spill 与 refresh 更诚实的可见性：过期 spill 工件的消息（#192、#291）、refresh 永久失败的可见性（#292），以及一份 headless 运行时存活性证明（#351）。
 - 更清晰的 Codex pre-molt summarize 引导（#531）。
 
-## 为什么这很重要
+## 为什么这重要
 
 一条只对 Homebrew 安装有效的 self-update 路径，会把 source 与 user-local 用户搁浅在陈旧的二进制上；补完 #404 意味着无论怎样安装，TUI 都能让自己保持最新，并在落后时告诉操作者。在 kernel 一侧，主题与 v0.15.0 相同——让运行时在长时间自治下保持诚实与安全。共享的文件系统 helper 减少了那些手写的、各自略有差异、可能被 fleet 写坏的状态写入；过去会悄悄通过的 spill 与 refresh 失败现在会浮现；而 `claude-code` provider 拓宽了操作者在不改动既有座舱的前提下支撑运行时的方式。
 
@@ -63,14 +63,6 @@ TUI/Portal v0.10.1 在候选 head `418e470`（构建版本经由 `make ... VERSI
 - Homebrew tap：<https://github.com/Lingtai-AI/homebrew-lingtai>
 
 对普通用户而言，LingTai 的 managed project environment 仍是解析 runtime package 的正常方式。PyPI 页面是已发布的 runtime package source 与一个有用的验证点，而不是普通用户的主要升级故事。
-
-## 贡献者
-
-本次 6/27 patch 窗口的主要贡献者包括 @huangzesen（release lead，scope 与验证负责人）、@TZZheng（source self-update epic、doctor/install 工作，以及 kernel 的文件系统/recovery 重构）、@wchwawa（mail 视图实时 agent 活动指示），以及 @rawpaper123（headless 就绪与存活性可靠性修复）。
-
-release window 内的 review 与来源贡献也计入名单：@LuuOW review 了 `/viz` ghost-avatar 修复；@zechenzhangAGI 在一个 closed kernel PR 中提出 `claude-code` provider，后由 #525 落地；@9s5bz2jvd2-lang 提交了 closed/unmerged 的 `/kanban` main/daemon API-call 拆分 PR #367，该 PR 在窗口内完成 review 与致谢后关闭。
-
-上一轮 6/26 release 的相邻窗口 issue reporters 继续留在 6/26 贡献者名单中，不在这里重复计入。
 
 ## 方向
 

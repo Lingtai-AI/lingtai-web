@@ -68,8 +68,8 @@ export interface Release {
 const v0_15_1_kernel_v0_10_1_tui: Release = {
   id: '20260627-1',
   version: 'Kernel v0.15.1 · TUI/Portal v0.10.1',
-  titleEn: 'LingTai release: a TUI that updates itself',
-  titleZh: 'LingTai release：会自我更新的 TUI',
+  titleEn: 'LingTai release day: self-updating TUI, Claude Code provider, and steadier runtime state',
+  titleZh: 'LingTai release day：自我更新的 TUI、Claude Code provider，与更稳的 runtime 状态',
   date: '2026-06-27',
   pkg: 'lingtai + lingtai-tui',
   tag: 'kernel v0.15.1 · TUI/Portal v0.10.1',
