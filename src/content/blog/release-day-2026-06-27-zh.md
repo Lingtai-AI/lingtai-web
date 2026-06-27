@@ -12,6 +12,8 @@ description: "一次把「自我更新」补完的 patch：source / user-local �
 
 这是一个 patch 窗口，而不是一个新功能窗口。上一轮 release 把 token 遥测带进了座舱的默认视图；这一轮收掉它留下的两个口子——让 *source* 的 TUI 像 Homebrew 的 TUI 那样能自我更新，并给 kernel 更安全的状态写入管道，外加一种把 Claude 订阅当作 LLM provider 来驱动的新方式。
 
+主角是「自我更新」收尾。v0.10.0 教会了 Homebrew 的 TUI 自我更新；source 与 user-local 安装仍被搁浅在它们上次构建的那个二进制上。这一轮把同样的原地更新——手动地、也在启动时——带给那些安装，让 TUI 无论怎样落到磁盘上都能保持最新。在它背后，kernel 把更多状态写入经由共享且经过测试的 helper，并不再让 spill 与 refresh 的失败悄悄通过。
+
 ## 发生了什么变化
 
 ### TUI / Portal v0.10.1
@@ -64,7 +66,7 @@ TUI/Portal v0.10.1 在候选 head `418e470`（构建版本经由 `make ... VERSI
 
 ## 贡献者
 
-感谢 huangzesen（lead，scope 与验证负责人）、TZZheng（source self-update epic 与 kernel 的文件系统/recovery 重构）、wchwawa（mail 视图实时 agent 活动指示）、rawpaper123（headless 就绪与存活性可靠性修复）、LuuOW（`/viz` ghost-avatar 修复的 review），以及 zechenzhangAGI（最初提出 `claude-code` provider）。
+@huangzesen（lead，scope 与验证负责人）、@TZZheng（source self-update epic 与 kernel 的文件系统/recovery 重构）、@wchwawa（mail 视图实时 agent 活动指示）、@rawpaper123（headless 就绪与存活性可靠性修复）、@LuuOW（`/viz` ghost-avatar 修复的 review），以及 @zechenzhangAGI（最初提出 `claude-code` provider）。
 
 ## 方向
 

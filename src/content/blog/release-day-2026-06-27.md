@@ -12,6 +12,8 @@ description: "A patch that finishes the self-update story: the source / user-loc
 
 This is a patch window, not a new feature window. The previous release brought token telemetry into the cockpit's default view; this one closes two loops it left open — let the *source* TUI update itself the way the Homebrew TUI already could, and give the kernel safer state-write plumbing plus a new way to drive a Claude subscription as an LLM provider.
 
+The headline is the self-update story finishing. v0.10.0 taught the Homebrew TUI to update itself; source and user-local installs were still stranded on whatever binary they last built. This release brings the same update-in-place — manual and on startup — to those installs, so the TUI can keep itself current however it was put on disk. Behind it, the kernel routes more of its state writes through shared, tested helpers and stops letting spill and refresh failures pass silently.
+
 ## What changed
 
 ### TUI / Portal v0.10.1
@@ -64,7 +66,7 @@ For regular users, LingTai's managed project environments remain the normal way 
 
 ## Contributors
 
-Thanks to huangzesen (lead, scope and validation owner), TZZheng (the source self-update epic and the kernel filesystem/recovery refactors), wchwawa (the live mail-view agent activity indicator), rawpaper123 (headless readiness and liveness reliability fixes), LuuOW (review of the `/viz` ghost-avatar fix), and zechenzhangAGI (who originated the `claude-code` provider).
+@huangzesen (lead, scope and validation owner), @TZZheng (the source self-update epic and the kernel filesystem/recovery refactors), @wchwawa (the live mail-view agent activity indicator), @rawpaper123 (headless readiness and liveness reliability fixes), @LuuOW (review of the `/viz` ghost-avatar fix), and @zechenzhangAGI (who originated the `claude-code` provider).
 
 ## Direction
 

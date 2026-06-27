@@ -188,25 +188,45 @@ const v0_15_1_kernel_v0_10_1_tui: Release = {
         '一个悄悄失败的 spill 或 refresh，正是长时间自治运行会发现得太晚的那类故障；把它们浮现出来，让操作者能在失败累积之前行动。',
     },
     {
-      titleEn: 'Cockpit polish, validation, and contributors',
-      titleZh: '座舱打磨、验证与贡献者',
+      titleEn: 'Cockpit and doctor polish',
+      titleZh: '座舱与 doctor 打磨',
       leadEn:
-        'Around the headline work, the cockpit and doctor got a polish pass, and both patch versions were validated from clean release worktrees before publish.',
+        'Around the headline work, the cockpit and doctor got a focused polish pass, and a headless agent-readiness reliability fix landed alongside.',
       leadZh:
-        '围绕主线工作，座舱与 doctor 经过一轮打磨，两个 patch 版本都在发布前从干净的 release worktree 完成验证。',
+        '围绕主线工作，座舱与 doctor 经过一轮聚焦的打磨，并随之落地一个 headless agent 就绪可靠性修复。',
       bulletsEn: [
         'Cockpit: a live agent-activity indicator on the mail view footer (#422), mail view copy mode (#402), and the live `/viz` ghost-avatar visibility fix (#354).',
-        'Doctor: a saved redacted report bundle with a privacy notice and export hint, install-method detection, and a diagnostic-section layout clarification (#406, #407, #409, #449, #450); plus a headless agent-readiness reliability fix (#365).',
-        'Kernel v0.15.1 gates at bump commit `2d23801` (base `834ce8b`): compileall clean; `pytest` 3034 passing, 4 skipped, 0 genuine failures (three subprocess-import failures proven to be local PYTHONPATH/non-installed-package artifacts, green on re-check); `python -m build` produced sdist + wheel; `twine check` PASSED on both.',
-        'TUI/Portal v0.10.1 gates at candidate head `418e470` (build version injected via `make ... VERSION=v0.10.1`): `git diff --check` against v0.10.0 clean; Portal web `npm ci && npm run build` passed; Portal Go tests passed; `make build` produced the TUI and Portal binaries.',
-        'Non-blocking caveats: two `internal/config` install-detection tests failed only on the maintainer machine because local `/usr/local`/`/opt/homebrew` dev symlinks resolve out of the Homebrew prefix — classified as host/test-isolation sensitivity, with the underlying classifier verified to return `homebrew` on a clean path; the `portal/web` toolchain reports dev/build-time npm-audit advisories that are not in the shipped static assets; the local kernel wheel is macOS-arm64 platform-tagged, so the portable sdist is the PyPI artifact.',
+        'Doctor: a saved redacted report bundle with a privacy notice and export hint, install-method detection, and a diagnostic-section layout clarification (#406, #407, #409, #449, #450).',
+        'Reliability: wait for headless agent readiness before proceeding (#365), plus dev-guide release-workflow docs and README install-method output (#448).',
       ],
       bulletsZh: [
         '座舱：mail 视图底栏的实时 agent 活动指示（#422）、mail 视图复制模式（#402），以及实时 `/viz` ghost-avatar 可见性修复（#354）。',
-        'doctor：保存一份脱敏的报告 bundle，带隐私提示与导出提示、安装方式检测，以及诊断分区布局澄清（#406、#407、#409、#449、#450）；外加一个 headless agent 就绪可靠性修复（#365）。',
-        'Kernel v0.15.1 在 bump commit `2d23801`（基于 `834ce8b`）上的 gate：compileall 通过；`pytest` 3034 passing、4 skipped、0 真实失败（三个 subprocess-import 失败被证明是本地 PYTHONPATH / 包未安装的工件，复查转绿）；`python -m build` 产出 sdist + wheel；`twine check` 两者均 PASSED。',
-        'TUI/Portal v0.10.1 在候选 head `418e470`（构建版本经由 `make ... VERSION=v0.10.1` 注入）上的 gate：对比 v0.10.0 的 `git diff --check` 干净；Portal web `npm ci && npm run build` 通过；Portal Go 测试通过；`make build` 产出 TUI 与 Portal 二进制。',
-        '不阻塞的注脚：两个 `internal/config` 安装检测测试只在维护者机器上失败，因为本地 `/usr/local`/`/opt/homebrew` dev 符号链接被解析到 Homebrew prefix 之外——归类为 host / 测试隔离敏感性，底层分类器已验证在干净路径上返回 `homebrew`；`portal/web` 工具链报告 dev / 构建期的 npm-audit 警告，不在打包的静态资产里；本地 kernel wheel 带 macOS-arm64 平台标签，因此 PyPI 工件是可移植的 sdist。',
+        'doctor：保存一份脱敏的报告 bundle，带隐私提示与导出提示、安装方式检测，以及诊断分区布局澄清（#406、#407、#409、#449、#450）。',
+        '可靠性：在继续之前等待 headless agent 就绪（#365），外加 dev-guide 的 release-workflow 文档与 README 安装方式输出（#448）。',
+      ],
+      whyEn:
+        'A patch window is the right place to clear small cockpit and doctor papercuts; an operator who can see agent activity, copy from the mail view, and read a clean diagnostic report trusts the surface more in a long session.',
+      whyZh:
+        '一个 patch 窗口正是清理座舱与 doctor 小毛刺的好时机；一个能看到 agent 活动、能从 mail 视图复制、能读到干净诊断报告的操作者，会在长会话里更信任这个界面。',
+    },
+    {
+      titleEn: 'Release hygiene, validation, and contributors',
+      titleZh: 'release hygiene、验证与贡献者',
+      leadEn:
+        'The paired patch versions — TUI/Portal v0.10.1 and kernel v0.15.1 — were validated from clean release worktrees before the publish step.',
+      leadZh:
+        '这对 patch 版本——TUI/Portal v0.10.1 与 kernel v0.15.1——在 publish 步骤之前从干净的 release worktree 完成验证。',
+      bulletsEn: [
+        'Kernel gates at the v0.15.1 bump commit `2d23801` (on base `834ce8b`): `compileall` clean; full `pytest` 3034 passing, 4 skipped, 0 genuine failures (three subprocess-import failures proven to be local PYTHONPATH / non-installed-package artifacts, green on re-check with `PYTHONPATH=src`); `python -m build` produced sdist + wheel; `twine check` PASSED on both.',
+        'TUI/Portal gates at candidate head `418e470` (build version injected via `make ... VERSION=v0.10.1`, no source bump): `git diff --check` against v0.10.0 clean; full Portal Go tests passed; `portal/web npm ci && npm run build` passed; `make build` produced the TUI and Portal binaries.',
+        'Noted, non-blocking: two `internal/config` install-detection tests failed only on the maintainer machine because local `/usr/local`/`/opt/homebrew` dev symlinks resolve out of the Homebrew prefix — classified as host / test-isolation sensitivity, with the underlying classifier verified to return `homebrew` on a clean path; the `portal/web` npm-audit advisories affect dev-only tooling, not the embedded static assets the Go binary ships; the locally built kernel wheel is macOS-arm64 platform-tagged, so the portable sdist is the artifact for PyPI.',
+        'Contributors in this window: @huangzesen (lead, scope and validation owner), @TZZheng (the source self-update epic and the kernel filesystem/recovery refactors), @wchwawa (the live mail-view agent activity indicator), @rawpaper123 (headless readiness and liveness reliability fixes), @LuuOW (review of the `/viz` ghost-avatar fix), and @zechenzhangAGI (who originated the `claude-code` provider).',
+      ],
+      bulletsZh: [
+        '在 v0.15.1 bump commit `2d23801`（基于 `834ce8b`）上的 kernel gate：`compileall` 通过；完整 `pytest` 3034 passing、4 skipped、0 真实失败（三个 subprocess-import 失败被证明是本地 PYTHONPATH / 包未安装的工件，用 `PYTHONPATH=src` 复查转绿）；`python -m build` 产出 sdist + wheel；`twine check` 两者均 PASSED。',
+        '在候选 head `418e470`（构建版本经由 `make ... VERSION=v0.10.1` 注入，无源码 bump）上的 TUI/Portal gate：对比 v0.10.0 的 `git diff --check` 干净；完整 Portal Go 测试通过；`portal/web npm ci && npm run build` 通过；`make build` 产出 TUI 与 Portal 二进制。',
+        '记录在案、不阻塞发布：两个 `internal/config` 安装检测测试只在维护者机器上失败，因为本地 `/usr/local`/`/opt/homebrew` dev 符号链接被解析到 Homebrew prefix 之外——归类为 host / 测试隔离敏感性，底层分类器已验证在干净路径上返回 `homebrew`；`portal/web` 的 npm-audit 警告只影响 dev-only 工具链，不影响 Go 二进制实际打包的静态资产；本地构建的 kernel wheel 带 macOS-arm64 平台标签，因此 PyPI 的工件是可移植的 sdist。',
+        '本窗口贡献者：@huangzesen（lead，scope 与验证负责人）、@TZZheng（source self-update epic 与 kernel 的文件系统/recovery 重构）、@wchwawa（mail 视图实时 agent 活动指示）、@rawpaper123（headless 就绪与存活性可靠性修复）、@LuuOW（`/viz` ghost-avatar 修复的 review），以及 @zechenzhangAGI（最初提出 `claude-code` provider）。',
       ],
       whyEn:
         'A patch still deserves full gate evidence and an honest contributor list; recording that the publish artifacts and tags are cut from these exact validated commits is part of shipping responsibly.',
