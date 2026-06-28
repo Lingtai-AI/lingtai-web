@@ -65,6 +65,161 @@ export interface Release {
 
 
 
+const v0_15_3_kernel_v0_10_2_tui: Release = {
+  id: '20260628-1',
+  version: 'Kernel v0.15.3 · TUI/Portal v0.10.2',
+  titleEn: 'LingTai release day: an honest init contract and steadier reconstruction signals',
+  titleZh: 'LingTai release day：诚实的 init 契约，与更稳的重建信号',
+  date: '2026-06-28',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.15.3 · TUI/Portal v0.10.2',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. The kernel package `lingtai` v0.15.3 is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story. This is a paired patch release validated from clean release worktrees before publication.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。Kernel package `lingtai` v0.15.3 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。这是一对在发布前从干净的 release worktree 完成验证的 patch release。',
+  summaryEn:
+    'A small paired patch that makes two runtime contracts honest. Generated, template, and example init.json no longer seed legacy `prompt` or empty `lingtai` fields — long-lived character state is owned by `system/lingtai.md` / psyche after creation, and the kernel treats a missing seed as a valid empty seed. The kernel also makes context-pressure signals more truthful: a delayed-summarization reconstruction now reports one-shot evidence while sustained high-context pressure is surfaced separately as a molt warning. The window rounds out with system-prompt resources refactored into Markdown catalogs, a WeChat MCP config-path fix and stronger inbound-media validation, grep and IMAP ergonomics, runtime-identity stamps on event logs, and the usual release hygiene.',
+  summaryZh:
+    '这是一对让两条运行时契约变诚实的小 patch。生成、模板与示例 init.json 不再写入 legacy `prompt` 或空的 `lingtai` 字段——长生命周期的 character state 在创建之后由 `system/lingtai.md` / psyche 拥有，kernel 把缺失的 seed 视为合法的空 seed。kernel 也让 context-pressure 信号更如实：延迟的 summarization 重建现在报告一次性证据，而持续的高 context 压力作为 molt warning 单独浮现。本窗口还包括把系统提示资源重构为 Markdown 目录、WeChat MCP 配置路径修复与更强的入站媒体校验、grep 与 IMAP 的人体工学、事件日志上的运行时身份戳，以及一贯的 release hygiene。',
+  features: [
+    {
+      titleEn: 'An honest init contract: no more seeded `prompt` / `lingtai`',
+      titleZh: '诚实的 init 契约：不再 seed `prompt` / `lingtai`',
+      leadEn:
+        'Generated, template, and example init.json stop writing character-seed fields that the runtime no longer honors. Created character state is owned afterward by `system/lingtai.md` / psyche, and the kernel accepts a missing seed as a valid empty seed.',
+      leadZh:
+        '生成、模板与示例 init.json 不再写入运行时已不再认可的 character-seed 字段。创建后的 character state 由 `system/lingtai.md` / psyche 拥有，kernel 把缺失的 seed 当作合法的空 seed。',
+      bulletsEn: [
+        'The kernel formalizes the init contract: `prompt` is not a legacy alias, a missing `lingtai` / `lingtai_file` is valid and means an empty initial seed, and deprecated brief fields are ignored (kernel #550, #551, #552, #557).',
+        'The TUI stops seeding the character field in generated init.json and ships a guard regression test that generated init JSON omits `prompt`, `prompt_file`, `lingtai`, and `lingtai_file` (TUI #458).',
+        'Stale init-schema tests are aligned with the optional `lingtai` seed, and avatar-anatomy docs clarify how the lingtai seed is inherited (kernel #553 plus the release-hygiene test alignment).',
+      ],
+      bulletsZh: [
+        'kernel 把 init 契约正式化：`prompt` 不是 legacy alias；缺失的 `lingtai` / `lingtai_file` 是合法的，表示空的初始 seed；deprecated 的 brief 字段被忽略（kernel #550、#551、#552、#557）。',
+        'TUI 不再在生成的 init.json 里 seed character 字段，并附带一个守护回归测试，确保生成的 init JSON 不含 `prompt`、`prompt_file`、`lingtai`、`lingtai_file`（TUI #458）。',
+        '陈旧的 init-schema 测试已与可选的 `lingtai` seed 对齐，avatar-anatomy 文档澄清了 lingtai seed 的继承方式（kernel #553，以及 release-hygiene 的测试对齐）。',
+      ],
+      whyEn:
+        'An init file that seeds fields the runtime ignores is a quiet lie about where character state lives; aligning the generator, templates, examples, and schema means a freshly created agent starts from one honest source of truth instead of stale, never-honored prompt text.',
+      whyZh:
+        '一个 seed 了运行时会忽略的字段的 init 文件，是对「character state 住在哪里」的一种悄悄的谎言；把生成器、模板、示例与 schema 对齐，意味着一个新建 agent 从一个诚实的事实来源出发，而不是从陈旧的、从未被认可的 prompt 文本出发。',
+    },
+    {
+      titleEn: 'Reconstruction-aware molt warnings',
+      titleZh: '感知重建的 molt warning',
+      leadEn:
+        'Context-pressure signals are made more truthful: a delayed-summarization reconstruction reports its evidence once, while sustained high-context pressure is surfaced separately so the two are not conflated.',
+      leadZh:
+        '让 context-pressure 信号更如实：延迟的 summarization 重建一次性报告它的证据，而持续的高 context 压力被单独浮现，使两者不再被混为一谈。',
+      bulletsEn: [
+        'A delayed summarization reconstruction now reports one-shot reconstruction evidence, while sustained high-context pressure is surfaced separately as a molt warning (kernel #556).',
+        'Resident meta-guidance ordering and prompt-layer documentation were tightened, with delayed-summarize guidance made more precise (kernel #542, #558).',
+        'Event logs are stamped with the kernel runtime identity so a long unattended run can be attributed to the runtime that produced it (kernel #540).',
+      ],
+      bulletsZh: [
+        '延迟的 summarization 重建现在报告一次性的重建证据，而持续的高 context 压力作为 molt warning 单独浮现（kernel #556）。',
+        '常驻 meta-guidance 的排序与 prompt-layer 文档被收紧，延迟 summarize 的引导更精确（kernel #542、#558）。',
+        '事件日志被打上 kernel runtime identity 戳，使一次长时间无人值守的运行能归因到产生它的运行时（kernel #540）。',
+      ],
+      whyEn:
+        'A single reconstruction event and ongoing context pressure are different facts that ask for different responses; reporting the reconstruction once and surfacing sustained pressure on its own keeps an agent from over-reading a one-time rebuild as a standing emergency.',
+      whyZh:
+        '一次重建事件与持续的 context 压力是两个不同的事实，需要不同的应对；把重建只报告一次、把持续压力单独浮现，能避免 agent 把一次性重建误读成长期的紧急状态。',
+    },
+    {
+      titleEn: 'System-prompt catalogs, MCP, and utility polish',
+      titleZh: '系统提示目录、MCP 与工具打磨',
+      leadEn:
+        'Around the two headline contracts, the kernel refactors its system-prompt resources into Markdown catalogs and lands a round of integration and utility fixes.',
+      leadZh:
+        '围绕两条主线契约，kernel 把系统提示资源重构为 Markdown 目录，并落地一轮集成与工具修复。',
+      bulletsEn: [
+        'System-prompt resources are refactored into Markdown catalogs with clearer related-file behavior, and the runtime principle layer is kernel-managed rather than injected at runtime (kernel #555, #547, #549).',
+        'WeChat MCP config-path resolution is fixed and inbound media is validated by magic bytes (kernel #554, #543).',
+        'Grep prunes its glob filter before reading files, and IMAP empty-argument ergonomics and flag diagnostics are clearer (kernel #544, #548).',
+      ],
+      bulletsZh: [
+        '系统提示资源被重构为 Markdown 目录，related-file 行为更清晰，运行时 principle 层改为由 kernel 管理而非运行时注入（kernel #555、#547、#549）。',
+        'WeChat MCP 配置路径解析被修复，入站媒体按 magic bytes 校验（kernel #554、#543）。',
+        'grep 在读文件之前先裁剪 glob filter，IMAP 空参数的人体工学与 flag 诊断更清晰（kernel #544、#548）。',
+      ],
+      whyEn:
+        'These are the seams a long-running fleet rubs against most — a misresolved MCP config path, an unvalidated inbound file, a grep that reads more than it needs; tidying them keeps the runtime predictable without changing the cockpit operators already know.',
+      whyZh:
+        '这些正是长任务 fleet 最常摩擦到的接缝——一个解析错的 MCP 配置路径、一个未校验的入站文件、一个读得比需要更多的 grep；把它们整理干净，能在不改动操作者已熟悉的座舱的前提下让运行时更可预测。',
+    },
+    {
+      titleEn: 'TUI ledger fidelity and cockpit ergonomics',
+      titleZh: 'TUI ledger 保真与座舱人体工学',
+      leadEn:
+        'On the cockpit side, the TUI improves how refresh and context-rebuild events are accounted for and restores roomier mail defaults.',
+      leadZh:
+        '在座舱一侧，TUI 改进了 refresh 与 context-rebuild 事件的计入方式，并恢复了更宽的 mail 默认值。',
+      bulletsEn: [
+        'Refresh rebuilds and context rebuilds are now marked in the call ledger so the recent-call view distinguishes a rebuild from an ordinary API call (TUI #457, #455).',
+        'Larger mail page-size defaults are restored and mail renderers are reused across mail views, and `ctrl-y` select mode is now available globally with a prominent indicator (TUI #454, #453, #452).',
+      ],
+      bulletsZh: [
+        'refresh 重建与 context 重建现在被标记在 call ledger 中，使 recent-call 视图能把重建与普通 API 调用区分开（TUI #457、#455）。',
+        '恢复了更大的 mail page-size 默认值并在 mail 视图间复用 mail renderer，`ctrl-y` 选择模式现在全局可用并带显著指示（TUI #454、#453、#452）。',
+      ],
+      whyEn:
+        'A ledger that reads a rebuild as a normal call misleads an operator reading per-round cost; marking rebuilds keeps the call view honest, and the mail and select-mode polish removes day-to-day cockpit papercuts.',
+      whyZh:
+        '一个把重建读成普通调用的 ledger，会误导查看按轮成本的操作者；标记重建让 call 视图保持诚实，而 mail 与选择模式的打磨清掉了日常座舱的小毛刺。',
+    },
+    {
+      titleEn: 'Release hygiene, validation, and contributors',
+      titleZh: 'release hygiene、验证与贡献者',
+      leadEn:
+        'The paired patch versions — TUI/Portal v0.10.2 and kernel v0.15.3 — were validated from clean release worktrees off `origin/main` before the publish step.',
+      leadZh:
+        '这对 patch 版本——TUI/Portal v0.10.2 与 kernel v0.15.3——在 publish 步骤之前从 `origin/main` 的干净 release worktree 完成验证。',
+      bulletsEn: [
+        'Strict ranges: TUI `v0.10.1..v0.10.2` (12 commits, 38 files changed, +1612/-177) and kernel `v0.15.2..v0.15.3` (38 commits, 99 files changed, +6331/-829).',
+        'Kernel gates: `git diff --check` clean; `compileall` clean; full `pytest` passed; `python -m build` produced sdist + wheel; `twine check` PASSED. Release hygiene aligned the init-schema tests with the optional `lingtai` seed and bumped the package version to `0.15.3`.',
+        'TUI/Portal gates: `git diff --check` clean against v0.10.1; full `tui` and `portal` Go tests passed; `portal/web npm ci && npm run build` passed; `make build` produced the TUI and Portal binaries. Release hygiene normalized `docs/stars/stars.csv` whitespace and isolated the Homebrew install-detection tests from real developer-machine symlinks.',
+        'Contributors in this window: @huangzesen (lead, scope and validation owner across both repos) and @TZZheng (kernel dry-run retention reporter, #541).',
+      ],
+      bulletsZh: [
+        '严格范围：TUI `v0.10.1..v0.10.2`（12 个 commit、38 个文件变更、+1612/-177）与 kernel `v0.15.2..v0.15.3`（38 个 commit、99 个文件变更、+6331/-829）。',
+        'kernel gate：`git diff --check` 干净；`compileall` 通过；完整 `pytest` 通过；`python -m build` 产出 sdist + wheel；`twine check` PASSED。release hygiene 把 init-schema 测试与可选的 `lingtai` seed 对齐，并把包版本 bump 到 `0.15.3`。',
+        'TUI/Portal gate：对比 v0.10.1 的 `git diff --check` 干净；完整 `tui` 与 `portal` Go 测试通过；`portal/web npm ci && npm run build` 通过；`make build` 产出 TUI 与 Portal 二进制。release hygiene 规范化了 `docs/stars/stars.csv` 的空白，并把 Homebrew 安装检测测试与真实开发者机器的符号链接隔离。',
+        '本窗口贡献者：@huangzesen（lead，两个仓库的 scope 与验证负责人）与 @TZZheng（kernel dry-run retention reporter，#541）。',
+      ],
+      whyEn:
+        'A patch still deserves full gate evidence and an honest contributor list; recording that the publish artifacts and tags are cut from these exact validated commits is part of shipping responsibly.',
+      whyZh:
+        '一次 patch 同样值得有完整的 gate 证据与诚实的贡献者列表；记录「publish 工件与 tag 正是从这些经过验证的 commit 切出」，是负责任地发布的一部分。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng'],
+  validation: {
+    commit:
+      'kernel v0.15.3 release head 543d210 / TUI/Portal v0.10.2 release head 7233e49',
+    items: [
+      { label: 'TUI strict range', result: 'v0.10.1..v0.10.2 — 12 commits, 38 files changed, +1612/-177' },
+      { label: 'Kernel strict range', result: 'v0.15.2..v0.15.3 — 38 commits, 99 files changed, +6331/-829' },
+      { label: 'Kernel diff-check', result: 'passed against v0.15.2' },
+      { label: 'Kernel compileall', result: 'src + tests compiled clean' },
+      { label: 'Kernel full pytest', result: 'passed' },
+      { label: 'Kernel build and twine check', result: 'sdist + wheel built; both PASSED' },
+      { label: 'TUI diff-check', result: 'clean against v0.10.1' },
+      { label: 'TUI Go tests/build', result: 'go test passed; make build → lingtai-tui v0.10.2' },
+      { label: 'Portal web npm ci/build', result: 'passed' },
+      { label: 'Portal Go tests/build', result: 'go test passed; make build → lingtai-portal v0.10.2' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.15.3' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.2' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.15.3/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-28/' },
+  ],
+};
+
 const v0_15_2_kernel: Release = {
   id: '20260627-2',
   version: 'Kernel v0.15.2',
@@ -2704,7 +2859,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
