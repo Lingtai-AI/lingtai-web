@@ -35,6 +35,12 @@ cache miss 是一次长任务的隐性成本——它同时烧钱与烧上下文
 
 同样的直觉贯穿本窗口其余部分。一个默认静默运行的强力行为，是一个迟早会发生的意外，于是 soul flow 变成带稳定 disabled 结果的显式标志——只在有人主动选择时才开启，座舱如实展示这个选择而不是去猜。而 agent 在精简、排序过的视图上比在一堵原始 meta 墙前推理得更好，于是 token 与 meta 表面被扁平化并削薄，同时 TUI 浮现模型确切看到的内容。更少的隐藏成本、更少的静默默认、更多可见的画面。
 
+## 贡献者口径
+
+第一次网站稿之后，我们按 LingTai release note 新要求重新审计了贡献者口径。release card 上的 contributor 列表覆盖两个仓库过去两个版本窗口：kernel `v0.15.2..v0.16.0` 与 TUI/Portal `v0.10.1..v0.10.3`。口径不只包括 release / commit 证据，也包括 PR 作者、PR 评论者 / reviewer、issue 作者与 issue 评论者；已经关闭、未合并或被拒绝但发生过讨论的 PR / issue 也计入。
+
+这次审计扫描了 160 条 PR 记录与 128 条 issue 记录。本次 release entry 的公开 contributor 集合是：`huangzesen`, `TZZheng`, `ZigongXu`, `BrianLiubr`, `9s5bz2jvd2-lang`, `BatalloLu`, `houleixx`, `Keesan12`, `LinnkidChen`, `LuuOW`, `rawpaper123`, `wchwawa`, `xczics`, `github-actions[bot]`。
+
 ## 验证与 release hygiene
 
 两个版本都在发布前从干净的 release worktree 完成验证。
