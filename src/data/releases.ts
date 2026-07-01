@@ -65,6 +65,166 @@ export interface Release {
 
 
 
+const v0_16_0_kernel_v0_10_3_tui: Release = {
+  id: '20260701-1',
+  version: 'Kernel v0.16.0 · TUI/Portal v0.10.3',
+  titleEn: 'LingTai release day: cache-miss budgets, soul-flow opt-in, and leaner runtime telemetry',
+  titleZh: 'LingTai release day：cache-miss 预算、soul-flow 显式启用，与更轻的运行时遥测',
+  date: '2026-07-01',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.16.0 · TUI/Portal v0.10.3',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. The kernel package `lingtai` v0.16.0 is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story. This is a paired release validated from clean release worktrees before publication.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。Kernel package `lingtai` v0.16.0 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。这是一对在发布前从干净的 release worktree 完成验证的 release。',
+  summaryEn:
+    'A paired release that puts the runtime’s cache economy and context-pressure signals under an explicit budget. The kernel adds a `cache_miss_budget` — a per-session, per-molt soft cap that defaults to a million cache-miss tokens; when it is reached the runtime restamps a `molt now` cue under durable context metadata alongside the running cache-miss count. Soul flow becomes an explicit env opt-in via `LINGTAI_SOUL_FLOW_ENABLED`, returning a stable disabled result unless enabled. Token and meta surfaces get leaner and more inspectable — flattened token diagnostics, sparse agent and notification meta, large-result ranking, and a-priori `summary=true` — while the TUI shows current-session cache-miss tokens inline, teaches the soul-flow opt-in in setup and kanban, exposes model-visible summary previews, and adds clipboard image paste. The window also broadens daemon/runtime backends (Kimi Code, claude-p wait guard, explicit daemon email tool, MCP completion, HTTP identity headers, Codex encrypted-reasoning replay self-heal).',
+  summaryZh:
+    '这是一对把运行时的缓存经济与 context-pressure 信号纳入显式预算的 release。kernel 新增 `cache_miss_budget`——一个 per-session、per-molt 的软上限，默认一百万 cache-miss token；一旦触及，运行时会在持久的 context metadata 下重新盖上 `molt now` 提示，并附上正在累计的 cache-miss 计数。soul flow 变为通过 `LINGTAI_SOUL_FLOW_ENABLED` 的显式环境启用，未启用时返回稳定的 disabled 结果。token 与 meta 表面更精简也更可检视——扁平化的 token 诊断、稀疏的 agent 与 notification meta、大结果排序，以及 a-priori 的 `summary=true`——同时 TUI 内联显示 current-session cache-miss token、在 setup 与 kanban 中教授 soul-flow 的显式启用、暴露 model-visible 的 summary 预览，并加入剪贴板图片粘贴。本窗口还拓宽了 daemon/runtime 后端（Kimi Code、claude-p 等待守护、显式 daemon email 工具、MCP 补全、HTTP identity headers、Codex 加密推理 replay 自愈）。',
+  features: [
+    {
+      titleEn: 'Cache-miss budgets and honest context-pressure reminders',
+      titleZh: 'cache-miss 预算与诚实的 context-pressure 提醒',
+      leadEn:
+        'The kernel gives every session and molt a spendable cache-miss budget, and moves the current context-pressure reminders to durable metadata so a `molt now` cue survives instead of flickering. The TUI surfaces the same number inline.',
+      leadZh:
+        'kernel 为每个 session 与 molt 赋予一个可消耗的 cache-miss 预算，并把当前的 context-pressure 提醒移到持久 metadata，让 `molt now` 提示得以留存而非一闪而过。TUI 把同一数字内联呈现。',
+      bulletsEn: [
+        '`manifest.cache_miss_budget` and `AgentConfig.cache_miss_budget` add a per-session, per-molt cache-miss soft cap defaulting to 1,000,000 tokens; when it is reached the runtime restamps `cache miss budget {budget} reached, molt now` under `_meta.tool_meta.context.molt`, alongside `cache_miss_budget` and `cache_miss_tokens` (kernel #641).',
+        'Current context-pressure reminders now live in durable `_meta.tool_meta.context.molt`, while reconstruction one-shots stay under `_meta.tool_meta.reconstruction.molt`, so a standing molt cue is no longer confused with a one-time rebuild (kernel #640, #638, #607).',
+        'The TUI mail/home telemetry shows current-session cache-miss tokens immediately after the token total, e.g. `tok 1.1M (miss 8.6k)  cache …` (TUI #498).',
+      ],
+      bulletsZh: [
+        '`manifest.cache_miss_budget` 与 `AgentConfig.cache_miss_budget` 增加了一个 per-session、per-molt 的 cache-miss 软上限，默认 1,000,000 token；触及后运行时会在 `_meta.tool_meta.context.molt` 下重新盖上 `cache miss budget {budget} reached, molt now`，并附上 `cache_miss_budget` 与 `cache_miss_tokens`（kernel #641）。',
+        '当前的 context-pressure 提醒现在存放在持久的 `_meta.tool_meta.context.molt`，而重建的一次性信息保留在 `_meta.tool_meta.reconstruction.molt`，使长期存在的 molt 提示不再与一次性重建混淆（kernel #640、#638、#607）。',
+        'TUI 的 mail/home 遥测在 token 总量之后立即显示 current-session cache-miss token，例如 `tok 1.1M (miss 8.6k)  cache …`（TUI #498）。',
+      ],
+      whyEn:
+        'A cache miss is where a long run quietly burns money and context; making it a budget with a visible running count and a durable `molt now` cue turns a hidden cost into a spendable one the operator and the agent can both see and act on.',
+      whyZh:
+        'cache miss 正是长任务悄悄烧钱与烧上下文的地方；把它变成一个带可见累计计数与持久 `molt now` 提示的预算，就把一项隐藏成本变成了操作者与 agent 都能看见、都能据以行动的可消耗成本。',
+    },
+    {
+      titleEn: 'Soul flow becomes an explicit opt-in',
+      titleZh: 'soul flow 变为显式启用',
+      leadEn:
+        'Soul flow no longer runs by default. It is gated behind an environment flag, and the TUI setup and kanban teach that model so operators know exactly when it is on.',
+      leadZh:
+        'soul flow 不再默认运行。它由一个环境标志控制，TUI 的 setup 与 kanban 教授这一模型，让操作者清楚它究竟何时开启。',
+      bulletsEn: [
+        'Soul flow is env opt-in by default via `LINGTAI_SOUL_FLOW_ENABLED`; `soul(action="flow")` returns a stable disabled result unless the flag is set (kernel #639).',
+        'The TUI setup and kanban reflect the opt-in model: soul flow is disabled by default unless `LINGTAI_SOUL_FLOW_ENABLED` is set, so the cockpit and the runtime agree on the same default (TUI #497).',
+      ],
+      bulletsZh: [
+        'soul flow 默认通过 `LINGTAI_SOUL_FLOW_ENABLED` 显式启用；未设置该标志时，`soul(action="flow")` 返回稳定的 disabled 结果（kernel #639）。',
+        'TUI 的 setup 与 kanban 反映这一显式启用模型：未设置 `LINGTAI_SOUL_FLOW_ENABLED` 时 soul flow 默认关闭，使座舱与运行时对同一默认值达成一致（TUI #497）。',
+      ],
+      whyEn:
+        'A powerful behavior that runs silently by default is a surprise waiting to happen; making soul flow an explicit flag with a stable disabled result means it is on only when someone chose it, and the cockpit shows that choice rather than guessing at it.',
+      whyZh:
+        '一个默认静默运行的强力行为，是一个迟早会发生的意外；把 soul flow 变成带稳定 disabled 结果的显式标志，意味着它只在有人主动选择时才开启，而座舱如实展示这个选择，而不是去猜。',
+    },
+    {
+      titleEn: 'Leaner, more inspectable runtime metadata',
+      titleZh: '更精简、更可检视的运行时 metadata',
+      leadEn:
+        'Progressive disclosure gets sharper on both sides: the kernel flattens and thins its token/meta surfaces, and the TUI exposes the model-visible summaries those surfaces produce.',
+      leadZh:
+        '渐进式披露在两侧都更锋利：kernel 把它的 token/meta 表面扁平化并削薄，TUI 则暴露这些表面产出的 model-visible summary。',
+      bulletsEn: [
+        'Kernel token/meta surfaces are tightened: compact flattened token diagnostics, current time under `tool_meta`, sparse `agent_meta`, sparse notifications, and large-result ranking in `agent_meta` (kernel #608, #618, #620, #609).',
+        'A-priori `summary=true` support lands for `bash`, `read`, and `grep`, so a tool call can declare up front that its result should be summarized for the model (kernel #586).',
+        'The TUI presents `summary=true` tool results as a model-visible summary after the raw tool output, and Ctrl+O / soul-mode tool-call previews expose summarized model-visible results with longer summary previews (TUI #477, #481, #480, #479).',
+      ],
+      bulletsZh: [
+        'kernel 的 token/meta 表面被收紧：紧凑的扁平化 token 诊断、`tool_meta` 下的 current time、稀疏的 `agent_meta`、稀疏的 notification，以及 `agent_meta` 中的大结果排序（kernel #608、#618、#620、#609）。',
+        '`bash`、`read`、`grep` 获得 a-priori 的 `summary=true` 支持，使一次工具调用可以预先声明其结果应为模型做摘要（kernel #586）。',
+        'TUI 把 `summary=true` 工具结果作为 model-visible summary 呈现在原始工具输出之后，Ctrl+O / soul-mode 的工具调用预览暴露摘要后的 model-visible 结果并提供更长的 summary 预览（TUI #477、#481、#480、#479）。',
+      ],
+      whyEn:
+        'An agent reasons better on a lean, ranked view than on a wall of raw meta, and an operator trusts the cockpit more when it shows exactly what the model saw; flattening the surfaces and surfacing their summaries keeps both looking at the same honest, inspectable picture.',
+      whyZh:
+        'agent 在精简、排序过的视图上比在一堵原始 meta 墙前推理得更好，而当座舱展示模型确切看到的内容时操作者也更信任它；把这些表面扁平化并浮现它们的 summary，能让两者看着同一幅诚实、可检视的画面。',
+    },
+    {
+      titleEn: 'Daemon and runtime backend safety and breadth',
+      titleZh: 'daemon 与 runtime 后端的安全与广度',
+      leadEn:
+        'The runtime widens which backends it can drive and hardens the seams where long-lived daemons wait, send mail, and replay provider state.',
+      leadZh:
+        '运行时拓宽了它能驱动的后端范围，并加固了长生命周期 daemon 等待、发信与重放 provider 状态的接缝。',
+      bulletsEn: [
+        'A Kimi Code backend is added, and a claude-p background wait guard keeps a backgrounded run from racing ahead of its own completion (kernel #634, #611).',
+        'Daemon email is surfaced as an explicit tool, common daemon MCP completion is filled in, and HTTP identity headers are attached to outbound runtime calls (kernel #584, #636).',
+        'Codex encrypted-reasoning replay now self-heals, so a provider-side reasoning-replay hiccup no longer strands the run; backend, runtime, and helper refactors round out the window (kernel #633).',
+      ],
+      bulletsZh: [
+        '新增 Kimi Code 后端，claude-p 的后台等待守护避免被后台化的运行抢先于自身完成（kernel #634、#611）。',
+        'daemon email 以显式工具浮现，补齐了常见的 daemon MCP 补全，并为出站运行时调用附加 HTTP identity headers（kernel #584、#636）。',
+        'Codex 加密推理 replay 现在能自愈，使 provider 侧的推理重放小故障不再让运行卡死；backend、runtime 与 helper 重构收尾本窗口（kernel #633）。',
+      ],
+      whyEn:
+        'A fleet that runs unattended for hours fails at the seams — a backgrounded wait that races, a daemon that cannot send mail, a provider replay that stalls; closing those seams and adding a backend is how the runtime stays reliable across more of the ways people actually run it.',
+      whyZh:
+        '一支无人值守运行数小时的 fleet 会在接缝处失败——一个抢跑的后台等待、一个发不出信的 daemon、一个卡住的 provider replay；堵住这些接缝并新增一个后端，正是运行时在人们实际运行它的更多方式下保持可靠的办法。',
+    },
+    {
+      titleEn: 'Cockpit polish, maintenance, and release hygiene',
+      titleZh: '座舱打磨、维护与 release hygiene',
+      leadEn:
+        'Around the headline work, the cockpit gains a small everyday convenience, a dead surface is removed, and the paired versions were validated from clean release worktrees before publication.',
+      leadZh:
+        '围绕主线工作，座舱获得一个日常小便利，一个已死的表面被移除，且这对版本在发布前从干净的 release worktree 完成验证。',
+      bulletsEn: [
+        'Clipboard image paste support landed for chat input, and the stamina surfaces were removed, with bundled skill/anatomy/frontmatter metadata refreshed (TUI #467, #478, #464–#459).',
+        'Kernel-side documentation, anatomy, and frontmatter maintenance continued alongside the feature work (many TZZheng-led docs/helper refactors; nudge-storm fix #576).',
+        'Strict ranges: kernel `v0.15.3..v0.16.0` (88 commits, 283 files changed, +15,005/-6,365) and TUI/Portal `v0.10.2..v0.10.3` (32 commits, 117 files changed, +2,904/-450).',
+      ],
+      bulletsZh: [
+        '聊天输入新增剪贴板图片粘贴支持，stamina 表面被移除，随包的 skill/anatomy/frontmatter metadata 得到刷新（TUI #467、#478、#464–#459）。',
+        'kernel 侧的文档、anatomy 与 frontmatter 维护与功能工作并行推进（多为 TZZheng 主导的 docs/helper 重构；nudge-storm 修复 #576）。',
+        '严格范围：kernel `v0.15.3..v0.16.0`（88 个 commit、283 个文件变更、+15,005/-6,365）与 TUI/Portal `v0.10.2..v0.10.3`（32 个 commit、117 个文件变更、+2,904/-450）。',
+      ],
+      whyEn:
+        'A release earns trust in the small things too — a paste that just works, a dead readout removed rather than left to mislead, and full gate evidence cut from the exact validated commits; recording that hygiene is part of shipping responsibly.',
+      whyZh:
+        '一次 release 也在小事上赢得信任——一个直接可用的粘贴、一个被移除而非留着误导的死读数，以及从确切经过验证的 commit 切出的完整 gate 证据；记录这份 hygiene 是负责任地发布的一部分。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng', 'ZigongXu', 'BrianLiubr', 'github-actions[bot]'],
+  validation: {
+    commit: 'cabb6a6fb7cad93caedb4b6f7fd5be7f082de5c8',
+    items: [
+      { label: 'Kernel release head', result: 'v0.16.0 tag at cabb6a6fb7ca' },
+      { label: 'TUI/Portal release head', result: 'v0.10.3 tag at d54217b290e2' },
+      { label: 'Kernel strict range', result: 'v0.15.3..v0.16.0 — 88 commits, 48 merged PRs, 283 files changed, +15,005/-6,365' },
+      { label: 'TUI strict range', result: 'v0.10.2..v0.10.3 — 32 commits, 14 merged PRs, 117 files changed, +2,904/-450' },
+      { label: 'Kernel diff-check', result: 'clean against v0.15.3' },
+      { label: 'Kernel validation gate', result: 'Dev-1/Dev-2/Dev-3 independent post-v0.15.3 gate PASS after cleanup #642' },
+      { label: 'Kernel focused suite', result: 'dev-1 suite after #642: 309 passed, 1 known warning' },
+      { label: 'Kernel full release validation', result: 'from #643 head: 3,475 passed, 4 skipped, 1 known warning' },
+      { label: 'Kernel build and twine check', result: 'Python 3.11 build from merge commit; twine check PASSED for both artifacts' },
+      { label: 'Kernel import smoke', result: 'clean no-deps wheel import passed (import lingtai, lingtai_kernel)' },
+      { label: 'Kernel artifact hashes', result: 'wheel c0b5f526…8588d; sdist 22c7486c…2330' },
+      { label: 'TUI diff-check', result: 'clean' },
+      { label: 'TUI Go tests', result: 'go test ./internal/tui ./internal/preset and go test ./... passed' },
+      { label: 'Portal web/module', result: 'npm ci + build passed (4 pre-existing audit advisories); portal go test ./... passed' },
+      { label: 'Homebrew tap', result: 'formula updated to v0.10.3; SHA256 ee1043cc…fb7a71; brew info stable 0.10.3' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.0' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.3' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.16.0/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Kernel compare v0.15.3...v0.16.0', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.15.3...v0.16.0' },
+    { label: 'TUI compare v0.10.2...v0.10.3', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.10.2...v0.10.3' },
+    { label: 'Previous release log', href: 'https://lingtai.ai/en/releases/20260628-1/' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-07-01/' },
+  ],
+};
+
 const v0_15_3_kernel_v0_10_2_tui: Release = {
   id: '20260628-1',
   version: 'Kernel v0.15.3 · TUI/Portal v0.10.2',
@@ -2859,7 +3019,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
