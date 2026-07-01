@@ -35,6 +35,12 @@ A cache miss is the quiet cost of a long run — it burns money and context at t
 
 The same instinct runs through the rest of the window. A powerful behavior that runs silently by default is a surprise waiting to happen, so soul flow becomes an explicit flag with a stable disabled result — on only when someone chose it, with the cockpit showing that choice rather than guessing at it. And an agent reasons better on a lean, ranked view than on a wall of raw meta, so the token and meta surfaces get flattened and thinned while the TUI surfaces exactly what the model saw. Less hidden cost, fewer silent defaults, more of the picture visible.
 
+## Contributor scope
+
+After the first website draft, we re-audited contributors using the broader release accounting now required for LingTai release notes. The contributor list on the release card covers the previous two version windows for both repositories: kernel `v0.15.2..v0.16.0` and TUI/Portal `v0.10.1..v0.10.3`. It includes release/commit evidence plus PR authors, PR commenters/reviewers, issue authors, and issue commenters — including closed or unmerged PRs and closed issues that were discussed but not accepted.
+
+The audit scanned 160 PR records and 128 issue records. The public contributor set for this release entry is: `huangzesen`, `TZZheng`, `ZigongXu`, `BrianLiubr`, `9s5bz2jvd2-lang`, `BatalloLu`, `houleixx`, `Keesan12`, `LinnkidChen`, `LuuOW`, `rawpaper123`, `wchwawa`, `xczics`, `github-actions[bot]`.
+
 ## Validation and release hygiene
 
 Both versions were validated from clean release worktrees before publication.

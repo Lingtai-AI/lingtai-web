@@ -192,7 +192,22 @@ const v0_16_0_kernel_v0_10_3_tui: Release = {
         '一次 release 也在小事上赢得信任——一个直接可用的粘贴、一个被移除而非留着误导的死读数，以及从确切经过验证的 commit 切出的完整 gate 证据；记录这份 hygiene 是负责任地发布的一部分。',
     },
   ],
-  contributors: ['huangzesen', 'TZZheng', 'ZigongXu', 'BrianLiubr', 'github-actions[bot]'],
+  contributors: [
+    'huangzesen',
+    'TZZheng',
+    'ZigongXu',
+    'BrianLiubr',
+    '9s5bz2jvd2-lang',
+    'BatalloLu',
+    'houleixx',
+    'Keesan12',
+    'LinnkidChen',
+    'LuuOW',
+    'rawpaper123',
+    'wchwawa',
+    'xczics',
+    'github-actions[bot]',
+  ],
   validation: {
     commit: 'cabb6a6fb7cad93caedb4b6f7fd5be7f082de5c8',
     items: [
@@ -211,6 +226,7 @@ const v0_16_0_kernel_v0_10_3_tui: Release = {
       { label: 'TUI Go tests', result: 'go test ./internal/tui ./internal/preset and go test ./... passed' },
       { label: 'Portal web/module', result: 'npm ci + build passed (4 pre-existing audit advisories); portal go test ./... passed' },
       { label: 'Homebrew tap', result: 'formula updated to v0.10.3; SHA256 ee1043cc…fb7a71; brew info stable 0.10.3' },
+      { label: 'Contributor audit', result: 'last two release windows scanned: 160 PR records and 128 issue records, including closed/unmerged/commented PRs and closed/commented issues' },
     ],
   },
   links: [
