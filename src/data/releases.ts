@@ -65,6 +65,139 @@ export interface Release {
 
 
 
+const v0_16_1_kernel_v0_10_4_tui: Release = {
+  id: '20260703-1',
+  version: 'Kernel v0.16.1 · TUI/Portal v0.10.4',
+  titleEn: 'Summarize rebuilds, portal reliability, and a cleaner update path',
+  titleZh: '总结重构、Portal 可靠性与更清晰的更新路径',
+  date: '2026-07-03',
+  pkg: 'LingTai kernel + TUI/Portal',
+  tag: 'kernel v0.16.1 · tui v0.10.4',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui && python -m pip install --upgrade lingtai==0.16.1',
+  runtimeNoteEn:
+    'Existing agents should refresh at the next safe boundary after upgrading the kernel so the new summarize/rebuild prompts and runtime guidance are active.',
+  runtimeNoteZh:
+    '升级 kernel 后，已有智能体应在安全边界 refresh，让新的 summarize/rebuild 提示与运行时指导生效。',
+  summaryEn:
+    'This paired release makes LingTai\'s context-rebuild behavior explicit, ships a safer TUI/Portal update and replay path, and closes another round of runtime reliability work across logging, addons, MCP workbench docs, and security hygiene.',
+  summaryZh:
+    '这一组配套发布把 LingTai 的上下文重构语义讲清楚，补上更安全的 TUI/Portal 更新与 replay 路径，并继续修复日志、插件、MCP workbench 文档与安全卫生等运行时边缘问题。',
+  features: [
+    {
+      titleEn: 'Context rebuild semantics are now explicit',
+      titleZh: '上下文重构语义显式化',
+      leadEn:
+        'Kernel v0.16.1 clarifies what summarize does immediately, what waits for reconstruction, and when the runtime forces a rebuild.',
+      leadZh:
+        'Kernel v0.16.1 明确区分 summarize 立即记录什么、什么要等重构才生效，以及运行时何时强制重构。',
+      bulletsEn: [
+        'Public `system(action="summarize", rebuild=true)` replaces the older rebuild-only/dry-run wording.',
+        'Summary markers now move through pending/done states, making delayed reconstruction easier to reason about.',
+        'The runtime documents the 0.75 proactive hint, the 1.0 hard forced-rebuild boundary, and the 0.6 recovery target in one place.',
+      ],
+      bulletsZh: [
+        '公开的 `system(action="summarize", rebuild=true)` 取代旧的 rebuild-only / dry-run 说法。',
+        'summary 标记现在区分 pending/done，延迟重构何时真正生效更容易判断。',
+        '运行时把 0.75 主动提示、1.0 强制重构边界与 0.6 恢复目标放到同一套说明里。',
+      ],
+      whyEn:
+        'Long-lived agents can now choose between continuing, applying pending summaries, or molting without guessing which layer owns the active provider context.',
+      whyZh:
+        '长会话智能体现在可以更有把握地选择继续、应用 pending summaries，或直接凝蜕，而不是猜当前 provider context 里到底有什么。',
+    },
+    {
+      titleEn: 'Runtime reliability and integration edges were tightened',
+      titleZh: '运行时可靠性与集成边缘继续收紧',
+      leadEn:
+        'The kernel release also fixes multiple edges around token accounting, logging, empty responses, lifecycle signals, and addon/MCP documentation.',
+      leadZh:
+        'kernel 这轮还修复了 token accounting、日志、空响应、生命周期信号与 addon/MCP 文档等多个边缘。',
+      bulletsEn: [
+        'Token usage layout, since-molt session accounting, cache-miss telemetry, and refresh rebuild opt-in were clarified.',
+        'JSONL close races, streamed tool-call argument fallback logging, empty-response usage handling, and atomic chat-history writes were hardened.',
+        'Telegram dynamic slash commands, WeChat filename sanitization, lifecycle/nirvana safeguards, gitignore/secrets hygiene, and NoKV workbench metadata validation landed together.',
+      ],
+      bulletsZh: [
+        'token usage 布局、since-molt 会话统计、cache-miss 遥测与 refresh rebuild opt-in 说明得到统一。',
+        'JSONL close race、streamed tool-call argument fallback logging、空响应 usage 处理与 chat-history 原子写入都更稳。',
+        'Telegram 动态 slash commands、WeChat 文件名清洗、生命周期/nirvana 防护、gitignore/secrets 卫生与 NoKV workbench metadata 验证一起落地。',
+      ],
+      whyEn:
+        'These changes reduce the number of cases where a live agent, its durable logs, and its prompt guidance disagree about what just happened.',
+      whyZh:
+        '这些变化减少了 live agent、持久日志与 prompt 指导对“刚刚发生了什么”理解不一致的情况。',
+    },
+    {
+      titleEn: 'TUI and Portal startup/replay paths are safer',
+      titleZh: 'TUI 与 Portal 的启动 / replay 路径更安全',
+      leadEn:
+        'TUI/Portal v0.10.4 focuses on update flows, portal startup cleanup, replay reconstruction, and small UI/setup correctness fixes.',
+      leadZh:
+        'TUI/Portal v0.10.4 重点收敛更新流程、Portal 启动清理、replay reconstruction，以及 UI/setup 的小型正确性修复。',
+      bulletsEn: [
+        'Portal startup timeout cleanup, replay-cache writer sharing, and the `rehydrateDone` deadlock fix improve replay reliability.',
+        'The `/update-tui` self-update command, explicit utility refresh behavior, runtime venv marker, and stricter `config.json` permissions make setup/update safer.',
+        'Verbose-toggle bottom anchoring, credential Esc handling, canonical recipe preview resolvers, inactive workflow cleanup, release docs, and normalized stars CSV whitespace round out the TUI polish.',
+      ],
+      bulletsZh: [
+        'Portal startup timeout cleanup、replay-cache writer sharing 与 `rehydrateDone` deadlock 修复提升 replay 可靠性。',
+        '`/update-tui` 自更新命令、显式 utility refresh、runtime venv marker 与更严格的 `config.json` 权限让 setup/update 更安全。',
+        'verbose toggle 后贴底、credential Esc 返回、canonical recipe preview resolvers、清理 inactive workflow、release docs 与 stars CSV whitespace 规范化则补齐 TUI 打磨。',
+      ],
+      whyEn:
+        'The release keeps local developer installations predictable while making the user-facing startup and replay surfaces less fragile.',
+      whyZh:
+        '这轮让本地开发安装路径更可预期，也让面向用户的启动与 replay 表面更不脆弱。',
+    },
+    {
+      titleEn: 'The release window was audited end to end',
+      titleZh: '发布窗口完成端到端审计',
+      leadEn:
+        'The public release log covers 56 kernel commits / 22 PRs and 28 TUI/Portal commits / 12 PRs, plus the release-window issue and PR participation that shaped the shipped work.',
+      leadZh:
+        '公开 release log 覆盖 56 个 kernel commits / 22 个 PR、28 个 TUI/Portal commits / 12 个 PR，并纳入这个发布窗口里影响工作方向的 issue 与 PR 参与者。',
+      bulletsEn: [
+        'TUI/Portal gates covered diff whitespace, Go tests, portal web build, portal tests, and release binary builds.',
+        'Kernel gates covered diff whitespace, compileall, a focused 400-test pytest set, package build, and twine checks on both artifacts.',
+        'Homebrew formula audit/fetch and PyPI JSON/version checks were verified after publishing.',
+      ],
+      bulletsZh: [
+        'TUI/Portal gate 覆盖 diff whitespace、Go tests、portal web build、portal tests 与 release binary builds。',
+        'Kernel gate 覆盖 diff whitespace、compileall、400 个 focused pytest、package build，以及两个 artifact 的 twine check。',
+        '发布后又验证了 Homebrew formula audit/fetch 与 PyPI JSON/version。',
+      ],
+      whyEn:
+        'The contributor list intentionally includes human issue/PR authors from the release window even when a specific issue or PR was closed, rejected, or unmerged.',
+      whyZh:
+        '贡献者名单刻意纳入发布窗口内的人类 issue/PR 作者，即使某个 issue 或 PR 最终被关闭、拒绝或未合并。',
+    },
+  ],
+  contributors: ['huangzesen', 'BrianLiubr', 'TZZheng', 'ZigongXu', 'BatalloLu', 'wchwawa', 'Thibaultjaigu', 'rawpaper123', '9s5bz2jvd2-lang'],
+  validation: {
+    commit: 'kernel 69ce16bcdd435ef89ae6b1fcdaa755eddb396d37 · tui 813d66abbb130f15a4d2eb160f9e0a23c514a474',
+    items: [
+      { label: 'TUI diff whitespace', result: 'git diff --check v0.10.3...HEAD passed' },
+      { label: 'TUI tests', result: 'cd tui && go test -count=1 ./... passed' },
+      { label: 'Portal web build', result: 'cd portal/web && npm ci && npm run build passed' },
+      { label: 'Portal tests', result: 'cd portal && go test -count=1 ./... passed' },
+      { label: 'TUI/Portal binaries', result: 'make clean && make build passed for both binaries' },
+      { label: 'Kernel diff whitespace', result: 'git diff --check v0.16.0...HEAD passed' },
+      { label: 'Kernel compile/test', result: 'python -m compileall -q src tests; focused pytest set: 400 passed in 20.36s' },
+      { label: 'Kernel artifacts', result: 'python -m build and python -m twine check dist/* passed' },
+      { label: 'PyPI', result: 'lingtai 0.16.1 JSON and pip index verification passed' },
+      { label: 'Homebrew', result: 'brew audit --strict --online and brew fetch passed for lingtai-tui v0.10.4' },
+    ],
+  },
+  links: [
+    { label: 'TUI/Portal v0.10.4 release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.4' },
+    { label: 'Kernel v0.16.1 release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.1' },
+    { label: 'PyPI lingtai 0.16.1', href: 'https://pypi.org/project/lingtai/0.16.1/' },
+    { label: 'TUI tag commit', href: 'https://github.com/Lingtai-AI/lingtai/commit/813d66abbb130f15a4d2eb160f9e0a23c514a474' },
+    { label: 'Kernel tag commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/69ce16bcdd435ef89ae6b1fcdaa755eddb396d37' },
+    { label: 'Homebrew formula', href: 'https://github.com/Lingtai-AI/homebrew-lingtai/blob/main/Formula/lingtai-tui.rb' },
+  ],
+};
+
 const v0_16_0_kernel_v0_10_3_tui: Release = {
   id: '20260701-1',
   version: 'Kernel v0.16.0 · TUI/Portal v0.10.3',
@@ -3035,7 +3168,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
