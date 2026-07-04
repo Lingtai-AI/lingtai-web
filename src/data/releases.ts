@@ -153,18 +153,18 @@ const v0_16_1_kernel_v0_10_4_tui: Release = {
       titleEn: 'The release window was audited end to end',
       titleZh: '发布窗口完成端到端审计',
       leadEn:
-        'The public release log covers 56 kernel commits / 22 PRs and 28 TUI/Portal commits / 12 PRs, plus the release-window issue and PR participation that shaped the shipped work.',
+        'The public release log covers 84 commits, 34 merged PRs, 96 issue records updated in the Jul 1–3 release window, and 136 files changed with +7,665 / -1,378 lines across the kernel and TUI/Portal repositories.',
       leadZh:
-        '公开 release log 覆盖 56 个 kernel commits / 22 个 PR、28 个 TUI/Portal commits / 12 个 PR，并纳入这个发布窗口里影响工作方向的 issue 与 PR 参与者。',
+        '公开 release log 覆盖 kernel 与 TUI/Portal 两个仓库合计 84 个 commits、34 个 merged PR、7 月 1–3 日发布窗口内更新的 96 条 issue 记录，以及 136 个文件、+7,665 / -1,378 行代码变更。',
       bulletsEn: [
-        'TUI/Portal gates covered diff whitespace, Go tests, portal web build, portal tests, and release binary builds.',
-        'Kernel gates covered diff whitespace, compileall, a focused 400-test pytest set, package build, and twine checks on both artifacts.',
-        'Homebrew formula audit/fetch and PyPI JSON/version checks were verified after publishing.',
+        'TUI/Portal: 28 commits, 12 merged PRs, 40 issue records updated in the release window, 57 files changed, +1,798 / -583 lines.',
+        'Kernel: 56 commits, 22 merged PRs, 56 issue records updated in the release window, 79 files changed, +5,867 / -795 lines.',
+        'Gates covered TUI/Portal Go tests, portal web build, release binary builds, kernel compileall, focused 400-test pytest run, package build, twine checks, PyPI verification, and Homebrew audit/fetch.',
       ],
       bulletsZh: [
-        'TUI/Portal gate 覆盖 diff whitespace、Go tests、portal web build、portal tests 与 release binary builds。',
-        'Kernel gate 覆盖 diff whitespace、compileall、400 个 focused pytest、package build，以及两个 artifact 的 twine check。',
-        '发布后又验证了 Homebrew formula audit/fetch 与 PyPI JSON/version。',
+        'TUI/Portal：28 个 commits、12 个 merged PR、发布窗口内更新的 40 条 issue 记录、57 个文件、+1,798 / -583 行。',
+        'Kernel：56 个 commits、22 个 merged PR、发布窗口内更新的 56 条 issue 记录、79 个文件、+5,867 / -795 行。',
+        '验证覆盖 TUI/Portal Go tests、portal web build、release binary builds、kernel compileall、400 个 focused pytest、package build、twine checks、PyPI verification 与 Homebrew audit/fetch。',
       ],
       whyEn:
         'The contributor list intentionally includes human issue/PR authors from the release window even when a specific issue or PR was closed, rejected, or unmerged.',
@@ -176,6 +176,7 @@ const v0_16_1_kernel_v0_10_4_tui: Release = {
   validation: {
     commit: 'kernel 69ce16bcdd435ef89ae6b1fcdaa755eddb396d37 · tui 813d66abbb130f15a4d2eb160f9e0a23c514a474',
     items: [
+      { label: 'Release-window totals', result: '84 commits; 34 merged PRs; 96 issue records updated Jul 1–3; 136 files changed; +7,665 / -1,378 lines' },
       { label: 'TUI diff whitespace', result: 'git diff --check v0.10.3...HEAD passed' },
       { label: 'TUI tests', result: 'cd tui && go test -count=1 ./... passed' },
       { label: 'Portal web build', result: 'cd portal/web && npm ci && npm run build passed' },
