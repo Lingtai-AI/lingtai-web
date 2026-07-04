@@ -42,9 +42,9 @@ TUI/Portal 侧也沿着同一种品味：从启动、setup、update 路径里移
 
 ## 贡献者口径
 
-下面的 public contributor set 来自严格 release window：kernel `v0.16.0..v0.16.1` 与 TUI/Portal `v0.10.3..v0.10.4`。审计使用 commit author 以及窗口内 PR 的 author/review/comment 证据，并从公开 contributors 中排除了 AI/模型名。
+下面的 public contributor set 来自严格 release window：kernel `v0.16.0..v0.16.1` 与 TUI/Portal `v0.10.3..v0.10.4`。审计使用 commit author、窗口内 PR 的 author/review/comment 证据，以及 GitHub issue author 证据。被拒绝、被关闭、未合并的 PR/issue 作者，只要参与了这个 release window，也要计入公开贡献者；贡献不要求对应工作最终 shipped。AI/模型名不进入公开 contributors。
 
-本 release window 的公开 contributors：`huangzesen`, `BrianLiubr`, `TZZheng`, `ZigongXu`, `BatalloLu`, `wchwawa`。
+本 release window 的公开 contributors：`huangzesen`, `BrianLiubr`, `TZZheng`, `ZigongXu`, `BatalloLu`, `wchwawa`, `Thibaultjaigu`, `rawpaper123`, `9s5bz2jvd2-lang`。
 
 ## 验证与 release hygiene
 

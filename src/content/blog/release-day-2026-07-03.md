@@ -42,9 +42,9 @@ The TUI/Portal work follows the same taste: remove hidden traps from startup, se
 
 ## Contributor scope
 
-The public contributor set below was audited from the strict release windows: kernel `v0.16.0..v0.16.1` and TUI/Portal `v0.10.3..v0.10.4`. The audit used commit authors plus parsed PR authors/review/comment evidence for the PRs in the window, and excludes AI/model names from the public contributor field.
+The public contributor set below was audited from the strict release windows: kernel `v0.16.0..v0.16.1` and TUI/Portal `v0.10.3..v0.10.4`. The audit uses commit authors, PR authors/review/comment evidence, and GitHub issue authorship from the release window. It intentionally includes authors of rejected, closed, or unmerged PRs and issues when they participated in the window; the work does not need to have shipped for the human contribution to count. AI/model names are excluded from the public contributor field.
 
-Public contributors for this release window: `huangzesen`, `BrianLiubr`, `TZZheng`, `ZigongXu`, `BatalloLu`, `wchwawa`.
+Public contributors for this release window: `huangzesen`, `BrianLiubr`, `TZZheng`, `ZigongXu`, `BatalloLu`, `wchwawa`, `Thibaultjaigu`, `rawpaper123`, `9s5bz2jvd2-lang`.
 
 ## Validation and release hygiene
 
