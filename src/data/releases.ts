@@ -65,6 +65,140 @@ export interface Release {
 
 
 
+const v0_16_2_kernel_v0_10_5_tui: Release = {
+  id: '20260707-1',
+  version: 'Kernel v0.16.2 · TUI/Portal v0.10.5',
+  titleEn: 'Reliability patch: safer migrations, cleaner summaries, and steadier releases',
+  titleZh: '可靠性补丁：更安全的迁移、更清爽的摘要与更稳的发布链路',
+  date: '2026-07-07',
+  pkg: 'LingTai kernel + TUI/Portal',
+  tag: 'kernel v0.16.2 · tui v0.10.5',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The TUI/Homebrew path is the normal end-user upgrade path. PyPI 0.16.2 is published as the runtime package source and verification point for project virtual environments.',
+  runtimeNoteZh:
+    '普通用户升级仍以 TUI/Homebrew 路径为主。PyPI 0.16.2 已发布，作为项目虚拟环境的 runtime 包来源与校验点。',
+  summaryEn:
+    'This paired patch release closes the loop on the July reliability batch: schema-critical migrations now fail loudly instead of advancing half-applied state, `lingtai clean` protects live agents, global config writes are atomic, and the kernel gains cleaner summary/manual/notification contracts for long-running agents.',
+  summaryZh:
+    '这次成对补丁发布收口 7 月可靠性批次：schema 关键迁移失败会明确中止而不再推进半成状态，`lingtai clean` 会保护存活 agent，全局配置写入改为原子写；kernel 侧也补齐了更清晰的摘要、manual 与通知契约，方便长任务 agent 稳定运行。',
+  features: [
+    {
+      titleEn: 'Safer TUI state transitions',
+      titleZh: '更安全的 TUI 状态转换',
+      leadEn:
+        'The TUI release focuses on protecting user projects from partial writes and unsafe cleanup commands.',
+      leadZh:
+        'TUI 侧重点是保护用户项目，不让半写入和误清理把工作目录带入危险状态。',
+      bulletsEn: [
+        'Schema-critical migrations m028/m030/m039 now propagate real transform/read/write failures instead of advancing the stored migration version after a partial failure.',
+        '`lingtai clean` refuses to remove `.lingtai/` while live or surviving agents are discoverable, or when discovery fails, unless the operator explicitly uses `--force`.',
+        'Global `config.json`, `tui_config.json`, and `.env` writes now use sibling-temp files, fsync, rename, cleanup, and permission preservation.',
+      ],
+      bulletsZh: [
+        'schema 关键迁移 m028/m030/m039 现在会传播真实的转换、读取、写入失败，不再在半失败后推进已存版本号。',
+        '`lingtai clean` 在发现存活/可恢复 agent，或 agent 探测失败时，会拒绝删除 `.lingtai/`，除非操作者明确使用 `--force`。',
+        '全局 `config.json`、`tui_config.json` 与 `.env` 写入改为 sibling-temp、fsync、rename、清理和权限保留的原子流程。',
+      ],
+      whyEn:
+        'Project state should either move forward completely or fail with evidence; cleanup must never silently erase a running network.',
+      whyZh:
+        '项目状态要么完整前进，要么带着证据失败；清理命令绝不能静默擦掉正在运行的网络。',
+    },
+    {
+      titleEn: 'Clearer setup, Codex, and operator feedback',
+      titleZh: '更清晰的 setup、Codex 与操作反馈',
+      leadEn:
+        'Several smaller TUI changes make failures visible at the surface where the operator can act.',
+      leadZh:
+        '多项较小的 TUI 改动把失败暴露在操作者可以处理的界面层。',
+      bulletsEn: [
+        'Codex OAuth/pool credentials now have clearer account labels and fallback filenames.',
+        'First-run config saves, recipe re-apply failures, preset load causes, and updater already-current states now surface more directly.',
+        'The UI gained API-call grouping, Ctrl+End tail-jump coverage, refreshed knowledge entries, async home telemetry, and network activity evidence.',
+      ],
+      bulletsZh: [
+        'Codex OAuth / pool 凭证现在有更清楚的账号标签与 fallback 文件名。',
+        'first-run 配置保存、recipe re-apply、preset 加载原因、updater 已是最新版等状态会更直接地暴露出来。',
+        'UI 增加 API call 分组、Ctrl+End 跳到尾部覆盖、knowledge 刷新、异步 home telemetry 与网络活动证据。',
+      ],
+      whyEn:
+        'When setup fails, the fastest fix is a precise surface message rather than another hidden log hunt.',
+      whyZh:
+        'setup 失败时，最快的修复方式是准确的界面信息，而不是再去翻隐藏日志。',
+    },
+    {
+      titleEn: 'Kernel summary and manual contracts',
+      titleZh: 'Kernel 摘要与 manual 契约',
+      leadEn:
+        'Kernel v0.16.2 continues the progressive-disclosure work needed by long-lived agents.',
+      leadZh:
+        'kernel v0.16.2 继续补强长驻 agent 所需的 progressive-disclosure 基础。',
+      bulletsEn: [
+        'Daemon/glob results now participate in summary flows, with better a-priori compression metadata and documentation.',
+        'Info/manual signpost actions are split so tools can report runtime health separately from bundled manuals.',
+        'Prompt section contracts, adapt-from-evidence guidance, retention footprint reports, and timely transient `_meta` filtering reduce stale or noisy context.',
+      ],
+      bulletsZh: [
+        'daemon / glob 结果纳入摘要流，并补上更明确的 a-priori compression metadata 与文档。',
+        'info / manual signpost action 拆开，工具可以把 runtime health 与 bundled manual 分开呈现。',
+        'prompt section contract、adapt-from-evidence 指引、retention footprint report 与及时 transient `_meta` 过滤，减少陈旧或嘈杂上下文。',
+      ],
+      whyEn:
+        'Agents doing release work need to preserve evidence without dragging every raw log through the next hundred calls.',
+      whyZh:
+        '做发布这类长任务时，agent 需要保留证据，但不能把每段原始日志拖进后续上百次调用。',
+    },
+    {
+      titleEn: 'Daemon, MCP, and messaging resilience',
+      titleZh: 'Daemon、MCP 与消息韧性',
+      leadEn:
+        'The runtime side adds more explicit contracts for delegated work and notification delivery.',
+      leadZh:
+        'runtime 侧为委托执行与通知传递补上更明确的契约。',
+      bulletsEn: [
+        'Kimi native MCP config, parent MCP propagation into CLI backends, and daemon architecture docs make delegated coding/review work easier to reproduce.',
+        'Codex pool provider/preset support and external skill intake docs make tool routing more explicit.',
+        'Persistent Telegram notification/reply context and the LICC notification contract reduce lost context across message surfaces.',
+      ],
+      bulletsZh: [
+        'Kimi native MCP config、父级 MCP 向 CLI backend 传播、daemon 架构文档，让委托代码/审核任务更可复现。',
+        'Codex pool provider / preset 支持与外部 skill intake 文档让工具路由更明确。',
+        'Telegram 持久通知/回复上下文与 LICC notification contract 降低跨消息面丢上下文的概率。',
+      ],
+      whyEn:
+        'Delegated work is only useful if the parent can reconstruct what happened and why the result is safe to ship.',
+      whyZh:
+        '委托任务只有在父 agent 能重建发生了什么、为什么可发布时，才真正有价值。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng'],
+  validation: {
+    commit:
+      'kernel ae53b4173a0373475e4f4a3a4d399d552a46f5c0 · tui 031b5ea8d01a8ffd4cdd0d01698fe7bd901704fa',
+    items: [
+      { label: 'TUI diff check', result: 'passed with documented docs/stars/stars.csv CRLF caveat' },
+      { label: 'TUI Go tests', result: 'targeted tests passed; full suite passed after known flaky rerun' },
+      { label: 'Portal validation', result: 'web build and Go tests passed' },
+      { label: 'TUI/Portal release builds', result: 'both binaries built successfully from the release candidate' },
+      { label: 'Kernel validation', result: 'diff check, compileall, and pytest passed (3798 passed, 4 skipped)' },
+      { label: 'Kernel packaging', result: 'build and twine check passed for wheel + sdist' },
+      { label: 'PyPI publication', result: 'lingtai 0.16.2 uploaded and visible on PyPI' },
+      { label: 'Homebrew tap', result: 'formula v0.10.5, SHA256 verified, ruby syntax and strict audit passed' },
+    ],
+  },
+  links: [
+    { label: 'TUI/Portal v0.10.5 release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.5' },
+    { label: 'Kernel v0.16.2 release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.2' },
+    { label: 'PyPI lingtai 0.16.2', href: 'https://pypi.org/project/lingtai/0.16.2/' },
+    { label: 'Homebrew formula', href: 'https://github.com/Lingtai-AI/homebrew-lingtai/blob/main/lingtai-tui.rb' },
+    { label: 'TUI tag commit', href: 'https://github.com/Lingtai-AI/lingtai/commit/031b5ea8d01a8ffd4cdd0d01698fe7bd901704fa' },
+    { label: 'Kernel tag commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/ae53b4173a0373475e4f4a3a4d399d552a46f5c0' },
+    { label: 'TUI compare', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.10.4...v0.10.5' },
+    { label: 'Kernel compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.16.1...v0.16.2' },
+  ],
+};
+
 const v0_16_1_kernel_v0_10_4_tui: Release = {
   id: '20260703-1',
   version: 'Kernel v0.16.1 · TUI/Portal v0.10.4',
@@ -3169,7 +3303,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
