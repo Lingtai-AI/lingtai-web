@@ -171,8 +171,30 @@ const v0_16_2_kernel_v0_10_5_tui: Release = {
       whyZh:
         '委托任务只有在父 agent 能重建发生了什么、为什么可发布时，才真正有价值。',
     },
+    {
+      titleEn: 'Release-window audit and contributors',
+      titleZh: '发布窗口审计与贡献者',
+      leadEn:
+        'Following the previous release-log structure, this entry accounts for actual commit authors as well as every issue and PR closed in the release window, including closed-unmerged PRs and triaged/rejected issues.',
+      leadZh:
+        '沿用上一版 release log 的结构，这条记录同时补齐实际 commit author，以及发布窗口内所有已关闭 issue 与 PR，包括未合并关闭的 PR、已分流或拒绝的问题。',
+      bulletsEn: [
+        'TUI/Portal: 45 commits (39 @huangzesen, 2 @TZZheng, 4 @github-actions[bot]); 20 PRs closed (19 merged, 1 closed unmerged); 31 issues closed.',
+        'Kernel: 51 commits (29 @9s5bz2jvd2-lang, 20 @huangzesen, 2 @TZZheng); 26 PRs closed (20 merged, 6 closed unmerged); 15 issues closed.',
+        'Release-window contributors/authors: @huangzesen, @TZZheng, @9s5bz2jvd2-lang, @ZigongXu, @BrianLiubr, and @888yzbt888.',
+      ],
+      bulletsZh: [
+        'TUI/Portal：45 个 commit（39 个 @huangzesen、2 个 @TZZheng、4 个 @github-actions[bot]）；关闭 20 个 PR（19 个合并、1 个未合并关闭）与 31 个 issue。',
+        'Kernel：51 个 commit（29 个 @9s5bz2jvd2-lang、20 个 @huangzesen、2 个 @TZZheng）；关闭 26 个 PR（20 个合并、6 个未合并关闭）与 15 个 issue。',
+        '发布窗口贡献者/作者：@huangzesen、@TZZheng、@9s5bz2jvd2-lang、@ZigongXu、@BrianLiubr、@888yzbt888。',
+      ],
+      whyEn:
+        'The contributor list intentionally includes issue/PR authors from the release window even when a specific issue or PR was closed, rejected, or unmerged.',
+      whyZh:
+        '贡献者名单刻意纳入发布窗口内的 issue/PR 作者，即使某个 issue 或 PR 最终被关闭、拒绝或未合并。',
+    },
   ],
-  contributors: ['huangzesen', 'TZZheng'],
+  contributors: ['huangzesen', 'TZZheng', 'ZigongXu', 'BrianLiubr', '888yzbt888', '9s5bz2jvd2-lang'],
   validation: {
     commit:
       'kernel ae53b4173a0373475e4f4a3a4d399d552a46f5c0 · tui 031b5ea8d01a8ffd4cdd0d01698fe7bd901704fa',
@@ -185,6 +207,7 @@ const v0_16_2_kernel_v0_10_5_tui: Release = {
       { label: 'Kernel packaging', result: 'build and twine check passed for wheel + sdist' },
       { label: 'PyPI publication', result: 'lingtai 0.16.2 uploaded and visible on PyPI' },
       { label: 'Homebrew tap', result: 'formula v0.10.5, SHA256 verified, ruby syntax and strict audit passed' },
+      { label: 'Release-window audit', result: '96 commits and 92 closed items accounted: TUI/Portal 45 commits, 20 PRs, 31 issues; kernel 51 commits, 26 PRs, 15 issues; 6 human contributors/authors listed' },
     ],
   },
   links: [
