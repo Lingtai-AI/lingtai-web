@@ -2,220 +2,217 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const bestPicks = [
-  'Kepler exoplanet transit — make a light curve and detect a planet dip.',
-  'Gaia Milky Way map / HR diagram — plot real stars and reveal stellar populations.',
-  'DART asteroid impact — make a movie from spacecraft approach images.',
-  'New Horizons Pluto flyby — animate Pluto growing larger during approach.',
-  'JWST or Hubble deep field — make a color composite and count galaxies.',
+  '开普勒系外行星凌星——制作光变曲线，找出行星经过恒星前方时的亮度下凹。',
+  'Gaia 银河系地图 / 赫罗图——绘制真实恒星，显现恒星族群。',
+  'DART 小行星撞击——用探测器接近图像做一段接近动画。',
+  '新视野号飞掠冥王星——动画呈现冥王星在接近过程中逐渐变大。',
+  'JWST 或哈勃深场——制作彩色合成图，并统计星系。',
 ];
 
 const projectCandidates = [
   {
-    event: 'Kepler finds exoplanets by stellar brightness dips',
+    event: '开普勒通过恒星亮度下凹发现系外行星',
     year: '2009–2018',
-    idea: 'Load a Kepler light curve, fold it by the planet’s period, and show a transit dip. Students can estimate the planet-to-star size ratio from the dip depth.',
+    idea: '载入一条开普勒光变曲线，按行星周期折叠，并显示凌星下凹。学生可以用下凹深度估计行星与恒星的半径比例。',
     archives: [
-      { label: 'MAST Kepler Archive', href: 'https://archive.stsci.edu/missions-and-data/kepler' },
+      { label: 'MAST 开普勒档案', href: 'https://archive.stsci.edu/missions-and-data/kepler' },
       { label: 'Lightkurve', href: 'https://lightkurve.github.io/lightkurve/' },
-      { label: 'NASA Exoplanet Archive Kepler data', href: 'https://exoplanetarchive.ipac.caltech.edu/docs/Kepler_Data_Products_Overview.html' },
+      { label: 'NASA Exoplanet Archive 开普勒数据', href: 'https://exoplanetarchive.ipac.caltech.edu/docs/Kepler_Data_Products_Overview.html' },
     ],
-    difficulty: 'Easy',
+    difficulty: '容易',
   },
   {
-    event: 'Gaia maps the Milky Way in unprecedented detail',
-    year: '2016–present',
-    idea: 'Query nearby stars and plot a Hertzsprung–Russell diagram, a sky map, or star color vs. brightness.',
+    event: 'Gaia 以前所未有的精度绘制银河系',
+    year: '2016–至今',
+    idea: '查询附近恒星，绘制赫罗图、全天图，或恒星颜色与亮度的关系图。',
     archives: [
       { label: 'ESA Gaia Archive', href: 'https://gea.esac.esa.int/archive/' },
-      { label: 'ESA Gaia HR Diagram example', href: 'https://sci.esa.int/web/gaia/-/60198-gaia-hertzsprung-russell-diagram' },
+      { label: 'ESA Gaia 赫罗图示例', href: 'https://sci.esa.int/web/gaia/-/60198-gaia-hertzsprung-russell-diagram' },
     ],
-    difficulty: 'Easy',
+    difficulty: '容易',
   },
   {
-    event: 'DART intentionally impacts asteroid moon Dimorphos',
+    event: 'DART 故意撞击小行星卫星 Dimorphos',
     year: '2022',
-    idea: 'Download DRACO images and make a frame-by-frame approach movie. Students can measure how the apparent size of Dimorphos grows before impact.',
+    idea: '下载 DRACO 图像并制作逐帧接近动画。学生可以测量 Dimorphos 在撞击前的表观大小如何增加。',
     archives: [
-      { label: 'NASA PDS DART Mission Archive', href: 'https://pds-smallbodies.astro.umd.edu/data_sb/missions/dart/index.shtml' },
-      { label: 'DART DRACO Raw Images', href: 'https://pds.nasa.gov/ds-view/pds/viewCollection.jsp?identifier=urn%3Anasa%3Apds%3Adart%3Adata_dracoraw' },
+      { label: 'NASA PDS DART 任务档案', href: 'https://pds-smallbodies.astro.umd.edu/data_sb/missions/dart/index.shtml' },
+      { label: 'DART DRACO 原始图像', href: 'https://pds.nasa.gov/ds-view/pds/viewCollection.jsp?identifier=urn%3Anasa%3Apds%3Adart%3Adata_dracoraw' },
     ],
-    difficulty: 'Easy–Moderate',
+    difficulty: '容易–中等',
   },
   {
-    event: 'New Horizons flies past Pluto',
+    event: '新视野号飞掠冥王星',
     year: '2015',
-    idea: 'Load LORRI images and create a Pluto approach animation. Students can measure Pluto’s apparent diameter in pixels across time.',
+    idea: '载入 LORRI 图像，制作冥王星接近动画。学生可以测量不同时刻冥王星的像素直径。',
     archives: [
-      { label: 'NASA PDS New Horizons Archive', href: 'https://pds-smallbodies.astro.umd.edu/data_sb/missions/newhorizons/index.shtml' },
+      { label: 'NASA PDS 新视野号档案', href: 'https://pds-smallbodies.astro.umd.edu/data_sb/missions/newhorizons/index.shtml' },
     ],
-    difficulty: 'Easy–Moderate',
+    difficulty: '容易–中等',
   },
   {
-    event: 'JWST releases its first deep field image',
+    event: 'JWST 发布第一张深场图像',
     year: '2022',
-    idea: 'Load JWST images of SMACS 0723, combine filters into a color image, and identify galaxies or gravitational arcs.',
+    idea: '载入 SMACS 0723 的 JWST 图像，将不同滤镜合成为彩色图像，并识别星系或引力弧。',
     archives: [
-      { label: 'MAST JWST Archive', href: 'https://archive.stsci.edu/missions-and-data/jwst' },
-      { label: 'Webb First Images data notice', href: 'https://www.stsci.edu/contents/news/jwst/2022/science-data-for-webbs-first-images-now-available' },
+      { label: 'MAST JWST 档案', href: 'https://archive.stsci.edu/missions-and-data/jwst' },
+      { label: 'Webb 首批图像数据说明', href: 'https://www.stsci.edu/contents/news/jwst/2022/science-data-for-webbs-first-images-now-available' },
     ],
-    difficulty: 'Moderate',
+    difficulty: '中等',
   },
   {
-    event: 'Hubble Deep Field reveals thousands of distant galaxies',
+    event: '哈勃深场揭示数千个遥远星系',
     year: '1995–1996',
-    idea: 'Use Hubble images in different filters to build a color composite, count sources, or compare the tiny sky area to the number of visible galaxies.',
+    idea: '使用不同滤镜的哈勃图像制作彩色合成图，统计源数量，或比较这片极小天空区域与可见星系数量之间的关系。',
     archives: [
-      { label: 'MAST Hubble Archive', href: 'https://archive.stsci.edu/missions-and-data/hst' },
-      { label: 'Hubble Deep Field paper', href: 'https://arxiv.org/abs/astro-ph/9607174' },
+      { label: 'MAST 哈勃档案', href: 'https://archive.stsci.edu/missions-and-data/hst' },
+      { label: '哈勃深场论文', href: 'https://arxiv.org/abs/astro-ph/9607174' },
     ],
-    difficulty: 'Moderate',
+    difficulty: '中等',
   },
   {
-    event: 'Comet Shoemaker–Levy 9 impacts Jupiter',
+    event: '苏梅克–列维 9 号彗星撞击木星',
     year: '1994',
-    idea: 'Build a before/after image sequence of Jupiter and measure how the impact scars change or fade.',
+    idea: '制作木星撞击前后的图像序列，并测量撞击痕迹如何变化或消退。',
     archives: [
-      { label: 'NASA Hubble SL9 image page', href: 'https://science.nasa.gov/asset/hubble/comet-shoemaker-levy-9-impact-sites-on-jupiter/' },
-      { label: 'ESA/Hubble SL9 image search', href: 'https://esahubble.org/images/?search=shoemaker+levy+9' },
+      { label: 'NASA 哈勃 SL9 图像页', href: 'https://science.nasa.gov/asset/hubble/comet-shoemaker-levy-9-impact-sites-on-jupiter/' },
+      { label: 'ESA/Hubble SL9 图像搜索', href: 'https://esahubble.org/images/?search=shoemaker+levy+9' },
     ],
-    difficulty: 'Moderate',
+    difficulty: '中等',
   },
   {
-    event: 'Supernova 1987A appears in the Large Magellanic Cloud',
+    event: '超新星 1987A 出现在大麦哲伦云',
     year: '1987',
-    idea: 'Download brightness observations and plot a supernova light curve: rapid brightening, peak, and long-term fading.',
+    idea: '下载亮度观测数据，绘制超新星光变曲线：快速变亮、达到峰值、随后长期变暗。',
     archives: [
-      { label: 'AAVSO International Database', href: 'https://www.aavso.org/aavso-international-database' },
-      { label: 'AAVSO photometry search', href: 'https://apps.aavso.org/data/search/photometry/' },
+      { label: 'AAVSO 国际数据库', href: 'https://www.aavso.org/aavso-international-database' },
+      { label: 'AAVSO 光度搜索', href: 'https://apps.aavso.org/data/search/photometry/' },
     ],
-    difficulty: 'Moderate',
+    difficulty: '中等',
   },
   {
-    event: 'Voyager 1 crosses the heliopause into interstellar space',
+    event: '旅行者 1 号穿越日球层顶，进入星际空间',
     year: '2012',
-    idea: 'Plot charged-particle changes around August 25, 2012: heliospheric particles decrease while galactic cosmic rays increase.',
+    idea: '绘制 2012 年 8 月 25 日前后的带电粒子变化：日球层粒子减少，而银河宇宙线增加。',
     archives: [
-      { label: 'NASA Voyager Interstellar Mission', href: 'https://science.nasa.gov/mission/voyager/interstellar-mission/' },
+      { label: 'NASA 旅行者星际任务', href: 'https://science.nasa.gov/mission/voyager/interstellar-mission/' },
       { label: 'NASA CDAWeb/SPDF', href: 'https://cdaweb.gsfc.nasa.gov/' },
     ],
-    difficulty: 'Moderate–Advanced',
+    difficulty: '中等–进阶',
   },
   {
-    event: 'Parker Solar Probe “touches” the Sun',
+    event: '帕克太阳探测器“触碰”太阳',
     year: '2021',
-    idea: 'Plot Parker Solar Probe’s distance from the Sun and compare it with magnetic-field or solar-wind measurements near a close solar encounter.',
+    idea: '绘制帕克太阳探测器与太阳的距离，并把它与近距离掠日时的磁场或太阳风测量进行比较。',
     archives: [
-      { label: 'NASA Parker Solar Probe Mission', href: 'https://science.nasa.gov/mission/parker-solar-probe/' },
+      { label: 'NASA 帕克太阳探测器任务', href: 'https://science.nasa.gov/mission/parker-solar-probe/' },
       { label: 'NASA CDAWeb/SPDF', href: 'https://cdaweb.gsfc.nasa.gov/' },
-      { label: 'WISPR Data', href: 'https://wispr.nrl.navy.mil/wisprdata' },
+      { label: 'WISPR 数据', href: 'https://wispr.nrl.navy.mil/wisprdata' },
     ],
-    difficulty: 'Moderate–Advanced',
+    difficulty: '中等–进阶',
   },
 ];
 
 const formats = [
   {
-    title: 'Option A: One-event mini project',
+    title: '选项 A：单一事件小项目',
     items: [
-      'One figure or animation.',
-      'A short explanation of the event.',
-      'The data source used.',
-      'A 3–5 sentence interpretation of what the figure shows.',
+      '一张图或一段动画。',
+      '对事件的简短说明。',
+      '所使用的数据来源。',
+      '用 3–5 句话解释图像或曲线说明了什么。',
     ],
   },
   {
-    title: 'Option B: Compare two events',
+    title: '选项 B：比较两个事件',
     items: [
-      'Kepler vs. Gaia: planets around stars vs. mapping stars.',
-      'Hubble Deep Field vs. JWST Deep Field: optical/near-infrared deep imaging across telescope generations.',
-      'Voyager 1 vs. Parker Solar Probe: farthest human-made probe vs. closest solar probe.',
-      'DART vs. New Horizons: spacecraft imaging of small/distant Solar System bodies.',
+      '开普勒 vs. Gaia：寻找恒星周围的行星 vs. 绘制恒星地图。',
+      '哈勃深场 vs. JWST 深场：跨越两代望远镜的光学 / 近红外深空成像。',
+      '旅行者 1 号 vs. 帕克太阳探测器：最远的人造探测器 vs. 最近距离接近太阳的探测器。',
+      'DART vs. 新视野号：对小天体和遥远太阳系天体的航天器成像。',
     ],
   },
   {
-    title: 'Option C: Agent-assisted notebook',
+    title: '选项 C：智能体辅助笔记本',
     items: [
-      'Identify the correct public archive.',
-      'Download a small sample dataset.',
-      'Load it with Python.',
-      'Make one plot or image sequence.',
-      'Explain what the result means in high-school-level language.',
+      '识别正确的公共档案。',
+      '下载一小份样本数据。',
+      '用 Python 载入数据。',
+      '制作一张图或一段图像序列。',
+      '用适合高中生的语言解释结果含义。',
     ],
   },
 ];
 
 const prompts = [
   {
-    title: 'Kepler transit prompt',
-    text: 'Use public Kepler light-curve data for a known exoplanet system. Download a small light-curve file, plot brightness vs. time, phase-fold the light curve by the planet period, and explain the transit dip for a high-school student.',
+    title: '开普勒凌星提示词',
+    text: '使用某个已知系外行星系统的公开开普勒光变曲线数据。下载一小份光变曲线文件，绘制亮度随时间变化的图，按行星周期折叠光变曲线，并用高中生能理解的语言解释凌星下凹。',
   },
   {
-    title: 'Gaia HR diagram prompt',
-    text: 'Query a small sample of nearby Gaia stars with parallax and color information. Plot a Hertzsprung–Russell diagram using color on the x-axis and absolute magnitude on the y-axis. Label the main sequence and giant branch.',
+    title: 'Gaia 赫罗图提示词',
+    text: '查询一小批带有视差和颜色信息的附近 Gaia 恒星。以颜色为横轴、绝对星等为纵轴绘制赫罗图，并标出主序星和巨星分支。',
   },
   {
-    title: 'DART image prompt',
-    text: 'Download a small set of DART DRACO approach images before impact. Create an ordered image sequence or GIF and estimate how Dimorphos changes in apparent size over time.',
+    title: 'DART 图像提示词',
+    text: '下载 DART 撞击前的一小组 DRACO 接近图像。制作有序图像序列或 GIF，并估计 Dimorphos 的表观大小如何随时间变化。',
   },
   {
-    title: 'New Horizons Pluto prompt',
-    text: 'Download several New Horizons LORRI images of Pluto from before closest approach. Make a simple approach animation and measure Pluto’s apparent diameter in pixels in each frame.',
+    title: '新视野号冥王星提示词',
+    text: '下载几张最接近前的新视野号 LORRI 冥王星图像。制作简单的接近动画，并测量每一帧中冥王星的像素直径。',
   },
   {
-    title: 'Voyager heliopause prompt',
-    text: 'Use Voyager 1 particle or magnetic-field data around August 25, 2012. Plot the time series before and after the heliopause crossing and explain why the change indicates interstellar space.',
+    title: '旅行者日球层顶提示词',
+    text: '使用 2012 年 8 月 25 日前后旅行者 1 号的粒子或磁场数据。绘制穿越前后的时间序列，并解释为什么这种变化说明它进入了星际空间。',
   },
   {
-    title: 'Parker Solar Probe prompt',
-    text: 'Use Parker Solar Probe trajectory and solar-wind or magnetic-field data near a close solar encounter. Plot distance from the Sun over time and compare it with one physical measurement.',
+    title: '帕克太阳探测器提示词',
+    text: '使用帕克太阳探测器在一次近距离掠日附近的轨道数据、太阳风数据或磁场数据。绘制它与太阳距离随时间的变化，并与一个物理量测量进行比较。',
   },
 ];
 ---
 
-<BaseLayout title="Astronomy Examples" lang="en">
+<BaseLayout title="天文项目案例" lang="zh">
   <main class="astronomy-page">
-    <section class="hero" data-snap>
-      <p class="eyebrow">High-school project menu · public archive data</p>
-      <h1>Astronomy-Related Events with Public Archive Data</h1>
+    <section class="hero">
+      <p class="eyebrow">高中项目菜单 · 公共档案数据</p>
+      <h1>可用公开档案数据的天文项目案例</h1>
       <p class="lede">
-        A classroom-friendly menu of space-science events from the past ~60 years.
-        Each entry is chosen because students can work with public archive data and
-        produce something visible: a plot, animation, image composite, light curve,
-        trajectory, or time-series comparison.
+        这是一份面向课堂的天文与空间科学项目菜单，时间范围约为过去 60 年。
+        每个事件都适合学生利用公共档案数据，产出可见成果：图表、动画、
+        图像合成、光变曲线、轨迹图，或时间序列对比。
       </p>
-      <aside class="note" aria-label="Voyager terminology note">
-        <strong>Wording note:</strong> “Leaving the solar system” is usually used
-        informally for <strong>Voyager 1 crossing the heliopause into interstellar
-        space</strong>. Voyager 1 has not crossed every possible outer boundary of
-        the Solar System, such as the distant Oort Cloud.
+      <aside class="note" aria-label="旅行者术语说明">
+        <strong>措辞说明：</strong>“离开太阳系”通常是对<strong>旅行者 1 号穿越日球层顶、进入星际空间</strong>的非正式说法。
+        旅行者 1 号还没有穿越太阳系所有可能的外边界，例如遥远的奥尔特云。
       </aside>
     </section>
 
-    <section class="panel picks" data-snap>
+    <section class="panel picks">
       <div class="section-heading">
-        <p class="eyebrow">Start here</p>
-        <h2>Best first picks</h2>
+        <p class="eyebrow">从这里开始</p>
+        <h2>最适合作为第一批项目的选题</h2>
       </div>
       <ol class="pick-grid">
         {bestPicks.map((pick) => <li>{pick}</li>)}
       </ol>
     </section>
 
-    <section class="panel" data-snap>
+    <section class="panel">
       <div class="section-heading">
-        <p class="eyebrow">Project candidates</p>
-        <h2>10 public-archive astronomy projects</h2>
+        <p class="eyebrow">项目候选</p>
+        <h2>10 个公共档案天文项目</h2>
       </div>
-      <div class="table-scroll" role="region" aria-label="Astronomy project candidates" tabindex="0">
+      <div class="table-scroll" role="region" aria-label="天文项目候选表" tabindex="0">
         <table>
           <thead>
             <tr>
               <th scope="col">#</th>
-              <th scope="col">Event</th>
-              <th scope="col">Year</th>
-              <th scope="col">Student project idea</th>
-              <th scope="col">Public data/archive</th>
-              <th scope="col">Difficulty</th>
+              <th scope="col">事件</th>
+              <th scope="col">年份</th>
+              <th scope="col">学生项目想法</th>
+              <th scope="col">公共数据 / 档案</th>
+              <th scope="col">难度</th>
             </tr>
           </thead>
           <tbody>
@@ -242,10 +239,10 @@ const prompts = [
       </div>
     </section>
 
-    <section class="panel formats" data-snap>
+    <section class="panel formats">
       <div class="section-heading">
-        <p class="eyebrow">Classroom shapes</p>
-        <h2>Suggested project formats</h2>
+        <p class="eyebrow">课堂形式</p>
+        <h2>推荐项目形式</h2>
       </div>
       <div class="card-grid three">
         {formats.map((format) => (
@@ -259,10 +256,10 @@ const prompts = [
       </div>
     </section>
 
-    <section class="panel prompts" data-snap>
+    <section class="panel prompts">
       <div class="section-heading">
-        <p class="eyebrow">Copy and adapt</p>
-        <h2>Good agent prompts for students</h2>
+        <p class="eyebrow">复制后改写</p>
+        <h2>适合学生使用的智能体提示词</h2>
       </div>
       <div class="card-grid two">
         {prompts.map((prompt) => (
@@ -274,17 +271,17 @@ const prompts = [
       </div>
     </section>
 
-    <section class="panel practical" data-snap>
+    <section class="panel practical">
       <div class="section-heading">
-        <p class="eyebrow">Keep it small</p>
-        <h2>Practical notes</h2>
+        <p class="eyebrow">保持小规模</p>
+        <h2>实用注意事项</h2>
       </div>
       <ul class="practical-list">
-        <li>Start with <strong>small samples</strong>, not full mission archives.</li>
-        <li>Prefer <strong>CSV, FITS, or simple image files</strong> when possible.</li>
-        <li>For image projects, the final output can be a PNG, GIF, or annotated figure.</li>
-        <li>For time-series projects, include labeled axes, units, and a short explanation.</li>
-        <li>The most classroom-friendly projects are usually <strong>Kepler</strong>, <strong>Gaia</strong>, <strong>DART</strong>, <strong>New Horizons</strong>, and <strong>deep-field imaging</strong>.</li>
+        <li>从<strong>小样本</strong>开始，不要一上来下载完整任务档案。</li>
+        <li>尽量优先选择 <strong>CSV、FITS 或简单图像文件</strong>。</li>
+        <li>图像项目的最终成果可以是 PNG、GIF 或带注释的图像。</li>
+        <li>时间序列项目应包含标注清楚的坐标轴、单位和简短说明。</li>
+        <li>最适合课堂的项目通常是<strong>开普勒</strong>、<strong>Gaia</strong>、<strong>DART</strong>、<strong>新视野号</strong>和<strong>深场成像</strong>。</li>
       </ul>
     </section>
   </main>
@@ -342,21 +339,20 @@ const prompts = [
   h2,
   h3 {
     color: var(--title-color);
-    line-height: 1.05;
+    line-height: 1.08;
   }
 
   h1 {
     max-width: 920px;
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-size: clamp(3.5rem, 10vw, 7.8rem);
-    font-weight: 400;
-    letter-spacing: -0.055em;
+    font-size: clamp(3rem, 8vw, 6.4rem);
+    font-weight: 500;
+    letter-spacing: -0.07em;
   }
 
   h2 {
     font-size: clamp(2rem, 5vw, 3.6rem);
     font-weight: 500;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.055em;
   }
 
   h3 {

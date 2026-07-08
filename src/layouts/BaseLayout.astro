@@ -41,6 +41,12 @@ const { title, lang } = Astro.props;
       // Soft magnetic scroll — gently pulls to nearest [data-snap] section
       // when the user stops scrolling near a boundary.
       (function() {
+        const landingPaths = new Set(['/en/', '/zh/', '/wen/']);
+        const path = window.location.pathname.endsWith('/')
+          ? window.location.pathname
+          : `${window.location.pathname}/`;
+        if (!landingPaths.has(path)) return;
+
         const THRESHOLD = 0.28;   // how close to top/bottom (% of viewport) before magnet kicks in
         const SETTLE_MS = 150;    // ms of no scrolling before magnet activates
         let timer: ReturnType<typeof setTimeout> | null = null;
