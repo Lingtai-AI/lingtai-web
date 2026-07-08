@@ -113,6 +113,59 @@ const projectCandidates = [
   },
 ];
 
+const projectAssets: Record<string, { bestFor: string; output: string; promptHref: string }> = {
+  '开普勒通过恒星亮度下凹发现系外行星': {
+    bestFor: '第一次做真实天文时间序列',
+    output: '光变曲线 + 凌星下凹解释',
+    promptHref: '/astronomy-examples/prompts/kepler-transit.md',
+  },
+  'Gaia 以前所未有的精度绘制银河系': {
+    bestFor: '想把真实恒星画成一张地图',
+    output: '赫罗图或附近恒星 sky map',
+    promptHref: '/astronomy-examples/prompts/gaia-hr-diagram.md',
+  },
+  'DART 故意撞击小行星卫星 Dimorphos': {
+    bestFor: '喜欢航天器影像和动画',
+    output: 'DART 接近动画或尺寸变化图',
+    promptHref: '/astronomy-examples/prompts/dart-impact-movie.md',
+  },
+  '新视野号飞掠冥王星': {
+    bestFor: '想做太阳系远方探测故事',
+    output: '冥王星接近动画 + 像素直径测量',
+    promptHref: '/astronomy-examples/prompts/new-horizons-pluto.md',
+  },
+  'JWST 发布第一张深场图像': {
+    bestFor: '喜欢彩色图像和星系',
+    output: '深场彩色合成图 + 星系标注',
+    promptHref: '/astronomy-examples/prompts/jwst-deep-field.md',
+  },
+  '哈勃深场揭示数千个遥远星系': {
+    bestFor: '想比较经典深空影像',
+    output: '哈勃深场合成图或源计数',
+    promptHref: '/astronomy-examples/prompts/hubble-deep-field.md',
+  },
+  '苏梅克–列维 9 号彗星撞击木星': {
+    bestFor: '想做前后对比图像序列',
+    output: '木星撞击痕迹变化图',
+    promptHref: '/astronomy-examples/prompts/shoemaker-levy-9.md',
+  },
+  '超新星 1987A 出现在大麦哲伦云': {
+    bestFor: '想研究恒星爆炸如何变亮变暗',
+    output: '超新星光变曲线 + 峰值解释',
+    promptHref: '/astronomy-examples/prompts/supernova-1987a.md',
+  },
+  '旅行者 1 号穿越日球层顶，进入星际空间': {
+    bestFor: '想做空间物理时间序列',
+    output: '粒子变化时间序列 + 日球层顶解释',
+    promptHref: '/astronomy-examples/prompts/voyager-heliopause.md',
+  },
+  '帕克太阳探测器“触碰”太阳': {
+    bestFor: '想研究探测器靠近太阳的过程',
+    output: '距离太阳曲线 + 一个太阳风/磁场指标',
+    promptHref: '/astronomy-examples/prompts/parker-solar-probe.md',
+  },
+};
+
 const formats = [
   {
     title: '选项 A：单一事件小项目',
@@ -172,15 +225,15 @@ const prompts = [
 ];
 ---
 
-<BaseLayout title="天文项目案例" lang="zh">
+<BaseLayout title="天文数据项目菜单" lang="zh">
   <main class="astronomy-page">
     <section class="hero">
       <p class="eyebrow">高中项目菜单 · 公共档案数据</p>
-      <h1>可用公开档案数据的天文项目案例</h1>
+      <h1>高中生天文数据项目选题菜单</h1>
       <p class="lede">
-        这是一份面向课堂的天文与空间科学项目菜单，时间范围约为过去 60 年。
-        每个事件都适合学生利用公共档案数据，产出可见成果：图表、动画、
-        图像合成、光变曲线、轨迹图，或时间序列对比。
+        先选一个你感兴趣的天文事件，再下载对应的 LingTai agent prompt。
+        每个项目都配有公开数据源、建议产出和可直接交给智能体的 Markdown 任务说明，
+        适合高中生做成图表、动画、图像合成、光变曲线、轨迹图或短报告。
       </p>
       <aside class="note" aria-label="旅行者术语说明">
         <strong>措辞说明：</strong>“离开太阳系”通常是对<strong>旅行者 1 号穿越日球层顶、进入星际空间</strong>的非正式说法。
@@ -196,6 +249,43 @@ const prompts = [
       <ol class="pick-grid">
         {bestPicks.map((pick) => <li>{pick}</li>)}
       </ol>
+    </section>
+
+    <section class="panel chooser">
+      <div class="section-heading">
+        <p class="eyebrow">选一个开始</p>
+        <h2>学生项目卡片</h2>
+        <p class="section-copy">
+          每张卡片都是一个可完成的公开数据项目。下载 Markdown prompt 后，可以把它交给 LingTai agent，
+          让 agent 帮你找小样本数据、写 notebook、生成图表，并把结果解释成高中生能讲清楚的短报告。
+        </p>
+      </div>
+      <div class="project-choice-grid">
+        {projectCandidates.map((project, index) => (
+          <article class="project-choice-card">
+            <div class="project-card-topline">
+              <span class="rank compact">{index + 1}</span>
+              <span class="badge">{project.difficulty}</span>
+            </div>
+            <h3>{project.event}</h3>
+            <p class="best-for">适合：{projectAssets[project.event].bestFor}</p>
+            <p>{project.idea}</p>
+            <dl class="project-facts">
+              <div>
+                <dt>预计产出</dt>
+                <dd>{projectAssets[project.event].output}</dd>
+              </div>
+              <div>
+                <dt>数据入口</dt>
+                <dd><a href={project.archives[0].href} target="_blank" rel="noreferrer">{project.archives[0].label}</a></dd>
+              </div>
+            </dl>
+            <a class="download-link" href={projectAssets[project.event].promptHref} download>
+              下载 LingTai 项目 prompt (.md)
+            </a>
+          </article>
+        ))}
+      </div>
     </section>
 
     <section class="panel">
@@ -416,6 +506,89 @@ const prompts = [
     font-family: "Cormorant Garamond", Georgia, serif;
     font-size: 2.4rem;
     line-height: 1;
+  }
+
+
+  .section-copy {
+    max-width: 820px;
+    color: var(--text-dim);
+    font-size: 1.05rem;
+  }
+
+  .project-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 18px;
+  }
+
+  .project-choice-card {
+    display: flex;
+    min-height: 390px;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    border: 1px solid color-mix(in srgb, var(--accent-warm) 32%, transparent);
+    border-radius: 24px;
+    background: color-mix(in srgb, var(--bg) 74%, transparent);
+  }
+
+  .project-card-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .rank.compact {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .best-for {
+    color: var(--vermilion);
+    font-weight: 700;
+  }
+
+  .project-choice-card p {
+    color: var(--text-dim);
+  }
+
+  .project-facts {
+    display: grid;
+    gap: 12px;
+    margin-top: auto;
+  }
+
+  .project-facts div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .project-facts dt {
+    color: var(--text-faint);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .project-facts dd {
+    color: var(--text-dim);
+  }
+
+  .download-link {
+    display: inline-flex;
+    justify-content: center;
+    margin-top: 6px;
+    padding: 12px 16px;
+    border: 1px solid var(--vermilion);
+    border-radius: 999px;
+    color: var(--vermilion);
+    font-weight: 700;
+  }
+
+  .download-link:hover {
+    background: var(--vermilion);
+    color: var(--seal-paper);
   }
 
   .table-scroll {
