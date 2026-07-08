@@ -1,0 +1,536 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const bestPicks = [
+  'Kepler exoplanet transit — make a light curve and detect a planet dip.',
+  'Gaia Milky Way map / HR diagram — plot real stars and reveal stellar populations.',
+  'DART asteroid impact — make a movie from spacecraft approach images.',
+  'New Horizons Pluto flyby — animate Pluto growing larger during approach.',
+  'JWST or Hubble deep field — make a color composite and count galaxies.',
+];
+
+const projectCandidates = [
+  {
+    event: 'Kepler finds exoplanets by stellar brightness dips',
+    year: '2009–2018',
+    idea: 'Load a Kepler light curve, fold it by the planet’s period, and show a transit dip. Students can estimate the planet-to-star size ratio from the dip depth.',
+    archives: [
+      { label: 'MAST Kepler Archive', href: 'https://archive.stsci.edu/missions-and-data/kepler' },
+      { label: 'Lightkurve', href: 'https://lightkurve.github.io/lightkurve/' },
+      { label: 'NASA Exoplanet Archive Kepler data', href: 'https://exoplanetarchive.ipac.caltech.edu/docs/Kepler_Data_Products_Overview.html' },
+    ],
+    difficulty: 'Easy',
+  },
+  {
+    event: 'Gaia maps the Milky Way in unprecedented detail',
+    year: '2016–present',
+    idea: 'Query nearby stars and plot a Hertzsprung–Russell diagram, a sky map, or star color vs. brightness.',
+    archives: [
+      { label: 'ESA Gaia Archive', href: 'https://gea.esac.esa.int/archive/' },
+      { label: 'ESA Gaia HR Diagram example', href: 'https://sci.esa.int/web/gaia/-/60198-gaia-hertzsprung-russell-diagram' },
+    ],
+    difficulty: 'Easy',
+  },
+  {
+    event: 'DART intentionally impacts asteroid moon Dimorphos',
+    year: '2022',
+    idea: 'Download DRACO images and make a frame-by-frame approach movie. Students can measure how the apparent size of Dimorphos grows before impact.',
+    archives: [
+      { label: 'NASA PDS DART Mission Archive', href: 'https://pds-smallbodies.astro.umd.edu/data_sb/missions/dart/index.shtml' },
+      { label: 'DART DRACO Raw Images', href: 'https://pds.nasa.gov/ds-view/pds/viewCollection.jsp?identifier=urn%3Anasa%3Apds%3Adart%3Adata_dracoraw' },
+    ],
+    difficulty: 'Easy–Moderate',
+  },
+  {
+    event: 'New Horizons flies past Pluto',
+    year: '2015',
+    idea: 'Load LORRI images and create a Pluto approach animation. Students can measure Pluto’s apparent diameter in pixels across time.',
+    archives: [
+      { label: 'NASA PDS New Horizons Archive', href: 'https://pds-smallbodies.astro.umd.edu/data_sb/missions/newhorizons/index.shtml' },
+    ],
+    difficulty: 'Easy–Moderate',
+  },
+  {
+    event: 'JWST releases its first deep field image',
+    year: '2022',
+    idea: 'Load JWST images of SMACS 0723, combine filters into a color image, and identify galaxies or gravitational arcs.',
+    archives: [
+      { label: 'MAST JWST Archive', href: 'https://archive.stsci.edu/missions-and-data/jwst' },
+      { label: 'Webb First Images data notice', href: 'https://www.stsci.edu/contents/news/jwst/2022/science-data-for-webbs-first-images-now-available' },
+    ],
+    difficulty: 'Moderate',
+  },
+  {
+    event: 'Hubble Deep Field reveals thousands of distant galaxies',
+    year: '1995–1996',
+    idea: 'Use Hubble images in different filters to build a color composite, count sources, or compare the tiny sky area to the number of visible galaxies.',
+    archives: [
+      { label: 'MAST Hubble Archive', href: 'https://archive.stsci.edu/missions-and-data/hst' },
+      { label: 'Hubble Deep Field paper', href: 'https://arxiv.org/abs/astro-ph/9607174' },
+    ],
+    difficulty: 'Moderate',
+  },
+  {
+    event: 'Comet Shoemaker–Levy 9 impacts Jupiter',
+    year: '1994',
+    idea: 'Build a before/after image sequence of Jupiter and measure how the impact scars change or fade.',
+    archives: [
+      { label: 'NASA Hubble SL9 image page', href: 'https://science.nasa.gov/asset/hubble/comet-shoemaker-levy-9-impact-sites-on-jupiter/' },
+      { label: 'ESA/Hubble SL9 image search', href: 'https://esahubble.org/images/?search=shoemaker+levy+9' },
+    ],
+    difficulty: 'Moderate',
+  },
+  {
+    event: 'Supernova 1987A appears in the Large Magellanic Cloud',
+    year: '1987',
+    idea: 'Download brightness observations and plot a supernova light curve: rapid brightening, peak, and long-term fading.',
+    archives: [
+      { label: 'AAVSO International Database', href: 'https://www.aavso.org/aavso-international-database' },
+      { label: 'AAVSO photometry search', href: 'https://apps.aavso.org/data/search/photometry/' },
+    ],
+    difficulty: 'Moderate',
+  },
+  {
+    event: 'Voyager 1 crosses the heliopause into interstellar space',
+    year: '2012',
+    idea: 'Plot charged-particle changes around August 25, 2012: heliospheric particles decrease while galactic cosmic rays increase.',
+    archives: [
+      { label: 'NASA Voyager Interstellar Mission', href: 'https://science.nasa.gov/mission/voyager/interstellar-mission/' },
+      { label: 'NASA CDAWeb/SPDF', href: 'https://cdaweb.gsfc.nasa.gov/' },
+    ],
+    difficulty: 'Moderate–Advanced',
+  },
+  {
+    event: 'Parker Solar Probe “touches” the Sun',
+    year: '2021',
+    idea: 'Plot Parker Solar Probe’s distance from the Sun and compare it with magnetic-field or solar-wind measurements near a close solar encounter.',
+    archives: [
+      { label: 'NASA Parker Solar Probe Mission', href: 'https://science.nasa.gov/mission/parker-solar-probe/' },
+      { label: 'NASA CDAWeb/SPDF', href: 'https://cdaweb.gsfc.nasa.gov/' },
+      { label: 'WISPR Data', href: 'https://wispr.nrl.navy.mil/wisprdata' },
+    ],
+    difficulty: 'Moderate–Advanced',
+  },
+];
+
+const formats = [
+  {
+    title: 'Option A: One-event mini project',
+    items: [
+      'One figure or animation.',
+      'A short explanation of the event.',
+      'The data source used.',
+      'A 3–5 sentence interpretation of what the figure shows.',
+    ],
+  },
+  {
+    title: 'Option B: Compare two events',
+    items: [
+      'Kepler vs. Gaia: planets around stars vs. mapping stars.',
+      'Hubble Deep Field vs. JWST Deep Field: optical/near-infrared deep imaging across telescope generations.',
+      'Voyager 1 vs. Parker Solar Probe: farthest human-made probe vs. closest solar probe.',
+      'DART vs. New Horizons: spacecraft imaging of small/distant Solar System bodies.',
+    ],
+  },
+  {
+    title: 'Option C: Agent-assisted notebook',
+    items: [
+      'Identify the correct public archive.',
+      'Download a small sample dataset.',
+      'Load it with Python.',
+      'Make one plot or image sequence.',
+      'Explain what the result means in high-school-level language.',
+    ],
+  },
+];
+
+const prompts = [
+  {
+    title: 'Kepler transit prompt',
+    text: 'Use public Kepler light-curve data for a known exoplanet system. Download a small light-curve file, plot brightness vs. time, phase-fold the light curve by the planet period, and explain the transit dip for a high-school student.',
+  },
+  {
+    title: 'Gaia HR diagram prompt',
+    text: 'Query a small sample of nearby Gaia stars with parallax and color information. Plot a Hertzsprung–Russell diagram using color on the x-axis and absolute magnitude on the y-axis. Label the main sequence and giant branch.',
+  },
+  {
+    title: 'DART image prompt',
+    text: 'Download a small set of DART DRACO approach images before impact. Create an ordered image sequence or GIF and estimate how Dimorphos changes in apparent size over time.',
+  },
+  {
+    title: 'New Horizons Pluto prompt',
+    text: 'Download several New Horizons LORRI images of Pluto from before closest approach. Make a simple approach animation and measure Pluto’s apparent diameter in pixels in each frame.',
+  },
+  {
+    title: 'Voyager heliopause prompt',
+    text: 'Use Voyager 1 particle or magnetic-field data around August 25, 2012. Plot the time series before and after the heliopause crossing and explain why the change indicates interstellar space.',
+  },
+  {
+    title: 'Parker Solar Probe prompt',
+    text: 'Use Parker Solar Probe trajectory and solar-wind or magnetic-field data near a close solar encounter. Plot distance from the Sun over time and compare it with one physical measurement.',
+  },
+];
+---
+
+<BaseLayout title="Astronomy Examples" lang="en">
+  <main class="astronomy-page">
+    <section class="hero" data-snap>
+      <p class="eyebrow">High-school project menu · public archive data</p>
+      <h1>Astronomy-Related Events with Public Archive Data</h1>
+      <p class="lede">
+        A classroom-friendly menu of space-science events from the past ~60 years.
+        Each entry is chosen because students can work with public archive data and
+        produce something visible: a plot, animation, image composite, light curve,
+        trajectory, or time-series comparison.
+      </p>
+      <aside class="note" aria-label="Voyager terminology note">
+        <strong>Wording note:</strong> “Leaving the solar system” is usually used
+        informally for <strong>Voyager 1 crossing the heliopause into interstellar
+        space</strong>. Voyager 1 has not crossed every possible outer boundary of
+        the Solar System, such as the distant Oort Cloud.
+      </aside>
+    </section>
+
+    <section class="panel picks" data-snap>
+      <div class="section-heading">
+        <p class="eyebrow">Start here</p>
+        <h2>Best first picks</h2>
+      </div>
+      <ol class="pick-grid">
+        {bestPicks.map((pick) => <li>{pick}</li>)}
+      </ol>
+    </section>
+
+    <section class="panel" data-snap>
+      <div class="section-heading">
+        <p class="eyebrow">Project candidates</p>
+        <h2>10 public-archive astronomy projects</h2>
+      </div>
+      <div class="table-scroll" role="region" aria-label="Astronomy project candidates" tabindex="0">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Event</th>
+              <th scope="col">Year</th>
+              <th scope="col">Student project idea</th>
+              <th scope="col">Public data/archive</th>
+              <th scope="col">Difficulty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projectCandidates.map((project, index) => (
+              <tr>
+                <td class="rank">{index + 1}</td>
+                <td><strong>{project.event}</strong></td>
+                <td>{project.year}</td>
+                <td>{project.idea}</td>
+                <td>
+                  <ul class="archive-links">
+                    {project.archives.map((archive) => (
+                      <li>
+                        <a href={archive.href} target="_blank" rel="noreferrer">{archive.label}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </td>
+                <td><span class="badge">{project.difficulty}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel formats" data-snap>
+      <div class="section-heading">
+        <p class="eyebrow">Classroom shapes</p>
+        <h2>Suggested project formats</h2>
+      </div>
+      <div class="card-grid three">
+        {formats.map((format) => (
+          <article class="card">
+            <h3>{format.title}</h3>
+            <ul>
+              {format.items.map((item) => <li>{item}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="panel prompts" data-snap>
+      <div class="section-heading">
+        <p class="eyebrow">Copy and adapt</p>
+        <h2>Good agent prompts for students</h2>
+      </div>
+      <div class="card-grid two">
+        {prompts.map((prompt) => (
+          <article class="prompt-card">
+            <h3>{prompt.title}</h3>
+            <blockquote>{prompt.text}</blockquote>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="panel practical" data-snap>
+      <div class="section-heading">
+        <p class="eyebrow">Keep it small</p>
+        <h2>Practical notes</h2>
+      </div>
+      <ul class="practical-list">
+        <li>Start with <strong>small samples</strong>, not full mission archives.</li>
+        <li>Prefer <strong>CSV, FITS, or simple image files</strong> when possible.</li>
+        <li>For image projects, the final output can be a PNG, GIF, or annotated figure.</li>
+        <li>For time-series projects, include labeled axes, units, and a short explanation.</li>
+        <li>The most classroom-friendly projects are usually <strong>Kepler</strong>, <strong>Gaia</strong>, <strong>DART</strong>, <strong>New Horizons</strong>, and <strong>deep-field imaging</strong>.</li>
+      </ul>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .astronomy-page {
+    width: min(1120px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 96px 0 72px;
+  }
+
+  .hero,
+  .panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--vermilion) 22%, transparent);
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at top left, color-mix(in srgb, var(--gold) 18%, transparent), transparent 34rem),
+      linear-gradient(145deg, color-mix(in srgb, var(--bg-alt) 84%, transparent), color-mix(in srgb, var(--bg) 94%, transparent));
+    box-shadow: 0 28px 70px color-mix(in srgb, var(--ink) 13%, transparent);
+  }
+
+  .hero {
+    min-height: 520px;
+    display: grid;
+    align-content: center;
+    gap: 24px;
+    padding: clamp(40px, 7vw, 88px);
+  }
+
+  .hero::after {
+    content: "✦";
+    position: absolute;
+    right: clamp(24px, 7vw, 90px);
+    top: clamp(20px, 6vw, 72px);
+    color: color-mix(in srgb, var(--vermilion) 52%, transparent);
+    font-size: clamp(4rem, 14vw, 11rem);
+    line-height: 1;
+    transform: rotate(18deg);
+    opacity: 0.18;
+  }
+
+  .eyebrow {
+    color: var(--vermilion);
+    font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--title-color);
+    line-height: 1.05;
+  }
+
+  h1 {
+    max-width: 920px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: clamp(3.5rem, 10vw, 7.8rem);
+    font-weight: 400;
+    letter-spacing: -0.055em;
+  }
+
+  h2 {
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+  }
+
+  h3 {
+    margin-bottom: 0.7rem;
+    font-size: 1.25rem;
+  }
+
+  .lede {
+    max-width: 780px;
+    color: var(--text-dim);
+    font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+  }
+
+  .note {
+    max-width: 780px;
+    padding: 18px 20px;
+    border-left: 4px solid var(--vermilion);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--seal-paper) 52%, transparent);
+    color: var(--text-dim);
+  }
+
+  [data-theme="dark"] .note {
+    background: color-mix(in srgb, var(--bg-alt) 72%, transparent);
+  }
+
+  .panel {
+    margin-top: 28px;
+    padding: clamp(28px, 5vw, 52px);
+  }
+
+  .section-heading {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .pick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    list-style: none;
+    counter-reset: pick;
+  }
+
+  .pick-grid li {
+    counter-increment: pick;
+    min-height: 150px;
+    padding: 22px;
+    border: 1px solid color-mix(in srgb, var(--accent-warm) 34%, transparent);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    color: var(--text-dim);
+  }
+
+  .pick-grid li::before {
+    content: counter(pick, decimal-leading-zero);
+    display: block;
+    margin-bottom: 18px;
+    color: var(--vermilion);
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 2.4rem;
+    line-height: 1;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid color-mix(in srgb, var(--accent-warm) 32%, transparent);
+    border-radius: 24px;
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+
+  table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 18px;
+    border-bottom: 1px solid color-mix(in srgb, var(--accent-warm) 25%, transparent);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--vermilion);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .rank {
+    color: var(--text-faint);
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 1.6rem;
+  }
+
+  .archive-links {
+    display: grid;
+    gap: 8px;
+    padding-left: 1rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    padding: 6px 10px;
+    border: 1px solid color-mix(in srgb, var(--vermilion) 34%, transparent);
+    border-radius: 999px;
+    color: var(--vermilion);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .card-grid {
+    display: grid;
+    gap: 18px;
+  }
+
+  .card-grid.two {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .card-grid.three {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .card,
+  .prompt-card {
+    padding: 24px;
+    border: 1px solid color-mix(in srgb, var(--accent-warm) 32%, transparent);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+  }
+
+  .card ul,
+  .practical-list {
+    display: grid;
+    gap: 10px;
+    padding-left: 1.1rem;
+    color: var(--text-dim);
+  }
+
+  blockquote {
+    position: relative;
+    margin: 0;
+    padding-left: 18px;
+    border-left: 3px solid var(--vermilion);
+    color: var(--text-dim);
+  }
+
+  .practical-list {
+    max-width: 840px;
+    font-size: 1.04rem;
+  }
+
+  @media (max-width: 720px) {
+    .astronomy-page {
+      width: min(100% - 24px, 1120px);
+      padding-top: 72px;
+    }
+
+    .hero,
+    .panel {
+      border-radius: 22px;
+    }
+
+    .hero {
+      min-height: auto;
+    }
+  }
+</style>
