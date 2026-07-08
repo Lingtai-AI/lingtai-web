@@ -23,9 +23,6 @@ const translations = {
       poem1: 'Awaken under Bodhi',
       poem2: 'One soul, thousand avatars',
       copy: 'copy',
-      installCaption: 'One-shot installer · macOS · Linux · WSL',
-      installHint:
-        'Bootstraps uv for the Python runtime and rebuilds a broken ~/.lingtai-tui/runtime/venv automatically. On WSL/Ubuntu, rerun after transient network or proxy failures; the healthy path mentions uv venv --python 3.13.',
     },
     network: {
       line1a: 'One Soul',
@@ -112,9 +109,6 @@ const translations = {
       poem1: '灵台方寸山 斜月三星洞',
       poem2: '闻道菩提下 一心化万相',
       copy: '复制',
-      installCaption: '一键安装 · macOS · Linux · WSL',
-      installHint:
-        '会自动 bootstrap uv 来创建 Python runtime，并在坏 venv / missing pip / 缺 ensurepip 时重建。WSL/Ubuntu 如果遇到临时网络或代理失败，直接重跑；健康路径会出现 uv venv --python 3.13。',
     },
     network: {
       line1a: '一心化万相',
@@ -178,9 +172,6 @@ const translations = {
       poem1: '灵台方寸山 斜月三星洞',
       poem2: '闻道菩提下 一心化万相',
       copy: '抄',
-      installCaption: '一令启灵台 · macOS · Linux · WSL',
-      installHint:
-        '自备 uv 以立 Python runtime；venv 败、pip 阙、ensurepip 阙，则自重建。WSL/Ubuntu 若网络暂阻，可复行此令；通途当见 uv venv --python 3.13。',
     },
     network: {
       line1a: '一心万相',
