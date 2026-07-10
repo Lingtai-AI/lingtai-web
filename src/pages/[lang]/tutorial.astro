@@ -1,0 +1,767 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import InstallCommand from '../../components/InstallCommand.astro';
+import { t, isValidLang, languages, type Lang } from '../../i18n/translations';
+import { tutorial, pick } from '../../data/tutorial';
+
+export function getStaticPaths() {
+  return languages.map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+if (!isValidLang(lang)) return Astro.redirect('/en/tutorial/');
+const currentLang = lang as Lang;
+const tr = t(currentLang);
+
+// Sections in reading order, with their in-page anchor ids and headings — drives both the
+// table of contents and the aria landmarks below, from one list so the two never drift.
+const toc = [
+  tutorial.whatIs,
+  tutorial.install,
+  tutorial.firstRun,
+  tutorial.firstTask,
+  tutorial.cast,
+  tutorial.memory,
+  tutorial.molt,
+  tutorial.channels,
+  tutorial.reference,
+  tutorial.troubleshooting,
+  tutorial.next,
+];
+
+// The copy label reuses the existing localized hero.copy string (copy / 复制 / 抄) so the
+// tutorial's copy buttons speak the same word as the rest of the site.
+const copyLabel = tr.hero.copy;
+---
+
+<BaseLayout title={tr.nav.tutorial} lang={currentLang}>
+  <main class="tutorial">
+    <header class="tut-header">
+      <p class="eyebrow">{pick(tutorial.eyebrow, currentLang)}</p>
+      <h1 class="title serif">{pick(tutorial.hero, currentLang)}</h1>
+      <div class="divider"></div>
+      <p class="lede">{pick(tutorial.lede, currentLang)}</p>
+      <p class="minutes">{pick(tutorial.minutes, currentLang)}</p>
+    </header>
+
+    <nav class="toc" aria-label={pick(tutorial.tocLabel, currentLang)}>
+      <p class="toc-label">{pick(tutorial.tocLabel, currentLang)}</p>
+      <ol>
+        {toc.map((s) => (
+          <li><a href={`#${s.id}`}>{pick(s.heading, currentLang)}</a></li>
+        ))}
+      </ol>
+    </nav>
+
+    <!-- 1. What LingTai is / is not -->
+    <section id={tutorial.whatIs.id} class="sec" aria-labelledby={`${tutorial.whatIs.id}-h`}>
+      <h2 id={`${tutorial.whatIs.id}-h`}>{pick(tutorial.whatIs.heading, currentLang)}</h2>
+      <p>{pick(tutorial.whatIs.body, currentLang)}</p>
+      <div class="two-col">
+        <div class="col is">
+          <p class="col-label">{pick(tutorial.whatIs.isLabel, currentLang)}</p>
+          <ul>
+            {tutorial.whatIs.is.map((item) => <li>{pick(item, currentLang)}</li>)}
+          </ul>
+        </div>
+        <div class="col isnot">
+          <p class="col-label">{pick(tutorial.whatIs.isNotLabel, currentLang)}</p>
+          <ul>
+            {tutorial.whatIs.isNot.map((item) => <li>{pick(item, currentLang)}</li>)}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Prerequisites + install -->
+    <section id={tutorial.install.id} class="sec" aria-labelledby={`${tutorial.install.id}-h`}>
+      <h2 id={`${tutorial.install.id}-h`}>{pick(tutorial.install.heading, currentLang)}</h2>
+
+      <h3>{pick(tutorial.install.prereqHeading, currentLang)}</h3>
+      <ul class="prose-list">
+        {tutorial.install.prereqs.map((item) => <li>{pick(item, currentLang)}</li>)}
+      </ul>
+
+      <h3>{pick(tutorial.install.primaryHeading, currentLang)}</h3>
+      <p>{pick(tutorial.install.primaryNote, currentLang)}</p>
+      <div class="install-row">
+        <InstallCommand copyLabel={copyLabel} />
+      </div>
+
+      <h3>{pick(tutorial.install.altHeading, currentLang)}</h3>
+      <div class="alts">
+        {tutorial.install.alts.map((alt) => (
+          <div class="alt">
+            <p class="alt-name">{pick(alt.name, currentLang)}</p>
+            <div class="cmd-block" data-command={alt.cmd}>
+              <code>{alt.cmd}</code>
+              <button class="copy-btn" data-command={alt.cmd} aria-label={copyLabel}>{copyLabel}</button>
+            </div>
+            <p class="alt-note">{pick(alt.note, currentLang)}</p>
+          </div>
+        ))}
+      </div>
+
+      <h3>{pick(tutorial.install.updateHeading, currentLang)}</h3>
+      <p>{pick(tutorial.install.updateBody, currentLang)}</p>
+    </section>
+
+    <!-- 3. First launch + project + /setup -->
+    <section id={tutorial.firstRun.id} class="sec" aria-labelledby={`${tutorial.firstRun.id}-h`}>
+      <h2 id={`${tutorial.firstRun.id}-h`}>{pick(tutorial.firstRun.heading, currentLang)}</h2>
+      <p>{pick(tutorial.firstRun.intro, currentLang)}</p>
+      <ol class="steps">
+        {tutorial.firstRun.steps.map((step) => (
+          <li class="step">
+            <p class="step-title">{pick(step.title, currentLang)}</p>
+            <p class="step-body">{pick(step.body, currentLang)}</p>
+            {step.cmd && (
+              <div class="cmd-block" data-command={step.cmd}>
+                <span class="prompt">$</span>
+                <code>{step.cmd}</code>
+                <button class="copy-btn" data-command={step.cmd} aria-label={copyLabel}>{copyLabel}</button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ol>
+      <div class="callout">
+        <p>{pick(tutorial.firstRun.setupNote, currentLang)}</p>
+      </div>
+    </section>
+
+    <!-- 4. First task + instructions + status -->
+    <section id={tutorial.firstTask.id} class="sec" aria-labelledby={`${tutorial.firstTask.id}-h`}>
+      <h2 id={`${tutorial.firstTask.id}-h`}>{pick(tutorial.firstTask.heading, currentLang)}</h2>
+      <p>{pick(tutorial.firstTask.intro, currentLang)}</p>
+
+      <p class="example-label">{pick(tutorial.firstTask.exampleLabel, currentLang)}</p>
+      <blockquote class="example">{pick(tutorial.firstTask.example, currentLang)}</blockquote>
+
+      <h3>{pick(tutorial.firstTask.tipsHeading, currentLang)}</h3>
+      <ul class="prose-list">
+        {tutorial.firstTask.tips.map((tip) => <li>{pick(tip, currentLang)}</li>)}
+      </ul>
+
+      <h3>{pick(tutorial.firstTask.statusHeading, currentLang)}</h3>
+      <p>{pick(tutorial.firstTask.statusBody, currentLang)}</p>
+      <table class="cmd-table">
+        <tbody>
+          {tutorial.firstTask.statusCmds.map((row) => (
+            <tr>
+              <td><code>{row.cmd}</code></td>
+              <td>{pick(row.note, currentLang)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 5. main agent vs daemon vs avatar -->
+    <section id={tutorial.cast.id} class="sec" aria-labelledby={`${tutorial.cast.id}-h`}>
+      <h2 id={`${tutorial.cast.id}-h`}>{pick(tutorial.cast.heading, currentLang)}</h2>
+      <p>{pick(tutorial.cast.intro, currentLang)}</p>
+      <div class="cards">
+        {tutorial.cast.items.map((item) => (
+          <article class="card">
+            <h4>{pick(item.name, currentLang)}</h4>
+            <p class="gist">{pick(item.gist, currentLang)}</p>
+            <p class="detail">{pick(item.detail, currentLang)}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- 6. files vs Knowledge vs Skills -->
+    <section id={tutorial.memory.id} class="sec" aria-labelledby={`${tutorial.memory.id}-h`}>
+      <h2 id={`${tutorial.memory.id}-h`}>{pick(tutorial.memory.heading, currentLang)}</h2>
+      <p>{pick(tutorial.memory.intro, currentLang)}</p>
+      <div class="cards">
+        {tutorial.memory.items.map((item) => (
+          <article class="card">
+            <h4>{pick(item.name, currentLang)}</h4>
+            <p class="gist">{pick(item.gist, currentLang)}</p>
+            <p class="detail">{pick(item.detail, currentLang)}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- 7. context / molt -->
+    <section id={tutorial.molt.id} class="sec" aria-labelledby={`${tutorial.molt.id}-h`}>
+      <h2 id={`${tutorial.molt.id}-h`}>{pick(tutorial.molt.heading, currentLang)}</h2>
+      {tutorial.molt.body.map((p) => <p>{pick(p, currentLang)}</p>)}
+      <div class="callout callout-note">
+        <p>{pick(tutorial.molt.note, currentLang)}</p>
+      </div>
+    </section>
+
+    <!-- 8. optional channels / add-ons -->
+    <section id={tutorial.channels.id} class="sec" aria-labelledby={`${tutorial.channels.id}-h`}>
+      <h2 id={`${tutorial.channels.id}-h`}>{pick(tutorial.channels.heading, currentLang)}</h2>
+      <p>{pick(tutorial.channels.intro, currentLang)}</p>
+      <ul class="channel-list">
+        {tutorial.channels.items.map((item) => (
+          <li>
+            <span class="channel-name">{pick(item.name, currentLang)}</span>
+            <span class="channel-body">{pick(item.body, currentLang)}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="fine-note">{pick(tutorial.channels.note, currentLang)}</p>
+    </section>
+
+    <!-- 9. command + shortcut reference -->
+    <section id={tutorial.reference.id} class="sec" aria-labelledby={`${tutorial.reference.id}-h`}>
+      <h2 id={`${tutorial.reference.id}-h`}>{pick(tutorial.reference.heading, currentLang)}</h2>
+      <p>{pick(tutorial.reference.intro, currentLang)}</p>
+
+      <h3>{pick(tutorial.reference.commandsLabel, currentLang)}</h3>
+      <table class="cmd-table">
+        <tbody>
+          {tutorial.reference.commands.map((row) => (
+            <tr>
+              <td><code>{row.cmd}</code></td>
+              <td>{pick(row.note, currentLang)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h3>{pick(tutorial.reference.shortcutsLabel, currentLang)}</h3>
+      <table class="cmd-table">
+        <tbody>
+          {tutorial.reference.shortcuts.map((row) => (
+            <tr>
+              <td><kbd>{row.keys}</kbd></td>
+              <td>{pick(row.note, currentLang)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 10. troubleshooting -->
+    <section id={tutorial.troubleshooting.id} class="sec" aria-labelledby={`${tutorial.troubleshooting.id}-h`}>
+      <h2 id={`${tutorial.troubleshooting.id}-h`}>{pick(tutorial.troubleshooting.heading, currentLang)}</h2>
+      <dl class="trouble">
+        {tutorial.troubleshooting.items.map((item) => (
+          <div class="trouble-item">
+            <dt>{pick(item.symptom, currentLang)}</dt>
+            <dd>{pick(item.fix, currentLang)}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <!-- 11. next steps + source -->
+    <section id={tutorial.next.id} class="sec" aria-labelledby={`${tutorial.next.id}-h`}>
+      <h2 id={`${tutorial.next.id}-h`}>{pick(tutorial.next.heading, currentLang)}</h2>
+      <p>{pick(tutorial.next.body, currentLang)}</p>
+      <div class="links">
+        {tutorial.next.links.map((link) => (
+          <a class="link" href={link.url} target="_blank" rel="noopener noreferrer">
+            <span class="link-label">{pick(link.label, currentLang)}</span>
+            <span class="link-url">{link.urlLabel}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<script>
+  // Copy-to-clipboard for the tutorial's inline command blocks. Mirrors the small handler
+  // in InstallCommand.astro; kept local so the tutorial page is self-contained.
+  document.querySelectorAll<HTMLButtonElement>('.tutorial .copy-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const command = btn.dataset.command;
+      if (!command) return;
+      navigator.clipboard.writeText(command);
+      const original = btn.textContent;
+      btn.textContent = '✓';
+      setTimeout(() => {
+        btn.textContent = original;
+      }, 1500);
+    });
+  });
+</script>
+
+<style>
+  .tutorial {
+    max-width: 760px;
+    width: 100%;
+    margin: 56px auto 96px;
+    padding: 0 24px;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────────────── */
+  .tut-header {
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    color: var(--text-faint);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .title {
+    font-size: clamp(28px, 5.5vw, 40px);
+    font-weight: 300;
+    letter-spacing: 2px;
+    color: var(--title-color);
+    line-height: 1.2;
+  }
+  .divider {
+    width: 44px;
+    height: 1px;
+    background: var(--accent);
+    margin: 20px 0;
+  }
+  .lede {
+    color: var(--text-dim);
+    font-size: 16px;
+    line-height: 1.85;
+  }
+  .minutes {
+    color: var(--text-faint);
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-top: 12px;
+  }
+
+  /* ── Table of contents ──────────────────────────────────────────────── */
+  .toc {
+    border: 1px solid rgba(138, 134, 128, 0.22);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 48px;
+    background: linear-gradient(135deg, rgba(125, 171, 143, 0.06), rgba(196, 154, 108, 0.05));
+  }
+  .toc-label {
+    color: var(--text-faint);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 20px;
+    columns: 2;
+    column-gap: 28px;
+  }
+  .toc li {
+    margin: 5px 0;
+    font-size: 14px;
+    break-inside: avoid;
+  }
+  .toc a {
+    color: var(--text-dim);
+  }
+  .toc a:hover {
+    color: var(--vermilion);
+  }
+
+  /* ── Sections ───────────────────────────────────────────────────────── */
+  .sec {
+    margin-top: 56px;
+    scroll-margin-top: 24px;
+  }
+  .sec h2 {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 1.5px;
+    color: var(--title-color);
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(138, 134, 128, 0.2);
+    margin-bottom: 20px;
+  }
+  .sec h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 28px;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+  .sec p {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.85;
+    margin-bottom: 14px;
+  }
+  .prose-list,
+  .sec ul {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.8;
+    padding-left: 22px;
+    margin-bottom: 14px;
+  }
+  .prose-list li,
+  .sec ul li {
+    margin: 8px 0;
+  }
+
+  /* ── Is / is-not two columns ────────────────────────────────────────── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  @media (min-width: 640px) {
+    .two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .col {
+    border: 1px solid rgba(138, 134, 128, 0.22);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .col.is {
+    background: rgba(125, 171, 143, 0.07);
+    border-color: rgba(125, 171, 143, 0.3);
+  }
+  .col.isnot {
+    background: color-mix(in srgb, var(--vermilion) 6%, transparent);
+    border-color: color-mix(in srgb, var(--vermilion) 24%, transparent);
+  }
+  .col-label {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px !important;
+    color: var(--text-faint);
+  }
+  .col.is .col-label {
+    color: var(--accent);
+  }
+  .col.isnot .col-label {
+    color: var(--vermilion);
+  }
+  .col ul {
+    margin-bottom: 0;
+  }
+
+  /* ── Command blocks (ink slab) ──────────────────────────────────────── */
+  .cmd-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 11px 16px;
+    border-radius: 2px;
+    border: 1px solid color-mix(in srgb, var(--vermilion) 26%, transparent);
+    margin: 10px 0 6px;
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 13px;
+    overflow-x: auto;
+  }
+  .cmd-block .prompt {
+    color: var(--vermilion);
+    flex-shrink: 0;
+  }
+  .cmd-block code {
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+  .install-row {
+    margin: 12px 0 6px;
+  }
+  .copy-btn {
+    background: none;
+    border: none;
+    color: var(--vermilion);
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0.85;
+    font-family: "Noto Serif SC", serif;
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover {
+    opacity: 1;
+    text-shadow: 0 0 8px color-mix(in srgb, var(--vermilion) 50%, transparent);
+  }
+
+  /* ── Install alternatives ───────────────────────────────────────────── */
+  .alt {
+    margin-bottom: 22px;
+  }
+  .alt-name {
+    font-weight: 600;
+    color: var(--text) !important;
+    font-size: 14px !important;
+    margin-bottom: 6px !important;
+  }
+  .alt-note {
+    font-size: 13.5px !important;
+    color: var(--text-faint) !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* ── Steps ──────────────────────────────────────────────────────────── */
+  .steps {
+    list-style: none;
+    padding-left: 0;
+    counter-reset: step;
+    margin-bottom: 20px;
+  }
+  .step {
+    counter-increment: step;
+    position: relative;
+    padding-left: 44px;
+    margin: 22px 0;
+  }
+  .step::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--vermilion);
+    color: var(--seal-paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+  }
+  .step-title {
+    font-weight: 600;
+    color: var(--text) !important;
+    margin-bottom: 4px !important;
+  }
+  .step-body {
+    margin-bottom: 8px !important;
+  }
+
+  /* ── Callouts ───────────────────────────────────────────────────────── */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    background: rgba(125, 171, 143, 0.08);
+    border: 1px solid rgba(125, 171, 143, 0.32);
+  }
+  .callout p {
+    margin-bottom: 0;
+    font-size: 14.5px;
+  }
+  .callout-note {
+    background: var(--bg-alt);
+    border: 1px solid rgba(138, 134, 128, 0.28);
+    border-left: 3px solid var(--accent-warm);
+  }
+
+  /* ── Concept cards (cast / memory) ──────────────────────────────────── */
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 18px;
+  }
+  @media (min-width: 720px) {
+    .cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .card {
+    border: 1px solid rgba(138, 134, 128, 0.22);
+    border-radius: 12px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(125, 171, 143, 0.06), rgba(196, 154, 108, 0.05));
+  }
+  .card h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--title-color);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  .card .gist {
+    color: var(--accent-warm) !important;
+    font-size: 13.5px !important;
+    margin-bottom: 10px !important;
+    line-height: 1.6 !important;
+  }
+  .card .detail {
+    font-size: 14px !important;
+    margin-bottom: 0 !important;
+    line-height: 1.75 !important;
+  }
+
+  /* ── Example blockquote ─────────────────────────────────────────────── */
+  .example-label {
+    font-size: 13px !important;
+    color: var(--text-faint) !important;
+    letter-spacing: 1px;
+    margin-bottom: 6px !important;
+  }
+  .example {
+    margin: 0 0 18px;
+    padding: 16px 20px;
+    border-left: 3px solid var(--vermilion);
+    background: var(--bg-alt);
+    border-radius: 0 8px 8px 0;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.8;
+    font-style: italic;
+  }
+
+  /* ── Command / shortcut tables ──────────────────────────────────────── */
+  .cmd-table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: 12px 0 18px;
+    font-size: 14px;
+  }
+  .cmd-table td {
+    border: 1px solid rgba(138, 134, 128, 0.24);
+    padding: 9px 12px;
+    vertical-align: top;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .cmd-table td:first-child {
+    white-space: nowrap;
+    width: 1%;
+  }
+  .cmd-table code,
+  .cmd-table kbd {
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--vermilion);
+    background: var(--bg-alt);
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .cmd-table kbd {
+    color: var(--text);
+    border: 1px solid rgba(138, 134, 128, 0.3);
+  }
+
+  /* inline <code> inside prose */
+  .sec p code,
+  .trouble code {
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    color: var(--vermilion);
+    background: var(--bg-alt);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* ── Channels ───────────────────────────────────────────────────────── */
+  .channel-list {
+    list-style: none;
+    padding-left: 0 !important;
+    margin-top: 16px;
+  }
+  .channel-list li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(138, 134, 128, 0.18);
+    align-items: baseline;
+  }
+  .channel-name {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 14.5px;
+    min-width: 140px;
+  }
+  .channel-body {
+    color: var(--text-dim);
+    font-size: 14px;
+    flex: 1;
+  }
+  .fine-note {
+    font-size: 13.5px !important;
+    color: var(--text-faint) !important;
+    margin-top: 14px !important;
+  }
+
+  /* ── Troubleshooting ────────────────────────────────────────────────── */
+  .trouble {
+    margin-top: 8px;
+  }
+  .trouble-item {
+    border: 1px solid rgba(138, 134, 128, 0.22);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    background: var(--bg-alt);
+  }
+  .trouble dt {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 14.5px;
+    margin-bottom: 6px;
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+  }
+  .trouble dd {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  /* ── Next-steps links ───────────────────────────────────────────────── */
+  .links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 16px;
+  }
+  .link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(138, 134, 128, 0.18);
+  }
+  .link-label {
+    color: var(--accent);
+    font-size: 14.5px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid transparent;
+    transition: border-color 160ms ease;
+  }
+  .link:hover .link-label {
+    border-color: var(--accent);
+  }
+  .link-url {
+    color: var(--text-faint);
+    font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  @media (max-width: 560px) {
+    .tutorial {
+      padding-inline: 18px;
+    }
+    .toc ol {
+      columns: 1;
+    }
+  }
+</style>

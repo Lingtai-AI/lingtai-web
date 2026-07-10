@@ -7,7 +7,7 @@ export function isValidLang(lang: string): lang is Lang {
 
 const translations = {
   en: {
-    nav: { logo: 'LingTai AI', home: 'Home', blog: 'Blog', about: 'About', agora: 'Agora', xingtan: 'Xingtan', releases: 'Releases', opportunities: 'Opportunities', projects: 'Projects' },
+    nav: { logo: 'LingTai AI', home: 'Home', tutorial: 'Tutorial', blog: 'Blog', about: 'About', agora: 'Agora', xingtan: 'Xingtan', releases: 'Releases', opportunities: 'Opportunities', projects: 'Projects' },
     projects: {
       title: 'Projects',
       eyebrow: 'Built on LingTai',
@@ -71,7 +71,7 @@ const translations = {
     },
   },
   zh: {
-    nav: { logo: '灵台AI', home: '首页', blog: '博客', about: '关于', agora: '市集', xingtan: '杏坛', releases: '发布', opportunities: '机会', projects: '项目' },
+    nav: { logo: '灵台AI', home: '首页', tutorial: '教程', blog: '博客', about: '关于', agora: '市集', xingtan: '杏坛', releases: '发布', opportunities: '机会', projects: '项目' },
     projects: {
       title: '项目',
       eyebrow: '基于灵台',
@@ -135,7 +135,7 @@ const translations = {
     },
   },
   wen: {
-    nav: { logo: '灵台AI', home: '首页', blog: '文录', about: '自述', agora: '墟', xingtan: '杏坛', releases: '纪', opportunities: '机缘', projects: '录' },
+    nav: { logo: '灵台AI', home: '首页', tutorial: '启蒙', blog: '文录', about: '自述', agora: '墟', xingtan: '杏坛', releases: '纪', opportunities: '机缘', projects: '录' },
     projects: {
       title: '器灵录',
       eyebrow: '出自灵台',
