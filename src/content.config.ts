@@ -12,20 +12,4 @@ const blog = defineCollection({
   }),
 });
 
-const agora = defineCollection({
-  loader: glob({ pattern: '*.yaml', base: './agora-data/entries' }),
-  schema: z.object({
-    id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
-    repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/),
-    name: z.string().min(1),
-    description: z.string().min(10).max(500),
-    author: z.string().min(1),
-    authorUrl: z.string().url(),
-    ref: z.string().default('main'),
-    tags: z.array(z.string()).default([]),
-    featured: z.boolean().default(false),
-    addedAt: z.coerce.date().optional(),
-  }),
-});
-
-export const collections = { blog, agora };
+export const collections = { blog };
