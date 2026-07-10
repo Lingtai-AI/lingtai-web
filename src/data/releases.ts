@@ -65,6 +65,193 @@ export interface Release {
 
 
 
+const v0_16_3_kernel_v0_10_6_tui: Release = {
+  id: '20260710-1',
+  version: 'Kernel v0.16.3 · TUI/Portal v0.10.6',
+  titleEn: 'LingTai release day: tool knowledge ownership, one-shot installer, and leaner prompt budgets',
+  titleZh: 'LingTai release day：工具知识归宿、一键安装脚本与更精简的提示预算',
+  date: '2026-07-10',
+  pkg: 'LingTai kernel + TUI/Portal',
+  tag: 'kernel v0.16.3 · tui v0.10.6',
+  install: 'curl -fsSL https://raw.githubusercontent.com/Lingtai-AI/lingtai/main/install.sh | bash',
+  runtimeNoteEn:
+    'This release adds a one-shot GitHub-release installer that bootstraps Go, Node, uv, and the venv-managed runtime from a single command. The one-shot https://lingtai.ai/install.sh installer plus TUI-managed project and runtime updates are now the primary end-user install and upgrade path; Homebrew is no longer required, and any remaining tap is only a legacy compatibility mirror. PyPI 0.16.3 is published as the managed-runtime package source and verification point for project virtual environments — not the normal user upgrade command — with the sidecar wheel repair (#847) landing in the v0.16.3 tag.',
+  runtimeNoteZh:
+    '本次新增一键 GitHub-release 安装脚本，从一条命令启动 Go、Node、uv 和 venv 管理的 runtime。一键 https://lingtai.ai/install.sh 安装脚本加上 TUI 管理的项目与 runtime 更新，现在是主要的终端用户安装与升级路径；不再需要 Homebrew，任何残留的 tap 仅作为遗留兼容镜像。PyPI 0.16.3 已发布，作为项目虚拟环境受管 runtime 包的来源与校验点——而非正常用户升级命令；sidecar wheel 修复（#847）已落入 v0.16.3 标签。',
+  summaryEn:
+    'This paired release reorganizes how the kernel owns tool knowledge — every built-in tool now lives in its own package directory with a CONTRACT.md, glossary files in EN/ZH/Wen, and a centralized glossary validator — while single-sourcing repeated tool guidance in the system prompt so #842 saves roughly 2,975 tokens per call (a different measurement scope; not a universal net). The TUI ships a one-shot GitHub-release installer with hardened uv/venv/portal/Go bootstrapping, a custom OpenAI wire selector, codex-pool model classification, mailbox search, session tool-call stats, loopback-only portal binding, and credential-labeling for Codex OAuth. The kernel adds a codex-pool exact-model auth lane, backend flag-discovery submanuals for 9 backends, IMAP attachment filename sanitization, extended credential redaction, AED manifest recognition, a skill/glossary i18n migration that grows ZH prompt descriptions by +5,224 chars (+221.17%) and Wen by +5,106 chars (+212.66%) while EN adds 0 new chars from glossary-only files (#844), and a final packaging repair (#847) that makes the native lingtai-search-sidecar platform wheels platlib-compliant.',
+  summaryZh:
+    '这次成对发布重组了 kernel 对工具知识的拥有方式——每个内置工具现在位于自己的包目录中，配备 CONTRACT.md、EN/ZH/Wen 的术语表文件和集中式术语校验器——同时在系统提示中单一来源化重复的工具指导，使 #842 每次调用节省约 2975 token（使用不同的测量范围，不能作为通用净减量）。TUI 新增一键 GitHub-release 安装脚本（加固的 uv/venv/portal/Go 引导）、自定义 OpenAI wire 选择器、codex-pool 模型分类、邮箱搜索与归档扫描、会话工具调用统计、仅回环 portal 绑定、以及 Codex OAuth 凭证标签。Kernel 新增 codex-pool 精确模型认证通道、9 个后端的 flag-discovery 子手册、IMAP 附件文件名消毒、扩展凭证脱敏、AED manifest 字段识别、一次将 i18n 从 lingtai_kernel 迁入工具术语表的重构（使中文提示描述增长 +5,224 字符（+221.17%）、文言增长 +5,106 字符（+212.66%），而英文从术语表文件新增 0 字符（#844）），以及一次收尾的打包修复（#847）——使原生 lingtai-search-sidecar 平台 wheel 符合 platlib 规范。',
+  features: [
+    {
+      titleEn: 'Tool knowledge ownership: packages, contracts, glossaries, and a validator',
+      titleZh: '工具知识归宿：包目录、契约、术语表与校验器',
+      leadEn:
+        'Every built-in tool is reorganized into its own package under src/tools/ with a CONTRACT.md that documents its public API, per-language glossary files (en/zh/wen) that move localized terminology out of runtime i18n JSON, and a centralized glossary_validator that enforces structure and cross-language parity at test time.',
+      leadZh:
+        '每个内置工具被重组到 src/tools/ 下自己的包目录中，配有记录公开 API 的 CONTRACT.md、将本地化术语从运行时 i18n JSON 中迁出的按语言术语表文件（en/zh/wen），以及在测试时强制执行结构和跨语言对等的集中式 glossary_validator。',
+      bulletsEn: [
+        'Kernel #839 consolidates 14 tool packages (bash, read, edit, glob, grep, daemon, email, mcp, notification, psyche, soul, system, skills, knowledge, vision, web_search, avatar, write) from scattered locations (lingtai/core, lingtai/capabilities, lingtai/intrinsics) into a unified src/tools/ namespace with per-tool ANATOMY.md updates.',
+        'Kernel #844 adds glossary-en.md, glossary-zh.md, and glossary-wen.md to every tool package, plus a tools/i18n/ directory with en.json/zh.json/wen.json and a glossary_validator.py (171 lines) that checks structure, required keys, and cross-language key parity. ZH glossary content grows +5,224 chars (+221.17%), Wen +5,106 chars (+212.66%); EN glossary files add 0 new chars because the EN terms are already present in the tool source; this is a glossary-file-only delta (#844).',
+        'TUI #614 adds lingtai-preset-skill router documentation with 12 child manuals covering Codex, Claude Agent SDK, custom, DeepSeek, Gemini, Kimi, MiMo, MiniMax, NVIDIA, OpenRouter, and Zhipu providers — so preset configuration is documented where operators actually look.',
+      ],
+      bulletsZh: [
+        'Kernel #839 将 14 个工具包（bash、read、edit、glob、grep、daemon、email、mcp、notification、psyche、soul、system、skills、knowledge、vision、web_search、avatar、write）从分散位置（lingtai/core、lingtai/capabilities、lingtai/intrinsics）整合到统一的 src/tools/ 命名空间中，每个工具附带更新的 ANATOMY.md。',
+        'Kernel #844 为每个工具包添加 glossary-en.md、glossary-zh.md 和 glossary-wen.md，外加一个 tools/i18n/ 目录（含 en.json/zh.json/wen.json）和一个 glossary_validator.py（171 行），用于检查结构、必需键和跨语言键对等。中文术语表内容增长 +5,224 字符（+221.17%），文言 +5,106 字符（+212.66%）；英文术语表文件新增 0 字符，因为英文术语已在工具源码中存在；这是一次仅术语表文件的增量（#844）。',
+        'TUI #614 添加了 lingtai-preset-skill 路由文档，含 12 个子手册，涵盖 Codex、Claude Agent SDK、custom、DeepSeek、Gemini、Kimi、MiMo、MiniMax、NVIDIA、OpenRouter 和 Zhipu 提供商——让 preset 配置文档出现在操作者实际查看的地方。',
+      ],
+      whyEn:
+        'When tool descriptions, localized terms, and public contracts live in the same package directory, a contributor can find and modify them without searching three separate codebases. The glossary validator ensures that adding a term in one language does not silently break another.',
+      whyZh:
+        '当工具描述、本地化术语和公开契约位于同一包目录中时，贡献者可以在不搜索三个独立代码库的情况下找到和修改它们。术语表校验器确保在一种语言中添加术语不会悄然破坏另一种语言。',
+    },
+    {
+      titleEn: 'Single-sourced tool guidance and the OpenAI wire selector',
+      titleZh: '单一来源化的工具指导与 OpenAI wire 选择器',
+      leadEn:
+        'Kernel #842 single-sources repeated tool guidance strings in the system prompt by referencing the glossary rather than inlining full descriptions per tool, saving approximately 2,975 tokens per API call on the measured test prompt. This measurement scope (the specific test prompt and model used) differs from universal token accounting and the -2,975 figure cannot be taken as a universal net saving across all configurations.',
+      leadZh:
+        'Kernel #842 通过引用术语表而非内联每个工具的完整描述，在系统提示中单一来源化重复的工具指导字符串，在所测量的测试提示上每次 API 调用节省约 2975 token。此测量范围（特定的测试提示和使用的模型）不同于通用 token 计算，-2975 的数字不能作为跨所有配置的通用净减量。',
+      bulletsEn: [
+        'Kernel #842 refactors tool guidance in the system prompt to reference glossary files instead of inline localized strings, yielding a measured -2,975 token saving on the test prompt used for validation. The measurement scope is specific to that test prompt and model; it cannot be extrapolated as a universal net saving across all operator configurations and prompts. This -2,975-token figure is a wire-saving on a specific test prompt and is a different scope from the #844 glossary-file character deltas.',
+        'Kernel #843 adds a custom OpenAI wire API selector so operators can choose the exact OpenAI-compatible wire format (e.g. chat completions vs. responses API) per agent or preset, rather than relying on a single hardcoded default.',
+        'TUI #613 mirrors the kernel-side custom wire selector in the TUI preset editor, so the wire API choice is a first-class TUI setting rather than a manifest-only override.',
+      ],
+      bulletsZh: [
+        'Kernel #842 将系统提示中的工具指导重构为引用术语表文件而非内联本地化字符串，在用于验证的测试提示上产生 -2,975 token 的实测节省。测量范围限于该测试提示和模型；不能外推为跨所有操作者配置和提示的通用净减量。这个 -2,975 token 是特定测试提示上的 wire 节省，与 #844 术语表文件字符增量属于不同的测量范围。',
+        'Kernel #843 添加自定义 OpenAI wire API 选择器，使操作者可以按 agent 或 preset 选择确切的 OpenAI 兼容 wire 格式（如 chat completions vs. responses API），而非依赖单一硬编码默认值。',
+        'TUI #613 在 TUI preset 编辑器中镜像了 kernel 端的自定义 wire 选择器，使 wire API 选择成为一等 TUI 设置，而非仅限 manifest 的覆盖。',
+      ],
+      whyEn:
+        'The -2,975 token saving is real for the measured prompt, but it is not a universal floor; different prompts, languages, and tool counts will yield different savings. Stating the measurement scope honestly prevents operators from expecting a fixed saving that does not hold in their configuration.',
+      whyZh:
+        '-2,975 token 的节省对所测量的提示是真实的，但它不是通用下限；不同的提示、语言和工具数量会产生不同的节省。诚实地说明测量范围可以防止操作者期待在他们的配置中不会成立的固定节省。',
+    },
+    {
+      titleEn: 'Codex-pool model classification and auth metadata',
+      titleZh: 'codex-pool 模型分类与认证元数据',
+      leadEn:
+        'The codex-pool auth lane now classifies shared OAuth pools by exact model identifier rather than treating all models behind one credential as interchangeable, and the token ledger records safe auth metadata for auditability.',
+      leadZh:
+        'codex-pool 认证通道现在按精确模型标识符分类共享 OAuth 池，而非将一个凭证背后的所有模型视为可互换的；token 账本记录安全的认证元数据以便审计。',
+      bulletsEn: [
+        'Kernel #841 classifies the codex-pool auth pool by exact model, so a single OAuth credential serving multiple models is no longer treated as one undifferentiated pool.',
+        'Kernel codex/token-ledger-auth-metadata records safe auth metadata (pool, model, source) in the token ledger without exposing credential material.',
+        'TUI #612 preserves and truthfully renders model-classified codex pools in the setup and pool management UI.',
+      ],
+      bulletsZh: [
+        'Kernel #841 按精确模型分类 codex-pool 认证池，使一个为多个模型服务的 OAuth 凭证不再被当作一个未分化的池。',
+        'Kernel codex/token-ledger-auth-metadata 在 token 账本中记录安全的认证元数据（池、模型、来源），不暴露凭证材料。',
+        'TUI #612 在 setup 和池管理 UI 中保留并如实渲染模型分类的 codex pool。',
+      ],
+      whyEn:
+        'When multiple models share one OAuth credential, cost attribution and rate-limit troubleshooting require knowing exactly which model consumed the tokens; classification makes that attribution automatic rather than a manual log hunt.',
+      whyZh:
+        '当多个模型共享一个 OAuth 凭证时，成本归因和限流排查需要准确知道是哪个模型消耗了 token；分类使归因自动化，而不需要手动翻日志。',
+    },
+    {
+      titleEn: 'One-shot installer, portal security, and TUI cockpit improvements',
+      titleZh: '一键安装脚本、portal 安全与 TUI 座舱改进',
+      leadEn:
+        'The TUI ships a GitHub-release one-shot installer that bootstraps Go, Node, uv, and the venv runtime from a single curl command, hardens WSL and broken-venv fallbacks, and adds portal loopback-only binding as the secure default.',
+      leadZh:
+        'TUI 新增一个从单条 curl 命令启动 Go、Node、uv 和 venv runtime 的 GitHub-release 一键安装脚本，加固了 WSL 和损坏 venv 的回退，并将 portal 仅回环绑定设为安全默认值。',
+      bulletsEn: [
+        'TUI #595 adds install.sh — a GitHub-release one-shot installer with Go, Node, uv, and venv bootstrapping, portal build support, and fallback to source builds (#596, #598, #599, #601–#604, #606).',
+        'TUI portal loopback binding is the default (TUI fix/portal-loopback): the portal no longer binds 0.0.0.0 by default, closing the exposure reported in earlier security audits.',
+        'TUI #610 adds mailbox search and archive scanning so operators can find messages by keyword without leaving the cockpit; TUI #611 shows session tool-call stats in the Details panel.',
+        'Codex OAuth credentials can now be labeled (TUI BatalloLu: allow labeling Codex OAuth credentials), making multi-account setups distinguishable in the login UI.',
+      ],
+      bulletsZh: [
+        'TUI #595 添加 install.sh——一个含 Go、Node、uv 和 venv 引导、portal 构建支持和源码构建回退的 GitHub-release 一键安装脚本（#596、#598、#599、#601–#604、#606）。',
+        'TUI portal 回环绑定成为默认值（TUI fix/portal-loopback）：portal 不再默认绑定 0.0.0.0，关闭了早期安全审计中报告的暴露。',
+        'TUI #610 添加邮箱搜索和归档扫描，让操作者可以按关键词查找消息而不离开座舱；TUI #611 在 Details 面板中显示会话工具调用统计。',
+        'Codex OAuth 凭证现在可以打标签（TUI BatalloLu: allow labeling Codex OAuth credentials），使多账户设置在登录 UI 中可区分。',
+      ],
+      whyEn:
+        'A one-command installer that actually bootstraps every dependency (Go, Node, uv, the venv runtime) removes the largest adoption friction for new operators. Loopback-only portal binding is the secure default for a local-first tool.',
+      whyZh:
+        '一个真正引导每个依赖（Go、Node、uv、venv runtime）的一键安装脚本消除了新操作者最大的采用摩擦。仅回环 portal 绑定是一个本地优先工具的安全默认值。',
+    },
+    {
+      titleEn: 'Backend knowledge, credential hardening, and the sidecar wheel repair',
+      titleZh: '后端知识、凭证加固与 sidecar wheel 修复',
+      leadEn:
+        'The kernel adds flag-discovery submanuals for 9 daemon backends, extends credential redaction and IMAP attachment sanitization, recognizes AED manifest fields, fixes pseudo-agent mail polling, and closes the release with #847 — a packaging repair that makes the native lingtai-search-sidecar platform wheels install into platlib.',
+      leadZh:
+        'kernel 为 9 个 daemon 后端添加了 flag-discovery 子手册，扩展了凭证脱敏和 IMAP 附件消毒，识别了 AED manifest 字段，修复了伪 agent 邮件轮询，并以 #847 收尾——一次让原生 lingtai-search-sidecar 平台 wheel 安装进 platlib 的打包修复。',
+      bulletsEn: [
+        'Kernel #830–#837 adds flag-discovery submanuals for Codex, OpenCode, claude-p, MiMo Code, built-in LingTai, Kimi Code, Qwen Code, Cursor, and Oh-My-Pi daemon backends — each documenting the exact flags, environment variables, and discovery flow for that backend.',
+        'Kernel #824 extends trace redaction to cover additional credential key names; kernel #770 sanitizes IMAP attachment filenames before writing to disk; kernel #825 recognizes AED (agent entity descriptor) manifest fields; kernel #806 fixes pseudo-agent outbox polling priority.',
+        'Kernel #828 clarifies rebuild context observation timing, and #838 clarifies peer mail during refresh. Kernel #846 fixes prompt-related-files runtime path resolution and adds tests that ignore external paths in prompt crawl checks.',
+        'Kernel #847 makes the native lingtai-search-sidecar platform-wheel layout correctly install into platlib rather than purelib; the Ubuntu, Intel-macOS, ARM-macOS, and Windows wheel jobs plus an independent sdist all passed on wheels-workflow run 29108219136. Intel/ARM macOS wheels declare 10.12 / 11.0 deployment-target floors, and a dependency-free sidecar smoke test avoids the unrelated PyAV/FFmpeg dependency resolution. This is a CI/packaging fix for the existing Python wheel runner, not a new Windows product or tool.',
+      ],
+      bulletsZh: [
+        'Kernel #830–#837 为 Codex、OpenCode、claude-p、MiMo Code、内置 LingTai、Kimi Code、Qwen Code、Cursor 和 Oh-My-Pi daemon 后端添加了 flag-discovery 子手册——每个都记录了该后端的确切标志、环境变量和发现流程。',
+        'Kernel #824 扩展了 trace 脱敏以覆盖额外的凭证键名；kernel #770 在写入磁盘前消毒 IMAP 附件文件名；kernel #825 识别 AED（agent entity descriptor）manifest 字段；kernel #806 修复了伪 agent 发件箱轮询优先级。',
+        'Kernel #828 澄清了重建上下文观察时机，#838 澄清了刷新期间的对等邮件。Kernel #846 修复了 prompt 相关文件的运行时路径解析，并添加了在 prompt 爬取检查中忽略外部路径的测试。',
+        'Kernel #847 让原生 lingtai-search-sidecar 平台 wheel 布局正确安装进 platlib 而非 purelib；Ubuntu、Intel macOS、ARM macOS 和 Windows wheel 作业外加一个独立 sdist 均在 wheels 工作流 run 29108219136 上通过。Intel/ARM macOS wheel 声明 10.12 / 11.0 部署目标下限，且一个无依赖的 sidecar 冒烟测试避开了无关的 PyAV/FFmpeg 依赖解析。这是对既有 Python wheel 运行器的 CI/打包修复，而非新的 Windows 产品或工具。',
+      ],
+      whyEn:
+        'Each daemon backend has its own flag conventions and environment quirks; a submanual per backend means the runtime can surface exact setup guidance instead of generic advice. Credential redaction and attachment sanitization are table-stakes for a tool that reads mail and runs unattended. And a wheel that lays its native sidecar into platlib is the difference between an install that imports and one that silently ships files to the wrong place.',
+      whyZh:
+        '每个 daemon 后端有自己的标志约定和环境怪癖；每个后端一个子手册意味着运行时可以呈现确切的设置指导而非通用建议。凭证脱敏和附件消毒是一个读取邮件且无人值守运行的工具的基本门槛。而把原生 sidecar 放进 platlib 的 wheel，决定了一次安装是能正常 import，还是把文件悄悄装到了错误的位置。',
+    },
+    {
+      titleEn: 'Release-window audit and contributors',
+      titleZh: '发布窗口审计与贡献者',
+      leadEn:
+        'This entry accounts for every commit author, with strict ranges from the previous release tags through the release tags: TUI/Portal v0.10.5..v0.10.6 (41 commits; author breakdown 30 @huangzesen, 7 @TZZheng, 3 @github-actions[bot], 1 @BatalloLu) and Kernel v0.16.2..v0.16.3 (54 commits; author breakdown 48 @huangzesen, 5 @TZZheng, 1 @wchwawa). GitHub merge-commit committers and @github-actions[bot] are automation, not human authorship; @9s5bz2jvd2-lang co-authored kernel #843; AI co-authors (Claude Fable 5, Claude Opus 4.8) appear on some commit trailers.',
+      leadZh:
+        '本条目记录每个 commit 作者，采用从上一发布标签到本次发布标签的严格范围：TUI/Portal v0.10.5..v0.10.6（41 个 commit；作者分布 30 个 @huangzesen、7 个 @TZZheng、3 个 @github-actions[bot]、1 个 @BatalloLu），Kernel v0.16.2..v0.16.3（54 个 commit；作者分布 48 个 @huangzesen、5 个 @TZZheng、1 个 @wchwawa）。GitHub merge commit 的提交者与 @github-actions[bot] 属于自动化而非人类作者；@9s5bz2jvd2-lang 是 kernel #843 的共同作者；部分 commit trailer 上有 AI 共同作者（Claude Fable 5、Claude Opus 4.8）。',
+      bulletsEn: [
+        'TUI/Portal: 41 commits (30 @huangzesen, 7 @TZZheng, 3 @github-actions[bot] daily star-count updates, 1 @BatalloLu; the 13 merge commits are committed by GitHub); 149 files changed, +7,573 / -1,007 lines.',
+        'Kernel: 54 commits (48 @huangzesen, 5 @TZZheng, 1 @wchwawa; the merge commits are committed by GitHub/@huangzesen); 392 files changed, +12,506 / -2,718 lines through the candidate, and 396 files changed, +13,306 / -2,780 lines through the v0.16.3 tag once the #847 sidecar-wheel repair (5 files, +809 / -71) is included.',
+        'Note: kernel #842 removed -2,975 tokens of system-prompt tool guidance via single-sourcing on the measured test prompt; this measurement scope (the specific test prompt) differs from universal net accounting and the -2,975 figure is not a universal saving, and is a different scope from the #844 glossary-file character deltas (EN 0; ZH +5,224/+221.17%; Wen +5,106/+212.66%).',
+        'Human contributors/authors in the window: @huangzesen, @TZZheng, @9s5bz2jvd2-lang (kernel #843 co-author), @BatalloLu, @wchwawa. Automation: @github-actions[bot] (daily star updates) and the GitHub merge committer. AI co-authors: Claude Fable 5, Claude Opus 4.8.',
+      ],
+      bulletsZh: [
+        'TUI/Portal：41 个 commit（30 个 @huangzesen、7 个 @TZZheng、3 个 @github-actions[bot] 每日 star 更新、1 个 @BatalloLu；其中 13 个 merge commit 由 GitHub 提交）；149 个文件变更，+7,573 / -1,007 行。',
+        'Kernel：54 个 commit（48 个 @huangzesen、5 个 @TZZheng、1 个 @wchwawa；merge commit 由 GitHub/@huangzesen 提交）；至候选提交为 392 个文件变更，+12,506 / -2,718 行；纳入 #847 sidecar wheel 修复（5 个文件，+809 / -71）后，至 v0.16.3 标签为 396 个文件变更，+13,306 / -2,780 行。',
+        '注：kernel #842 在所测量的测试提示上通过单一来源化移除了 -2,975 token 的系统提示工具指导；此测量范围（特定测试提示）不同于通用净计算，-2,975 的数字不是通用节省，且与 #844 的术语表文件字符增量（英文 0；中文 +5,224/+221.17%；文言 +5,106/+212.66%）属于不同范围。',
+        '窗口内的人类贡献者/作者：@huangzesen、@TZZheng、@9s5bz2jvd2-lang（kernel #843 共同作者）、@BatalloLu、@wchwawa。自动化：@github-actions[bot]（每日 star 更新）与 GitHub merge 提交者。AI 共同作者：Claude Fable 5、Claude Opus 4.8。',
+      ],
+      whyEn:
+        'The contributor list intentionally names every human commit author, separates automation (the bot and GitHub merge committers) from humans, and acknowledges the measurement caveat around #842 so operators can form their own judgment about prompt cost changes.',
+      whyZh:
+        '贡献者名单刻意列出每位人类 commit 作者，将自动化（bot 与 GitHub merge 提交者）与人类分开，并说明 #842 的测量注意事项，让操作者可以自行判断提示成本的变化。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng', '9s5bz2jvd2-lang', 'BatalloLu', 'wchwawa'],
+  validation: {
+    commit:
+      'kernel f3971f254d9f918715cf0099678a089628cb364f (v0.16.3) · tui 7f9ea9efa2fa45d354d2ba8852d015734542d334 (v0.10.6)',
+    items: [
+      { label: 'TUI strict range', result: 'v0.10.5..v0.10.6 — 41 commits, 149 files changed, +7,573 / -1,007' },
+      { label: 'Kernel strict range', result: 'v0.16.2..v0.16.3 — 54 commits, 396 files changed, +13,306 / -2,780' },
+      { label: 'Web archive build', result: 'npm ci && npm run build passed from the clean release worktree' },
+      { label: 'Kernel tool glossary validator', result: 'glossary_validator.py enforces structure, required keys, and cross-language key parity' },
+      { label: 'Kernel #844 i18n delta', result: 'EN 0 new chars; ZH +5,224 chars (+221.17%); Wen +5,106 chars (+212.66%) — glossary-file-only delta' },
+      { label: 'Kernel #842 single-source', result: '-2,975 tokens on measured test prompt; measurement scope caveat documented; not a universal net saving' },
+      { label: 'Kernel #847 sidecar wheels', result: 'platlib-compliant native wheels; Ubuntu/Intel-macOS/ARM-macOS/Windows wheel jobs + independent sdist passed on run 29108219136; macOS floors 10.12/11.0; dependency-free sidecar smoke test' },
+    ],
+  },
+  links: [
+    { label: 'TUI/Portal v0.10.6 release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.6' },
+    { label: 'Kernel v0.16.3 release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.3' },
+    { label: 'TUI/Portal compare', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.10.5...v0.10.6' },
+    { label: 'Kernel compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.16.2...v0.16.3' },
+    { label: 'Kernel #839 tools consolidation', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/839' },
+    { label: 'Kernel #844 tool glossaries', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/844' },
+    { label: 'Kernel #842 single-source guidance', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/842' },
+    { label: 'Kernel #843 OpenAI wire API', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/843' },
+    { label: 'Kernel #847 sidecar wheel platlib repair', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/847' },
+    { label: 'TUI #595 one-shot installer', href: 'https://github.com/Lingtai-AI/lingtai/pull/595' },
+    { label: 'TUI #613 custom wire selector', href: 'https://github.com/Lingtai-AI/lingtai/pull/613' },
+    { label: 'TUI #614 preset router docs', href: 'https://github.com/Lingtai-AI/lingtai/pull/614' },
+  ],
+};
+
 const v0_16_2_kernel_v0_10_5_tui: Release = {
   id: '20260707-1',
   version: 'Kernel v0.16.2 · TUI/Portal v0.10.5',
@@ -3326,7 +3513,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
