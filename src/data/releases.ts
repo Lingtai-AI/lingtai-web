@@ -65,6 +65,184 @@ export interface Release {
 
 
 
+const v0_10_7_tui: Release = {
+  id: '20260713-1',
+  version: 'TUI/Portal v0.10.7',
+  titleEn: 'LingTai TUI/Portal v0.10.7: an admin network switcher, faster mail history, and four honest platform archives',
+  titleZh: 'LingTai TUI/Portal v0.10.7：管理网络切换器、更快的邮件历史，以及四个如实披露的平台归档',
+  date: '2026-07-13',
+  pkg: 'LingTai TUI/Portal',
+  tag: 'v0.10.7',
+  runtimeNoteEn:
+    'This is a TUI/Portal-only release. It ships the Go TUI and portal binaries, which communicate with agents over the filesystem; it does not include the kernel or a Python/PyPI package. Install with Homebrew (`brew install lingtai-tui`, updated from the tagged source archive) or download a platform archive from the GitHub release. The coordinated kernel release follows its own cadence and is not part of this tag.',
+  runtimeNoteZh:
+    '这是一次仅 TUI/Portal 的发布。它交付通过文件系统与智能体通信的 Go TUI 与 portal 二进制文件；不包含 kernel 或 Python/PyPI 包。可通过 Homebrew 安装（`brew install lingtai-tui`，从标签源归档更新），或从 GitHub release 下载平台归档。协调的 kernel 发布按自身节奏进行，不属于本标签。',
+  summaryEn:
+    'Published from the independently locked TUI/Portal candidate 5fb554b69f966b39cb9eca32a70c84d628714d18 (tree 05c068dbc5e50832d2d5d425099c104290acd2f4), this TUI-only release makes /projects a live admin network switcher (#620, #639), makes large mail history fast and consistent (#631, #632, #637, #638, #640), and keeps projects working across both runtime import layouts (#617). It also corrects daemon cache accounting (#636), refreshes documentation (#618, #628, #629, #630, #633, #616, #642), and publishes four platform archives. The darwin-amd64 archive was manually recovered after the macos-13 Intel runner failed; its full checksum is recorded below.',
+  summaryZh:
+    '本次仅 TUI 发布从独立锁定的 TUI/Portal 候选版本 5fb554b69f966b39cb9eca32a70c84d628714d18（tree 05c068dbc5e50832d2d5d425099c104290acd2f4）发布：/projects 成为实时管理网络切换器（#620、#639），大规模邮件历史加载更快且各视图一致（#631、#632、#637、#638、#640），并兼容两种运行时导入布局（#617）。它还修正守护进程缓存统计（#636）、刷新文档（#618、#628、#629、#630、#633、#616、#642），并发布四个平台归档。macos-13 Intel runner 失败后，darwin-amd64 归档被手动恢复；完整校验和列在下方。',
+  features: [
+    {
+      titleEn: '/projects becomes a live admin network switcher',
+      titleZh: '/projects 成为实时管理网络切换器',
+      leadEn:
+        'The running process inventory now powers /projects, giving operators a compact way to move between several agent networks without losing topology context.',
+      leadZh:
+        '运行中的进程清单现在驱动 /projects，让操作员可以在多个智能体网络之间快速切换，同时保留拓扑上下文。',
+      bulletsEn: [
+        'TUI #620 lets an operator select an admin/orchestrator agent to switch context; non-admin members remain visible for topology awareness, and a curated /kanban detail subset shows lifecycle, process uptime, molt count, and live topology.',
+        'TUI #639 clarifies the agent grouping and presents the kanban-on-a-projects-view layout.',
+      ],
+      bulletsZh: [
+        'TUI #620 允许操作员选择 admin/orchestrator 智能体切换上下文；非管理员成员仍可见以掌握拓扑，精选的 /kanban 详情子集显示生命周期、进程运行时间、molt 计数与实时拓扑。',
+        'TUI #639 澄清 /projects 中的智能体分组，并呈现 kanban-on-a-projects-view 布局。',
+      ],
+      whyEn:
+        'Multiple networks are easier to operate when switching context and checking health are one keystroke away.',
+      whyZh:
+        '当切换上下文与检查健康状况都只需一次按键时，多个网络更容易运维。',
+    },
+    {
+      titleEn: 'Faster, safer mail history and rendering',
+      titleZh: '更快、更安全的邮件历史与渲染',
+      leadEn:
+        'Email is a primary asynchronous surface for long-running agents, so this release makes history loading, stale-result handling, and rendering behavior predictable across views.',
+      leadZh:
+        '邮件是长时间运行智能体的主要异步界面，因此本次发布让历史加载、过期结果处理和各视图渲染行为都更可预测。',
+      bulletsEn: [
+        'TUI #632 bounds and pages history on demand: the newest 200 entries load in about 50 ms, exact counting runs asynchronously, and JSONL is the authoritative replay source rather than SQLite interior-hole results.',
+        'TUI #631 gates asynchronous history results to their owning model, preventing stale or cross-view mutations after navigation.',
+        'TUI #637 renders mail once from the live mailbox cache instead of fetching and rendering again on every view switch.',
+        'TUI #638 shows full local timestamps in list, detail, and Ctrl+O views.',
+        'TUI #640 aligns Ctrl+O mailbox rendering with the default view so both show the same content.',
+      ],
+      bulletsZh: [
+        'TUI #632 按需对历史分页并设置边界：最新 200 条约 50ms 加载完成，精确计数异步执行，JSONL 成为权威回放源而非 SQLite 内部空洞结果。',
+        'TUI #631 将异步历史结果锁定至所属模型，防止导航后产生过期或跨视图变更。',
+        'TUI #637 使邮件从实时邮箱缓存渲染一次，而不是每次视图切换都重新获取和渲染。',
+        'TUI #638 在列表、详情和 Ctrl+O 视图中显示完整本地时间戳。',
+        'TUI #640 将 Ctrl+O 邮箱渲染与默认视图对齐，使两者显示相同内容。',
+      ],
+      whyEn:
+        'A fast mailbox is useful only when its timestamps, content, and asynchronous updates remain trustworthy during a long session.',
+      whyZh:
+        '邮箱只有在长时间会话中仍能保持时间戳、内容和异步更新可信时，快速才真正有用。',
+    },
+    {
+      titleEn: 'Runtime compatibility, diagnostics, and documentation',
+      titleZh: '运行时兼容、诊断与文档',
+      leadEn:
+        'The release keeps the TUI-side runtime path compatible, makes daemon accounting honest, and updates the repository guidance operators and contributors rely on.',
+      leadZh:
+        '本次发布保持 TUI 侧运行时路径兼容，使守护进程统计如实，并更新操作员与贡献者依赖的仓库指南。',
+      bulletsEn: [
+        'TUI #636 fixes the impossible daemon CLI cache-hit display by normalizing cached-input accounting so TokenTotals.Input includes cached input.',
+        'TUI #617 recognizes both the legacy lingtai_kernel layout and the new lingtai.kernel runtime namespace; this is a TUI/Portal compatibility shim, not a kernel release.',
+        'TUI #630 simplifies architecture-document checks, while #618 clarifies /btw inquiry semantics.',
+        'TUI #629 and #628 refresh the lifelong Digital Scientist narrative and distributed-architecture ownership; #633 adds “learn from every setback” to the Covenant; #616 simplifies the README and moves the beginner guide to the website; #642 updates the Discord invitation across README variants.',
+      ],
+      bulletsZh: [
+        'TUI #636 通过规范化缓存输入统计修复不可能的守护进程 CLI 缓存命中率显示，使 TokenTotals.Input 包含缓存输入。',
+        'TUI #617 同时识别旧 lingtai_kernel 布局与新 lingtai.kernel 运行时命名空间；这是 TUI/Portal 兼容 shim，而非 kernel 发布。',
+        'TUI #630 精简架构文档检查，#618 澄清 /btw 查询语义。',
+        'TUI #629 与 #628 刷新终身“数字科学家”叙事和分布式架构所有权；#633 将“从每次挫折中学习”加入 Covenant；#616 精简 README 并将入门指南迁移至网站；#642 更新所有 README 变体中的 Discord 邀请。',
+      ],
+      whyEn:
+        'A small compatibility shim reduces upgrade coordination, while accurate diagnostics and current documentation reduce operational guesswork.',
+      whyZh:
+        '小型兼容 shim 减少升级协同成本，而准确诊断与最新文档减少运维猜测。',
+    },
+    {
+      titleEn: 'Four platform archives and Homebrew distribution',
+      titleZh: '四个平台归档与 Homebrew 分发',
+      leadEn:
+        'The tag workflow publishes macOS and Linux archives for amd64 and arm64. Each archive contains both lingtai-tui and lingtai-portal plus a SHA-256 sidecar, and the supported Homebrew tap is updated from the tagged source archive.',
+      leadZh:
+        '标签工作流发布 macOS 与 Linux 的 amd64 和 arm64 归档。每个归档都包含 lingtai-tui、lingtai-portal 及 SHA-256 sidecar，受支持的 Homebrew tap 则从标签源归档更新。',
+      bulletsEn: [
+        'Published archives: darwin-amd64 (7a73db99…), darwin-arm64 (27d4d082…), linux-amd64 (dd2374bd…), and linux-arm64 (645feedc…); full checksums are in Validation.',
+        'The Homebrew formula uses the tagged source archive https://github.com/Lingtai-AI/lingtai/archive/refs/tags/v0.10.7.tar.gz with SHA-256 6bdde2c41a588cccdf54e32732f5c2c6a89df1c2279cde3f7cbca572d05f4dcf.',
+        'GitHub is retiring the macos-13 Intel runner used for darwin-amd64; that automated job failed while darwin-arm64, linux-amd64, and linux-arm64 passed.',
+        'The darwin-amd64 archive was manually rebuilt and uploaded. Its SHA-256 is byte-identical to the intended artifact, so Intel-macOS users have a verifiable build.',
+      ],
+      bulletsZh: [
+        '已发布归档：darwin-amd64（7a73db99…）、darwin-arm64（27d4d082…）、linux-amd64（dd2374bd…）和 linux-arm64（645feedc…）；完整校验和见“验证”。',
+        'Homebrew formula 使用标签源归档 https://github.com/Lingtai-AI/lingtai/archive/refs/tags/v0.10.7.tar.gz，其 SHA-256 为 6bdde2c41a588cccdf54e32732f5c2c6a89df1c2279cde3f7cbca572d05f4dcf。',
+        'GitHub 正在退役用于 darwin-amd64 的 macos-13 Intel runner；该自动化作业失败，而 darwin-arm64、linux-amd64 和 linux-arm64 均通过。',
+        'darwin-amd64 归档随后被手动重建并上传，其 SHA-256 与预期制品逐字节一致，因此 Intel-macOS 用户获得了可验证的构建。',
+      ],
+      whyEn:
+        'Publishing the recovered archive and its checksum keeps Intel-macOS support verifiable instead of silently dropping a platform.',
+      whyZh:
+        '发布恢复后的归档及其校验和，使 Intel-macOS 支持可验证，而不是静默丢弃一个平台。',
+    },
+    {
+      titleEn: 'Release-window accounting and validation',
+      titleZh: '发布窗口审计与验证',
+      leadEn:
+        'This archive records the strict v0.10.6..v0.10.7 window rather than implying that unrelated kernel work shipped with this tag.',
+      leadZh:
+        '本归档记录严格的 v0.10.6..v0.10.7 窗口，而不暗示无关的 kernel 工作随本标签发布。',
+      bulletsEn: [
+        'The window contains 30 commits: 22 non-merge and 8 merge, with 16 merged PRs. The human contributor is @huangzesen; three daily star-count commits were authored by github-actions[bot] and are automation, not human authorship.',
+        'The exact candidate passed Go vet, all TUI and Portal tests, and versioned builds of both lingtai-tui and lingtai-portal at v0.10.7.',
+        'Six Discord invitation occurrences were audited with no legacy links; the candidate worktree was clean with exact commit/tree match and no tag/version collision before publication.',
+        'The public GitHub release is v0.10.7, draft=false, prerelease=false, published 2026-07-13T17:30:33Z.',
+      ],
+      bulletsZh: [
+        '该窗口包含 30 个 commit：22 个非合并、8 个合并，以及 16 个已合并 PR。人类贡献者为 @huangzesen；三个每日 star 计数提交由 github-actions[bot] 撰写，属于自动化而非人类作者。',
+        '精确候选版本通过 Go vet、全部 TUI 与 Portal 测试，并将 lingtai-tui 与 lingtai-portal 均以 v0.10.7 版本构建。',
+        '审计六处 Discord 邀请且无旧链接残留；候选 worktree 干净、commit/tree 精确匹配，发布前无标签或版本冲突。',
+        '公开 GitHub release 为 v0.10.7，draft=false、prerelease=false，发布时间为 2026-07-13T17:30:33Z。',
+      ],
+      whyEn:
+        'Separating the TUI candidate, the strict attribution window, and automation makes this release record auditable without attributing unfinished joint-kernel work to it.',
+      whyZh:
+        '将 TUI 候选版本、严格归因窗口和自动化分开记录，让本发布可审计，也不会把未完成的联合 kernel 工作归到本发布名下。',
+    },
+  ],
+  contributors: ['huangzesen'],
+  validation: {
+    commit:
+      'tui/portal 5fb554b69f966b39cb9eca32a70c84d628714d18 (v0.10.7) · tree 05c068dbc5e50832d2d5d425099c104290acd2f4',
+    items: [
+      { label: 'Published release', result: 'v0.10.7 — public, draft=false, prerelease=false, published 2026-07-13T17:30:33Z (github.com/Lingtai-AI/lingtai/releases/tag/v0.10.7)' },
+      { label: 'TUI/Portal candidate', result: '5fb554b69f966b39cb9eca32a70c84d628714d18 · tree 05c068dbc5e50832d2d5d425099c104290acd2f4' },
+      { label: 'Strict attribution range', result: 'v0.10.6..v0.10.7: 30 commits (22 non-merge, 8 merge), 16 merged PRs' },
+      { label: 'Release gate', result: 'Go vet clean; all TUI and Portal tests passed; both binaries built at v0.10.7; 6 Discord invites audited, 0 legacy links; clean worktree, exact commit/tree match, no tag/version collision' },
+      { label: 'Source-archive SHA-256 (Homebrew)', result: '6bdde2c41a588cccdf54e32732f5c2c6a89df1c2279cde3f7cbca572d05f4dcf' },
+      { label: 'darwin-amd64 archive SHA-256', result: '7a73db9924edd3e6955cb69434a91c6b503cbf5f7c25a61a70b2503c2a74ead3 (manually recovered; macos-13 Intel runner job failed; byte-identical to intended artifact)' },
+      { label: 'darwin-arm64 archive SHA-256', result: '27d4d08236d9d00f47427c2a76f858b711d5c481d5eea84312e8575f50db0fac' },
+      { label: 'linux-amd64 archive SHA-256', result: 'dd2374bdba4f146350fa3f50cfc5471429aaac1227b1abc5e9a09f6cd7e77ab8' },
+      { label: 'linux-arm64 archive SHA-256', result: '645feedc7a4e4ff9b8b8cc8f2b3d75d8dea24b8b7c627da37e5c7c2882c1bde0' },
+    ],
+  },
+  links: [
+    { label: 'Release — v0.10.7', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.7' },
+    { label: 'TUI/Portal v0.10.7 candidate', href: 'https://github.com/Lingtai-AI/lingtai/commit/5fb554b69f966b39cb9eca32a70c84d628714d18' },
+    { label: 'TUI/Portal compare v0.10.6...v0.10.7', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.10.6...v0.10.7' },
+    { label: 'Installation guide', href: 'https://github.com/Lingtai-AI/lingtai#installation' },
+    { label: 'TUI PR #642 — docs(readme): update Discord invite', href: 'https://github.com/Lingtai-AI/lingtai/pull/642' },
+    { label: 'TUI PR #640 — fix(tui): align Ctrl+O mailbox rendering', href: 'https://github.com/Lingtai-AI/lingtai/pull/640' },
+    { label: 'TUI PR #639 — fix(tui): clarify and group agents in /projects', href: 'https://github.com/Lingtai-AI/lingtai/pull/639' },
+    { label: 'TUI PR #638 — fix(tui): show full timestamps for mailbox mail', href: 'https://github.com/Lingtai-AI/lingtai/pull/638' },
+    { label: 'TUI PR #637 — fix(tui): render mail once from mailbox cache', href: 'https://github.com/Lingtai-AI/lingtai/pull/637' },
+    { label: 'TUI PR #636 — fix(tui): normalize daemon CLI cached input', href: 'https://github.com/Lingtai-AI/lingtai/pull/636' },
+    { label: 'TUI PR #633 — docs(covenant): learn from every setback', href: 'https://github.com/Lingtai-AI/lingtai/pull/633' },
+    { label: 'TUI PR #632 — perf(tui): speed up large Email history loading', href: 'https://github.com/Lingtai-AI/lingtai/pull/632' },
+    { label: 'TUI PR #631 — fix(tui): gate async mail history results', href: 'https://github.com/Lingtai-AI/lingtai/pull/631' },
+    { label: 'TUI PR #630 — test: simplify architecture document checks', href: 'https://github.com/Lingtai-AI/lingtai/pull/630' },
+    { label: 'TUI PR #629 — docs: present LingTai as a lifelong Digital Scientist', href: 'https://github.com/Lingtai-AI/lingtai/pull/629' },
+    { label: 'TUI PR #628 — docs: establish distributed architecture systems', href: 'https://github.com/Lingtai-AI/lingtai/pull/628' },
+    { label: 'TUI PR #620 — feat(tui): turn projects into admin network switcher', href: 'https://github.com/Lingtai-AI/lingtai/pull/620' },
+    { label: 'TUI PR #618 — docs(tui): clarify /btw inquiry semantics', href: 'https://github.com/Lingtai-AI/lingtai/pull/618' },
+    { label: 'TUI PR #617 — refactor(runtime): support lingtai namespace migration', href: 'https://github.com/Lingtai-AI/lingtai/pull/617' },
+    { label: 'TUI PR #616 — simplify README and move beginner guide to website', href: 'https://github.com/Lingtai-AI/lingtai/pull/616' },
+    { label: 'Previous release (20260710-1)', href: 'https://lingtai.ai/en/releases/20260710-1/' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-07-13/' },
+  ],
+};
+
 const v0_16_3_kernel_v0_10_6_tui: Release = {
   id: '20260710-1',
   version: 'Kernel v0.16.3 · TUI/Portal v0.10.6',
@@ -3513,7 +3691,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
