@@ -65,26 +65,26 @@ export interface Release {
 
 
 
-const v0_16_5_kernel_v0_11_0_tui: Release = {
+const v0_17_1_kernel_v0_11_0_tui: Release = {
   id: '20260717-1',
   date: '2026-07-17',
   type: 'Release',
   pkg: 'LingTai Kernel + TUI/Portal',
-  version: 'Kernel v0.16.5 · TUI/Portal v0.11.0',
+  version: 'Kernel v0.17.1 · TUI/Portal v0.11.0',
   title: {
     en: 'Native release bundles, live Task Cards, and a clearer first-run journey',
     zh: '原生发布包、实时任务卡与更清晰的首次启动体验',
   },
   summary: {
-    en: 'This coordinated release makes delivery and operation more concrete: exact-source GitHub/Gitee/Homebrew bundles, Telegram Task Cards with truthful elapsed progress, a project-first TUI startup journey, more resilient daemon backends, updated model/setup contracts, and cleaner runtime platform boundaries.',
-    zh: '这次协同发布让交付和运行都更具体：基于精确源码的 GitHub/Gitee/Homebrew 发布包、带真实计时与进度的 Telegram 任务卡、以项目为中心的 TUI 首次启动流程、更稳健的 daemon 后端、更新后的模型与安装契约，以及更清晰的运行时平台边界。',
+    en: 'This coordinated release makes delivery and operation more concrete: exact-source GitHub/Gitee/PyPI/Homebrew delivery, Telegram Task Cards with truthful elapsed progress, a project-first TUI startup journey, more resilient daemon backends, updated model/setup contracts, and cleaner runtime platform boundaries.',
+    zh: '这次协同发布让交付和运行都更具体：基于精确源码的 GitHub/Gitee/PyPI/Homebrew 交付、带真实计时与进度的 Telegram 任务卡、以项目为中心的 TUI 首次启动流程、更稳健的 daemon 后端、更新后的模型与安装契约，以及更清晰的运行时平台边界。',
   },
-  tags: ['release', 'kernel', 'tui', 'portal', 'task-card', 'daemon', 'github', 'gitee', 'homebrew'],
+  tags: ['release', 'kernel', 'tui', 'portal', 'task-card', 'daemon', 'github', 'gitee', 'pypi', 'homebrew'],
   links: [
-    { label: 'Kernel v0.16.5', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.5' },
+    { label: 'Kernel v0.17.1', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.17.1' },
     { label: 'TUI/Portal v0.11.0', url: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.11.0' },
-    { label: 'Kernel source', url: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/11a39bac412b69cda6a668128e1b638c36b9e2d7' },
-    { label: 'TUI/Portal source', url: 'https://github.com/Lingtai-AI/lingtai/tree/0e5d1e46babde17f3c6985f045dd7af41ba2e8cc' },
+    { label: 'Kernel source', url: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/c9cc872f5fd47542af740422fadada2a6ca47ddd' },
+    { label: 'TUI/Portal source', url: 'https://github.com/Lingtai-AI/lingtai/tree/4a71a868f42f03c0973e3b24018ac7cb7128ba9e' },
   ],
   install: [
     {
@@ -92,25 +92,25 @@ const v0_16_5_kernel_v0_11_0_tui: Release = {
       command: 'curl -fsSL https://lingtai.ai/install.sh | bash',
       scope: { en: 'LingTai TUI, Portal, and managed runtime', zh: 'LingTai TUI、Portal 与受管运行时' },
       note: {
-        en: 'Kernel v0.16.5 is distributed through the release bundle manifest rather than PyPI. The TUI/Portal v0.11.0 bundle pins and verifies that exact kernel release.',
-        zh: 'Kernel v0.16.5 通过发布包清单而非 PyPI 分发；TUI/Portal v0.11.0 发布包会锁定并校验这一精确内核版本。',
+        en: 'Kernel v0.17.1 is selected by strict GitHub/Gitee release manifests. GitHub, Gitee, and PyPI may transport only the same manifest-selected wheel filename and SHA-256; PyPI never selects the latest version. The TUI/Portal v0.11.0 bundle pins and verifies that exact kernel release.',
+        zh: 'Kernel v0.17.1 由严格的 GitHub/Gitee 发布清单选定；GitHub、Gitee 与 PyPI 只能传输同一清单选定的 wheel 文件名和 SHA-256，PyPI 永不负责判定最新版本。TUI/Portal v0.11.0 发布包会锁定并校验这一精确内核版本。',
       },
     },
   ],
   runtime: {
     managedBy: 'lingtai-tui',
-    manifest: 'https://github.com/Lingtai-AI/lingtai/blob/0e5d1e46babde17f3c6985f045dd7af41ba2e8cc/kernel-release.json',
+    manifest: 'https://github.com/Lingtai-AI/lingtai/blob/4a71a868f42f03c0973e3b24018ac7cb7128ba9e/kernel-release.json',
     note: {
-      en: 'Release automation binds exact kernel and TUI/Portal commit provenance into one manifest-backed bundle and publishes it to GitHub, Gitee, and Homebrew without force-updating existing tags.',
-      zh: '发布自动化会把精确的内核与 TUI/Portal 提交来源绑定到同一个清单化发布包中，并以非强制覆盖方式发布到 GitHub、Gitee 与 Homebrew。',
+      en: 'Release automation binds exact kernel and TUI/Portal commit provenance into one manifest-backed bundle, publishes immutable bytes to GitHub/Gitee/Homebrew without force-updating tags, and permits PyPI only as an exact manifest-selected kernel-artifact transport.',
+      zh: '发布自动化会把精确的内核与 TUI/Portal 提交来源绑定到同一个清单化发布包中，以非强制覆盖方式发布不可变字节到 GitHub、Gitee 与 Homebrew，并且只允许 PyPI 作为清单精确选定的内核产物传输面。',
     },
   },
   source: [
-    { repo: 'lingtai-kernel', commit: '11a39bac412b69cda6a668128e1b638c36b9e2d7', tag: 'v0.16.5' },
-    { repo: 'lingtai', commit: '0e5d1e46babde17f3c6985f045dd7af41ba2e8cc', tag: 'v0.11.0' },
+    { repo: 'lingtai-kernel', commit: 'c9cc872f5fd47542af740422fadada2a6ca47ddd', tag: 'v0.17.1' },
+    { repo: 'lingtai', commit: '4a71a868f42f03c0973e3b24018ac7cb7128ba9e', tag: 'v0.11.0' },
   ],
   contributors: ['9s5bz2jvd2-lang', 'huangzesen', 'TZZheng', 'Wang Runyuan'],
-  aiContributors: ['Claude Opus', 'Claude Opus 4.8', 'Claude Sonnet 5', 'GPT-5.6 Luna', 'OpenAI Codex'],
+  aiContributors: ['Claude Opus', 'Claude Opus 4.8', 'Claude Sonnet 5', 'GPT-5.6 Luna', 'GPT-5.6 Terra', 'OpenAI Codex'],
   automationContributors: ['github-actions[bot]'],
   acknowledgements: {
     en: 'Human contributors and participants are credited separately from AI assistance and automation. Attribution was derived from complete commit ranges and fully paginated GitHub PR participant connections across the current and immediately preceding release windows.',
@@ -119,18 +119,18 @@ const v0_16_5_kernel_v0_11_0_tui: Release = {
   bodyMarkdown: {
     en: `## What ships together
 
-Kernel v0.16.5 and TUI/Portal v0.11.0 are published as one verified release train. The kernel tag produces native-platform artifacts and a provenance manifest; the TUI tag consumes that exact manifest and builds the user-facing bundle, Gitee mirror, and Homebrew update.
+Kernel v0.17.1 and TUI/Portal v0.11.0 are published as one verified release train. The kernel tag produces native-platform artifacts and a provenance manifest; the TUI tag consumes that exact manifest and builds the user-facing bundle, Gitee mirror, and Homebrew update. The already-public v0.17.0 tag/release remains preserved: its artifact builds succeeded, but its manifest job failed before asset publication, so v0.17.1 is the non-destructive recovery release.
 
 The user-visible release is intentionally broader than packaging. Telegram now shows live Task Cards for long work, the TUI starts from an explicit project journey when no project is active, daemon execution survives more backend and lifecycle edge cases, and model/setup/runtime contracts are clearer and easier to audit.`,
     zh: `## 本次协同交付
 
-Kernel v0.16.5 与 TUI/Portal v0.11.0 作为同一条经过校验的发布列车交付。内核标签会生成原生平台产物与来源清单；TUI 标签消费这一精确清单，再构建用户发布包、Gitee 镜像与 Homebrew 更新。
+Kernel v0.17.1 与 TUI/Portal v0.11.0 作为同一条经过校验的发布列车交付。内核标签会生成原生平台产物与来源清单；TUI 标签消费这一精确清单，再构建用户发布包、Gitee 镜像与 Homebrew 更新。已经公开的 v0.17.0 标签与 Release 保持原样：其产物构建成功，但 manifest job 在资产发布前失败，因此 v0.17.1 是非破坏性恢复版本。
 
 这次面向用户的变化不只在打包。Telegram 现在能为长任务展示实时任务卡；没有活动项目时，TUI 会从明确的项目入口开始；daemon 能覆盖更多后端与生命周期边界；模型、安装和运行时契约也更清晰、更易审计。`,
   },
   features: [
     {
-      title: { en: 'Native release bundles across GitHub, Gitee, and Homebrew', zh: '贯通 GitHub、Gitee 与 Homebrew 的原生发布包' },
+      title: { en: 'Manifest-bound delivery across GitHub, Gitee, PyPI, and Homebrew', zh: '贯通 GitHub、Gitee、PyPI 与 Homebrew 的清单绑定交付' },
       summary: {
         en: 'Release automation now freezes exact source provenance, emits platform-native artifacts and manifests, and binds the kernel release into the TUI/Portal distribution.',
         zh: '发布自动化现在会冻结精确源码来源，生成平台原生产物与清单，并把内核版本绑定进 TUI/Portal 分发包。',
@@ -138,18 +138,20 @@ Kernel v0.16.5 与 TUI/Portal v0.11.0 作为同一条经过校验的发布列车
       bullets: {
         en: [
           'Kernel release tags build native sidecar wheels, source archives, checksums, and a release manifest.',
+          'PyPI may receive only the exact manifest-selected wheel and sdist bytes after independent SHA-256 validation; it never decides the latest runtime.',
           'TUI release tags verify that kernel manifest before producing the combined GitHub/Gitee bundle and Homebrew update.',
           'Identity, source, tag, and non-force publication gates fail closed when release provenance drifts.',
         ],
         zh: [
           '内核发布标签会构建原生 sidecar wheel、源码归档、校验和与发布清单。',
+          'PyPI 只能在独立 SHA-256 校验后接收清单精确选定的 wheel 与 sdist 字节，永不负责判定最新运行时。',
           'TUI 发布标签会先校验该内核清单，再生成 GitHub/Gitee 组合包与 Homebrew 更新。',
           '身份、源码、标签与非强制发布门禁在来源漂移时会直接阻断。',
         ],
       },
-      affectedAreas: ['Release automation', 'GitHub/Gitee', 'Homebrew', 'Managed runtime'],
+      affectedAreas: ['Release automation', 'GitHub/Gitee', 'PyPI', 'Homebrew', 'Managed runtime'],
       links: [
-        { label: 'Kernel release', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.5' },
+        { label: 'Kernel release', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.17.1' },
         { label: 'TUI/Portal release', url: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.11.0' },
       ],
     },
@@ -3882,7 +3884,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_16_5_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_17_1_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
