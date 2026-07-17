@@ -65,6 +65,197 @@ export interface Release {
 
 
 
+const v0_16_4_kernel_v0_11_0_tui: Release = {
+  id: '20260717-1',
+  date: '2026-07-17',
+  type: 'Release',
+  pkg: 'LingTai Kernel + TUI/Portal',
+  version: 'Kernel v0.16.4 · TUI/Portal v0.11.0',
+  title: {
+    en: 'Native release bundles, live Task Cards, and a clearer first-run journey',
+    zh: '原生发布包、实时任务卡与更清晰的首次启动体验',
+  },
+  summary: {
+    en: 'This coordinated release makes delivery and operation more concrete: exact-source GitHub/Gitee/Homebrew bundles, Telegram Task Cards with truthful elapsed progress, a project-first TUI startup journey, more resilient daemon backends, updated model/setup contracts, and cleaner runtime platform boundaries.',
+    zh: '这次协同发布让交付和运行都更具体：基于精确源码的 GitHub/Gitee/Homebrew 发布包、带真实计时与进度的 Telegram 任务卡、以项目为中心的 TUI 首次启动流程、更稳健的 daemon 后端、更新后的模型与安装契约，以及更清晰的运行时平台边界。',
+  },
+  tags: ['release', 'kernel', 'tui', 'portal', 'task-card', 'daemon', 'github', 'gitee', 'homebrew'],
+  links: [
+    { label: 'Kernel v0.16.4', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.4' },
+    { label: 'TUI/Portal v0.11.0', url: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.11.0' },
+    { label: 'Kernel source', url: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/763d35a33b769f5cc2e9029ee1e6fb23f9d448be' },
+    { label: 'TUI/Portal source', url: 'https://github.com/Lingtai-AI/lingtai/tree/0e5d1e46babde17f3c6985f045dd7af41ba2e8cc' },
+  ],
+  install: [
+    {
+      label: { en: 'Install or update through the supported LingTai installer', zh: '通过官方 LingTai 安装器安装或更新' },
+      command: 'curl -fsSL https://lingtai.ai/install.sh | bash',
+      scope: { en: 'LingTai TUI, Portal, and managed runtime', zh: 'LingTai TUI、Portal 与受管运行时' },
+      note: {
+        en: 'Kernel v0.16.4 is distributed through the release bundle manifest rather than PyPI. The TUI/Portal v0.11.0 bundle pins and verifies that exact kernel release.',
+        zh: 'Kernel v0.16.4 通过发布包清单而非 PyPI 分发；TUI/Portal v0.11.0 发布包会锁定并校验这一精确内核版本。',
+      },
+    },
+  ],
+  runtime: {
+    managedBy: 'lingtai-tui',
+    manifest: 'https://github.com/Lingtai-AI/lingtai/blob/0e5d1e46babde17f3c6985f045dd7af41ba2e8cc/kernel-release.json',
+    note: {
+      en: 'Release automation binds exact kernel and TUI/Portal commit provenance into one manifest-backed bundle and publishes it to GitHub, Gitee, and Homebrew without force-updating existing tags.',
+      zh: '发布自动化会把精确的内核与 TUI/Portal 提交来源绑定到同一个清单化发布包中，并以非强制覆盖方式发布到 GitHub、Gitee 与 Homebrew。',
+    },
+  },
+  source: [
+    { repo: 'lingtai-kernel', commit: '763d35a33b769f5cc2e9029ee1e6fb23f9d448be', tag: 'v0.16.4' },
+    { repo: 'lingtai', commit: '0e5d1e46babde17f3c6985f045dd7af41ba2e8cc', tag: 'v0.11.0' },
+  ],
+  contributors: ['9s5bz2jvd2-lang', 'huangzesen', 'TZZheng', 'Wang Runyuan'],
+  aiContributors: ['Claude Opus', 'Claude Opus 4.8', 'Claude Sonnet 5', 'GPT-5.6 Luna', 'OpenAI Codex'],
+  automationContributors: ['github-actions[bot]'],
+  acknowledgements: {
+    en: 'Human contributors and participants are credited separately from AI assistance and automation. Attribution was derived from complete commit ranges and fully paginated GitHub PR participant connections across the current and immediately preceding release windows.',
+    zh: '人类贡献者与参与者、AI 协助和自动化身份分别列出。署名来自当前及前一发布窗口的完整提交范围，并完整分页收集 GitHub PR 参与者连接。',
+  },
+  bodyMarkdown: {
+    en: `## What ships together
+
+Kernel v0.16.4 and TUI/Portal v0.11.0 are published as one verified release train. The kernel tag produces native-platform artifacts and a provenance manifest; the TUI tag consumes that exact manifest and builds the user-facing bundle, Gitee mirror, and Homebrew update.
+
+The user-visible release is intentionally broader than packaging. Telegram now shows live Task Cards for long work, the TUI starts from an explicit project journey when no project is active, daemon execution survives more backend and lifecycle edge cases, and model/setup/runtime contracts are clearer and easier to audit.`,
+    zh: `## 本次协同交付
+
+Kernel v0.16.4 与 TUI/Portal v0.11.0 作为同一条经过校验的发布列车交付。内核标签会生成原生平台产物与来源清单；TUI 标签消费这一精确清单，再构建用户发布包、Gitee 镜像与 Homebrew 更新。
+
+这次面向用户的变化不只在打包。Telegram 现在能为长任务展示实时任务卡；没有活动项目时，TUI 会从明确的项目入口开始；daemon 能覆盖更多后端与生命周期边界；模型、安装和运行时契约也更清晰、更易审计。`,
+  },
+  features: [
+    {
+      title: { en: 'Native release bundles across GitHub, Gitee, and Homebrew', zh: '贯通 GitHub、Gitee 与 Homebrew 的原生发布包' },
+      summary: {
+        en: 'Release automation now freezes exact source provenance, emits platform-native artifacts and manifests, and binds the kernel release into the TUI/Portal distribution.',
+        zh: '发布自动化现在会冻结精确源码来源，生成平台原生产物与清单，并把内核版本绑定进 TUI/Portal 分发包。',
+      },
+      bullets: {
+        en: [
+          'Kernel release tags build native sidecar wheels, source archives, checksums, and a release manifest.',
+          'TUI release tags verify that kernel manifest before producing the combined GitHub/Gitee bundle and Homebrew update.',
+          'Identity, source, tag, and non-force publication gates fail closed when release provenance drifts.',
+        ],
+        zh: [
+          '内核发布标签会构建原生 sidecar wheel、源码归档、校验和与发布清单。',
+          'TUI 发布标签会先校验该内核清单，再生成 GitHub/Gitee 组合包与 Homebrew 更新。',
+          '身份、源码、标签与非强制发布门禁在来源漂移时会直接阻断。',
+        ],
+      },
+      affectedAreas: ['Release automation', 'GitHub/Gitee', 'Homebrew', 'Managed runtime'],
+      links: [
+        { label: 'Kernel release', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.4' },
+        { label: 'TUI/Portal release', url: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.11.0' },
+      ],
+    },
+    {
+      title: { en: 'Telegram Task Cards make long work visible', zh: 'Telegram 任务卡让长任务过程可见' },
+      summary: {
+        en: 'Long-running work can expose truthful elapsed time, active work, completed evidence, not-started steps, the next gate, and the current blocker in one resident card.',
+        zh: '长任务可以在同一张常驻任务卡中展示真实耗时、当前动作、已完成证据、尚未开始的步骤、下一道门禁与当前阻塞。',
+      },
+      bullets: {
+        en: [
+          'Programmable renderers update independently from ordinary chat replies.',
+          'MarkdownV2 rendering and literal fallback paths preserve readable status under formatting errors.',
+          'Backend failures are preserved instead of being flattened into generic progress text.',
+        ],
+        zh: [
+          '可编程渲染器独立于普通聊天回复持续更新。',
+          'MarkdownV2 渲染与字面量回退在格式错误时仍保持状态可读。',
+          '后端失败原因会被完整保留，不再被压平成泛化进度文字。',
+        ],
+      },
+      affectedAreas: ['Telegram', 'Task Card', 'Long-running workflows'],
+    },
+    {
+      title: { en: 'A clearer project-first TUI startup journey', zh: '更清晰、以项目为先的 TUI 启动流程' },
+      summary: {
+        en: 'When no project is active, the TUI now opens with an explicit project chooser and creation journey instead of leaving users inside an ambiguous empty shell.',
+        zh: '没有活动项目时，TUI 现在会进入明确的项目选择与创建流程，而不是把用户留在含义不清的空壳界面。',
+      },
+      bullets: {
+        en: [
+          'A dedicated project journey separates create, choose, migrate, and resume decisions.',
+          'Project helpers and slash-command wording align the startup flow with the same mental model.',
+          'Legacy and nested project discovery paths are handled without silently changing existing projects.',
+        ],
+        zh: [
+          '专用项目流程把创建、选择、迁移与继续操作明确分开。',
+          '项目辅助逻辑与斜杠命令文案采用一致的启动心智模型。',
+          '兼容旧项目与嵌套项目发现路径，不会静默改写现有项目。',
+        ],
+      },
+      affectedAreas: ['TUI', 'Projects', 'First-run experience'],
+    },
+    {
+      title: { en: 'Daemon and runtime execution are more resilient', zh: 'Daemon 与运行时执行更加稳健' },
+      summary: {
+        en: 'Daemon execution gains broader coding-backend support and stronger lifecycle, cancellation, notification, prompt, and artifact-preservation contracts.',
+        zh: 'Daemon 执行扩展了编码后端支持，并强化生命周期、取消、通知、提示词与产物保留契约。',
+      },
+      bullets: {
+        en: [
+          'New external coding backends include Qwen Code, Oh-My-Pi, Kimi Code, and Cursor Agent.',
+          'Restart-safe registry and terminal-state handling reduce lost or duplicated execution outcomes.',
+          'Prompt/tool contracts, cancellation semantics, and failed-run artifacts are easier to inspect and recover.',
+        ],
+        zh: [
+          '新增 Qwen Code、Oh-My-Pi、Kimi Code 与 Cursor Agent 等外部编码后端。',
+          '可跨重启恢复的注册表与终态处理减少结果丢失和重复。',
+          '提示词/工具契约、取消语义与失败运行产物更容易检查和恢复。',
+        ],
+      },
+      affectedAreas: ['Daemon', 'Coding backends', 'Lifecycle', 'Notifications'],
+    },
+    {
+      title: { en: 'Model, preset, and setup contracts are explicit', zh: '模型、预设与安装契约更加明确' },
+      summary: {
+        en: 'The release aligns current GPT-5.6 model defaults, pool presets, user overrides, and setup documentation so runtime choices are inspectable rather than implicit.',
+        zh: '本次发布对齐当前 GPT-5.6 模型默认值、池化预设、用户覆盖与安装文档，让运行时选择可检查而非隐式发生。',
+      },
+      bullets: {
+        en: [
+          'Codex-family defaults and preset capability bundles are refreshed for current supported models.',
+          'Init-time overrides and preset metadata use explicit contracts that survive refresh and daemon handoff.',
+          'Setup and provider guidance distinguish supported built-ins from user-defined custom presets.',
+        ],
+        zh: [
+          'Codex 系列默认值与预设能力包更新到当前受支持模型。',
+          '初始化覆盖与预设元数据采用跨 refresh 与 daemon 交接仍稳定的明确契约。',
+          '安装与提供方指引明确区分内置支持和用户自定义预设。',
+        ],
+      },
+      affectedAreas: ['Models', 'Presets', 'Setup', 'Provider guidance'],
+    },
+    {
+      title: { en: 'Cleaner namespace, platform, and configuration boundaries', zh: '更清晰的命名空间、平台与配置边界' },
+      summary: {
+        en: 'Runtime packaging converges on the lingtai namespace, adds native PowerShell support, and documents configuration and environment-variable ownership more precisely.',
+        zh: '运行时打包统一到 lingtai 命名空间，加入原生 PowerShell 支持，并更精确地说明配置与环境变量的归属边界。',
+      },
+      bullets: {
+        en: [
+          'Runtime imports and packaged scripts move toward one public lingtai namespace.',
+          'PowerShell-native subprocess and command behavior improve Windows support without leaking platform mechanisms into core contracts.',
+          'Configuration layers, environment variables, sidecar resolution, and protocol boundaries are documented and tested more consistently.',
+        ],
+        zh: [
+          '运行时导入与打包脚本逐步统一到单一公开的 lingtai 命名空间。',
+          '原生 PowerShell 子进程与命令行为提升 Windows 支持，同时不把平台机制泄漏进核心契约。',
+          '配置层、环境变量、sidecar 解析与协议边界获得更一致的文档和测试。',
+        ],
+      },
+      affectedAreas: ['Runtime namespace', 'Windows/PowerShell', 'Configuration', 'Packaging'],
+    },
+  ],
+};
+
 const v0_10_7_tui: Release = {
   id: '20260713-1',
   version: 'TUI/Portal v0.10.7',
@@ -3691,7 +3882,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_16_4_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
