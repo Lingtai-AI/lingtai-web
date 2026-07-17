@@ -27,6 +27,8 @@ export type Project = {
   /** Sort/recency hint, ISO date. */
   addedAt: string;
   featured?: boolean;
+  /** Secondary public links such as source repositories. */
+  links?: { label: L; url: string; urlLabel: string }[];
 };
 
 export const projects: Project[] = [
@@ -56,6 +58,41 @@ export const projects: Project[] = [
     ],
     addedAt: '2026-06-23',
     featured: true,
+  },
+  {
+    id: 'lingtai-guanji-ifm-matrix',
+    name: {
+      en: 'LingTai · Guanji / IFM Matrix',
+      zh: '灵台·观己 / IFM Matrix',
+      wen: '灵台·观己 / IFM Matrix',
+    },
+    tagline: {
+      en: 'A functional-medicine matrix web tool co-created by LingTai and Yuanjiang.',
+      zh: '由灵台与圆酱共创的功能医学矩阵网页工具。',
+      wen: '灵台与圆酱共创之功能医学矩阵网页工具。',
+    },
+    description: {
+      en: 'LingTai · Guanji uses the IFM Matrix worksheet as its frame and turns it into a browser-based thinking aid: practitioners can organize antecedents, triggers, mediators, core physiological nodes, and lifestyle intervention directions in one place. It is a research, education, and workflow-assist tool for nutrition and functional medicine work; it does not replace diagnosis, treatment, medication, nutrition therapy prescriptions, or clinical decision-making.',
+      zh: '「灵台·观己」以 IFM Matrix worksheet 为骨架，将其整理成可在浏览器中使用的思考辅助工具：帮助营养与功能医学从业者把 ATMs、核心生理节点与生活方式干预方向放在同一张矩阵中梳理。它用于研究、教育与工作流辅助，不替代诊断、治疗、用药、营养治疗处方或临床决策。',
+      wen: '「灵台·观己」以 IFM Matrix worksheet 为骨，化为浏览器中可用之思维辅具；使营养与功能医学从业者得以并观 ATMs、核心生理节点与生活方式干预之向。此为研究、教育与流程辅助之器，不代诊断、治疗、用药、营养治疗处方，亦不代临床决策。',
+    },
+    url: 'https://9s5bz2jvd2-lang.github.io/lingtai-guanji-ifm-matrix/',
+    urlLabel: '9s5bz2jvd2-lang.github.io/lingtai-guanji-ifm-matrix',
+    tags: [
+      { en: 'Functional medicine', zh: '功能医学', wen: '功能医学' },
+      { en: 'Matrix worksheet', zh: '矩阵工作表', wen: '矩阵' },
+      { en: 'Co-created with LingTai', zh: '灵台共创', wen: '灵台共创' },
+      { en: 'Education / workflow aid', zh: '教育与工作流辅助', wen: '教与流程' },
+    ],
+    addedAt: '2026-06-25',
+    featured: true,
+    links: [
+      {
+        label: { en: 'Source repository', zh: '源代码仓库', wen: '源码仓库' },
+        url: 'https://github.com/9s5bz2jvd2-lang/lingtai-guanji-ifm-matrix',
+        urlLabel: 'github.com/9s5bz2jvd2-lang/lingtai-guanji-ifm-matrix',
+      },
+    ],
   },
   {
     id: 'nira-worldcup-2026',

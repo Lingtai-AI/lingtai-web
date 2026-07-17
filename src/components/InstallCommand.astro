@@ -4,7 +4,7 @@ interface Props {
 }
 
 const { copyLabel } = Astro.props;
-const command = 'brew install lingtai-ai/lingtai/lingtai-tui';
+const command = 'curl -fsSL https://lingtai.ai/install.sh | bash';
 ---
 
 <div class="install-pill">

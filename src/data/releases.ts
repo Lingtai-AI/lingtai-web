@@ -65,6 +65,1651 @@ export interface Release {
 
 
 
+const v0_10_7_tui: Release = {
+  id: '20260713-1',
+  version: 'TUI/Portal v0.10.7',
+  titleEn: 'LingTai TUI/Portal v0.10.7: an admin network switcher, faster mail history, and four honest platform archives',
+  titleZh: 'LingTai TUI/Portal v0.10.7：管理网络切换器、更快的邮件历史，以及四个如实披露的平台归档',
+  date: '2026-07-13',
+  pkg: 'LingTai TUI/Portal',
+  tag: 'v0.10.7',
+  runtimeNoteEn:
+    'This is a TUI/Portal-only release. It ships the Go TUI and portal binaries, which communicate with agents over the filesystem; it does not include the kernel or a Python/PyPI package. Install with Homebrew (`brew install lingtai-tui`, updated from the tagged source archive) or download a platform archive from the GitHub release. The coordinated kernel release follows its own cadence and is not part of this tag.',
+  runtimeNoteZh:
+    '这是一次仅 TUI/Portal 的发布。它交付通过文件系统与智能体通信的 Go TUI 与 portal 二进制文件；不包含 kernel 或 Python/PyPI 包。可通过 Homebrew 安装（`brew install lingtai-tui`，从标签源归档更新），或从 GitHub release 下载平台归档。协调的 kernel 发布按自身节奏进行，不属于本标签。',
+  summaryEn:
+    'Published from the independently locked TUI/Portal candidate 5fb554b69f966b39cb9eca32a70c84d628714d18 (tree 05c068dbc5e50832d2d5d425099c104290acd2f4), this TUI-only release makes /projects a live admin network switcher (#620, #639), makes large mail history fast and consistent (#631, #632, #637, #638, #640), and keeps projects working across both runtime import layouts (#617). It also corrects daemon cache accounting (#636), refreshes documentation (#618, #628, #629, #630, #633, #616, #642), and publishes four platform archives. The darwin-amd64 archive was manually recovered after the macos-13 Intel runner failed; its full checksum is recorded below.',
+  summaryZh:
+    '本次仅 TUI 发布从独立锁定的 TUI/Portal 候选版本 5fb554b69f966b39cb9eca32a70c84d628714d18（tree 05c068dbc5e50832d2d5d425099c104290acd2f4）发布：/projects 成为实时管理网络切换器（#620、#639），大规模邮件历史加载更快且各视图一致（#631、#632、#637、#638、#640），并兼容两种运行时导入布局（#617）。它还修正守护进程缓存统计（#636）、刷新文档（#618、#628、#629、#630、#633、#616、#642），并发布四个平台归档。macos-13 Intel runner 失败后，darwin-amd64 归档被手动恢复；完整校验和列在下方。',
+  features: [
+    {
+      titleEn: '/projects becomes a live admin network switcher',
+      titleZh: '/projects 成为实时管理网络切换器',
+      leadEn:
+        'The running process inventory now powers /projects, giving operators a compact way to move between several agent networks without losing topology context.',
+      leadZh:
+        '运行中的进程清单现在驱动 /projects，让操作员可以在多个智能体网络之间快速切换，同时保留拓扑上下文。',
+      bulletsEn: [
+        'TUI #620 lets an operator select an admin/orchestrator agent to switch context; non-admin members remain visible for topology awareness, and a curated /kanban detail subset shows lifecycle, process uptime, molt count, and live topology.',
+        'TUI #639 clarifies the agent grouping and presents the kanban-on-a-projects-view layout.',
+      ],
+      bulletsZh: [
+        'TUI #620 允许操作员选择 admin/orchestrator 智能体切换上下文；非管理员成员仍可见以掌握拓扑，精选的 /kanban 详情子集显示生命周期、进程运行时间、molt 计数与实时拓扑。',
+        'TUI #639 澄清 /projects 中的智能体分组，并呈现 kanban-on-a-projects-view 布局。',
+      ],
+      whyEn:
+        'Multiple networks are easier to operate when switching context and checking health are one keystroke away.',
+      whyZh:
+        '当切换上下文与检查健康状况都只需一次按键时，多个网络更容易运维。',
+    },
+    {
+      titleEn: 'Faster, safer mail history and rendering',
+      titleZh: '更快、更安全的邮件历史与渲染',
+      leadEn:
+        'Email is a primary asynchronous surface for long-running agents, so this release makes history loading, stale-result handling, and rendering behavior predictable across views.',
+      leadZh:
+        '邮件是长时间运行智能体的主要异步界面，因此本次发布让历史加载、过期结果处理和各视图渲染行为都更可预测。',
+      bulletsEn: [
+        'TUI #632 bounds and pages history on demand: the newest 200 entries load in about 50 ms, exact counting runs asynchronously, and JSONL is the authoritative replay source rather than SQLite interior-hole results.',
+        'TUI #631 gates asynchronous history results to their owning model, preventing stale or cross-view mutations after navigation.',
+        'TUI #637 renders mail once from the live mailbox cache instead of fetching and rendering again on every view switch.',
+        'TUI #638 shows full local timestamps in list, detail, and Ctrl+O views.',
+        'TUI #640 aligns Ctrl+O mailbox rendering with the default view so both show the same content.',
+      ],
+      bulletsZh: [
+        'TUI #632 按需对历史分页并设置边界：最新 200 条约 50ms 加载完成，精确计数异步执行，JSONL 成为权威回放源而非 SQLite 内部空洞结果。',
+        'TUI #631 将异步历史结果锁定至所属模型，防止导航后产生过期或跨视图变更。',
+        'TUI #637 使邮件从实时邮箱缓存渲染一次，而不是每次视图切换都重新获取和渲染。',
+        'TUI #638 在列表、详情和 Ctrl+O 视图中显示完整本地时间戳。',
+        'TUI #640 将 Ctrl+O 邮箱渲染与默认视图对齐，使两者显示相同内容。',
+      ],
+      whyEn:
+        'A fast mailbox is useful only when its timestamps, content, and asynchronous updates remain trustworthy during a long session.',
+      whyZh:
+        '邮箱只有在长时间会话中仍能保持时间戳、内容和异步更新可信时，快速才真正有用。',
+    },
+    {
+      titleEn: 'Runtime compatibility, diagnostics, and documentation',
+      titleZh: '运行时兼容、诊断与文档',
+      leadEn:
+        'The release keeps the TUI-side runtime path compatible, makes daemon accounting honest, and updates the repository guidance operators and contributors rely on.',
+      leadZh:
+        '本次发布保持 TUI 侧运行时路径兼容，使守护进程统计如实，并更新操作员与贡献者依赖的仓库指南。',
+      bulletsEn: [
+        'TUI #636 fixes the impossible daemon CLI cache-hit display by normalizing cached-input accounting so TokenTotals.Input includes cached input.',
+        'TUI #617 recognizes both the legacy lingtai_kernel layout and the new lingtai.kernel runtime namespace; this is a TUI/Portal compatibility shim, not a kernel release.',
+        'TUI #630 simplifies architecture-document checks, while #618 clarifies /btw inquiry semantics.',
+        'TUI #629 and #628 refresh the lifelong Digital Scientist narrative and distributed-architecture ownership; #633 adds “learn from every setback” to the Covenant; #616 simplifies the README and moves the beginner guide to the website; #642 updates the Discord invitation across README variants.',
+      ],
+      bulletsZh: [
+        'TUI #636 通过规范化缓存输入统计修复不可能的守护进程 CLI 缓存命中率显示，使 TokenTotals.Input 包含缓存输入。',
+        'TUI #617 同时识别旧 lingtai_kernel 布局与新 lingtai.kernel 运行时命名空间；这是 TUI/Portal 兼容 shim，而非 kernel 发布。',
+        'TUI #630 精简架构文档检查，#618 澄清 /btw 查询语义。',
+        'TUI #629 与 #628 刷新终身“数字科学家”叙事和分布式架构所有权；#633 将“从每次挫折中学习”加入 Covenant；#616 精简 README 并将入门指南迁移至网站；#642 更新所有 README 变体中的 Discord 邀请。',
+      ],
+      whyEn:
+        'A small compatibility shim reduces upgrade coordination, while accurate diagnostics and current documentation reduce operational guesswork.',
+      whyZh:
+        '小型兼容 shim 减少升级协同成本，而准确诊断与最新文档减少运维猜测。',
+    },
+    {
+      titleEn: 'Four platform archives and Homebrew distribution',
+      titleZh: '四个平台归档与 Homebrew 分发',
+      leadEn:
+        'The tag workflow publishes macOS and Linux archives for amd64 and arm64. Each archive contains both lingtai-tui and lingtai-portal plus a SHA-256 sidecar, and the supported Homebrew tap is updated from the tagged source archive.',
+      leadZh:
+        '标签工作流发布 macOS 与 Linux 的 amd64 和 arm64 归档。每个归档都包含 lingtai-tui、lingtai-portal 及 SHA-256 sidecar，受支持的 Homebrew tap 则从标签源归档更新。',
+      bulletsEn: [
+        'Published archives: darwin-amd64 (7a73db99…), darwin-arm64 (27d4d082…), linux-amd64 (dd2374bd…), and linux-arm64 (645feedc…); full checksums are in Validation.',
+        'The Homebrew formula uses the tagged source archive https://github.com/Lingtai-AI/lingtai/archive/refs/tags/v0.10.7.tar.gz with SHA-256 6bdde2c41a588cccdf54e32732f5c2c6a89df1c2279cde3f7cbca572d05f4dcf.',
+        'GitHub is retiring the macos-13 Intel runner used for darwin-amd64; that automated job failed while darwin-arm64, linux-amd64, and linux-arm64 passed.',
+        'The darwin-amd64 archive was manually rebuilt and uploaded. Its SHA-256 is byte-identical to the intended artifact, so Intel-macOS users have a verifiable build.',
+      ],
+      bulletsZh: [
+        '已发布归档：darwin-amd64（7a73db99…）、darwin-arm64（27d4d082…）、linux-amd64（dd2374bd…）和 linux-arm64（645feedc…）；完整校验和见“验证”。',
+        'Homebrew formula 使用标签源归档 https://github.com/Lingtai-AI/lingtai/archive/refs/tags/v0.10.7.tar.gz，其 SHA-256 为 6bdde2c41a588cccdf54e32732f5c2c6a89df1c2279cde3f7cbca572d05f4dcf。',
+        'GitHub 正在退役用于 darwin-amd64 的 macos-13 Intel runner；该自动化作业失败，而 darwin-arm64、linux-amd64 和 linux-arm64 均通过。',
+        'darwin-amd64 归档随后被手动重建并上传，其 SHA-256 与预期制品逐字节一致，因此 Intel-macOS 用户获得了可验证的构建。',
+      ],
+      whyEn:
+        'Publishing the recovered archive and its checksum keeps Intel-macOS support verifiable instead of silently dropping a platform.',
+      whyZh:
+        '发布恢复后的归档及其校验和，使 Intel-macOS 支持可验证，而不是静默丢弃一个平台。',
+    },
+    {
+      titleEn: 'Release-window accounting and validation',
+      titleZh: '发布窗口审计与验证',
+      leadEn:
+        'This archive records the strict v0.10.6..v0.10.7 window rather than implying that unrelated kernel work shipped with this tag.',
+      leadZh:
+        '本归档记录严格的 v0.10.6..v0.10.7 窗口，而不暗示无关的 kernel 工作随本标签发布。',
+      bulletsEn: [
+        'The window contains 30 commits: 22 non-merge and 8 merge, with 16 merged PRs. The human contributor is @huangzesen; three daily star-count commits were authored by github-actions[bot] and are automation, not human authorship.',
+        'The exact candidate passed Go vet, all TUI and Portal tests, and versioned builds of both lingtai-tui and lingtai-portal at v0.10.7.',
+        'Six Discord invitation occurrences were audited with no legacy links; the candidate worktree was clean with exact commit/tree match and no tag/version collision before publication.',
+        'The public GitHub release is v0.10.7, draft=false, prerelease=false, published 2026-07-13T17:30:33Z.',
+      ],
+      bulletsZh: [
+        '该窗口包含 30 个 commit：22 个非合并、8 个合并，以及 16 个已合并 PR。人类贡献者为 @huangzesen；三个每日 star 计数提交由 github-actions[bot] 撰写，属于自动化而非人类作者。',
+        '精确候选版本通过 Go vet、全部 TUI 与 Portal 测试，并将 lingtai-tui 与 lingtai-portal 均以 v0.10.7 版本构建。',
+        '审计六处 Discord 邀请且无旧链接残留；候选 worktree 干净、commit/tree 精确匹配，发布前无标签或版本冲突。',
+        '公开 GitHub release 为 v0.10.7，draft=false、prerelease=false，发布时间为 2026-07-13T17:30:33Z。',
+      ],
+      whyEn:
+        'Separating the TUI candidate, the strict attribution window, and automation makes this release record auditable without attributing unfinished joint-kernel work to it.',
+      whyZh:
+        '将 TUI 候选版本、严格归因窗口和自动化分开记录，让本发布可审计，也不会把未完成的联合 kernel 工作归到本发布名下。',
+    },
+  ],
+  contributors: ['huangzesen'],
+  validation: {
+    commit:
+      'tui/portal 5fb554b69f966b39cb9eca32a70c84d628714d18 (v0.10.7) · tree 05c068dbc5e50832d2d5d425099c104290acd2f4',
+    items: [
+      { label: 'Published release', result: 'v0.10.7 — public, draft=false, prerelease=false, published 2026-07-13T17:30:33Z (github.com/Lingtai-AI/lingtai/releases/tag/v0.10.7)' },
+      { label: 'TUI/Portal candidate', result: '5fb554b69f966b39cb9eca32a70c84d628714d18 · tree 05c068dbc5e50832d2d5d425099c104290acd2f4' },
+      { label: 'Strict attribution range', result: 'v0.10.6..v0.10.7: 30 commits (22 non-merge, 8 merge), 16 merged PRs' },
+      { label: 'Release gate', result: 'Go vet clean; all TUI and Portal tests passed; both binaries built at v0.10.7; 6 Discord invites audited, 0 legacy links; clean worktree, exact commit/tree match, no tag/version collision' },
+      { label: 'Source-archive SHA-256 (Homebrew)', result: '6bdde2c41a588cccdf54e32732f5c2c6a89df1c2279cde3f7cbca572d05f4dcf' },
+      { label: 'darwin-amd64 archive SHA-256', result: '7a73db9924edd3e6955cb69434a91c6b503cbf5f7c25a61a70b2503c2a74ead3 (manually recovered; macos-13 Intel runner job failed; byte-identical to intended artifact)' },
+      { label: 'darwin-arm64 archive SHA-256', result: '27d4d08236d9d00f47427c2a76f858b711d5c481d5eea84312e8575f50db0fac' },
+      { label: 'linux-amd64 archive SHA-256', result: 'dd2374bdba4f146350fa3f50cfc5471429aaac1227b1abc5e9a09f6cd7e77ab8' },
+      { label: 'linux-arm64 archive SHA-256', result: '645feedc7a4e4ff9b8b8cc8f2b3d75d8dea24b8b7c627da37e5c7c2882c1bde0' },
+    ],
+  },
+  links: [
+    { label: 'Release — v0.10.7', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.7' },
+    { label: 'TUI/Portal v0.10.7 candidate', href: 'https://github.com/Lingtai-AI/lingtai/commit/5fb554b69f966b39cb9eca32a70c84d628714d18' },
+    { label: 'TUI/Portal compare v0.10.6...v0.10.7', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.10.6...v0.10.7' },
+    { label: 'Installation guide', href: 'https://github.com/Lingtai-AI/lingtai#installation' },
+    { label: 'TUI PR #642 — docs(readme): update Discord invite', href: 'https://github.com/Lingtai-AI/lingtai/pull/642' },
+    { label: 'TUI PR #640 — fix(tui): align Ctrl+O mailbox rendering', href: 'https://github.com/Lingtai-AI/lingtai/pull/640' },
+    { label: 'TUI PR #639 — fix(tui): clarify and group agents in /projects', href: 'https://github.com/Lingtai-AI/lingtai/pull/639' },
+    { label: 'TUI PR #638 — fix(tui): show full timestamps for mailbox mail', href: 'https://github.com/Lingtai-AI/lingtai/pull/638' },
+    { label: 'TUI PR #637 — fix(tui): render mail once from mailbox cache', href: 'https://github.com/Lingtai-AI/lingtai/pull/637' },
+    { label: 'TUI PR #636 — fix(tui): normalize daemon CLI cached input', href: 'https://github.com/Lingtai-AI/lingtai/pull/636' },
+    { label: 'TUI PR #633 — docs(covenant): learn from every setback', href: 'https://github.com/Lingtai-AI/lingtai/pull/633' },
+    { label: 'TUI PR #632 — perf(tui): speed up large Email history loading', href: 'https://github.com/Lingtai-AI/lingtai/pull/632' },
+    { label: 'TUI PR #631 — fix(tui): gate async mail history results', href: 'https://github.com/Lingtai-AI/lingtai/pull/631' },
+    { label: 'TUI PR #630 — test: simplify architecture document checks', href: 'https://github.com/Lingtai-AI/lingtai/pull/630' },
+    { label: 'TUI PR #629 — docs: present LingTai as a lifelong Digital Scientist', href: 'https://github.com/Lingtai-AI/lingtai/pull/629' },
+    { label: 'TUI PR #628 — docs: establish distributed architecture systems', href: 'https://github.com/Lingtai-AI/lingtai/pull/628' },
+    { label: 'TUI PR #620 — feat(tui): turn projects into admin network switcher', href: 'https://github.com/Lingtai-AI/lingtai/pull/620' },
+    { label: 'TUI PR #618 — docs(tui): clarify /btw inquiry semantics', href: 'https://github.com/Lingtai-AI/lingtai/pull/618' },
+    { label: 'TUI PR #617 — refactor(runtime): support lingtai namespace migration', href: 'https://github.com/Lingtai-AI/lingtai/pull/617' },
+    { label: 'TUI PR #616 — simplify README and move beginner guide to website', href: 'https://github.com/Lingtai-AI/lingtai/pull/616' },
+    { label: 'Previous release (20260710-1)', href: 'https://lingtai.ai/en/releases/20260710-1/' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-07-13/' },
+  ],
+};
+
+const v0_16_3_kernel_v0_10_6_tui: Release = {
+  id: '20260710-1',
+  version: 'Kernel v0.16.3 · TUI/Portal v0.10.6',
+  titleEn: 'LingTai release day: tool knowledge ownership, one-shot installer, and leaner prompt budgets',
+  titleZh: 'LingTai release day：工具知识归宿、一键安装脚本与更精简的提示预算',
+  date: '2026-07-10',
+  pkg: 'LingTai kernel + TUI/Portal',
+  tag: 'kernel v0.16.3 · tui v0.10.6',
+  install: 'curl -fsSL https://raw.githubusercontent.com/Lingtai-AI/lingtai/main/install.sh | bash',
+  runtimeNoteEn:
+    'This release adds a one-shot GitHub-release installer that bootstraps Go, Node, uv, and the venv-managed runtime from a single command. The one-shot https://lingtai.ai/install.sh installer plus TUI-managed project and runtime updates are now the primary end-user install and upgrade path; Homebrew is no longer required, and any remaining tap is only a legacy compatibility mirror. PyPI 0.16.3 is published as the managed-runtime package source and verification point for project virtual environments — not the normal user upgrade command — with the sidecar wheel repair (#847) landing in the v0.16.3 tag.',
+  runtimeNoteZh:
+    '本次新增一键 GitHub-release 安装脚本，从一条命令启动 Go、Node、uv 和 venv 管理的 runtime。一键 https://lingtai.ai/install.sh 安装脚本加上 TUI 管理的项目与 runtime 更新，现在是主要的终端用户安装与升级路径；不再需要 Homebrew，任何残留的 tap 仅作为遗留兼容镜像。PyPI 0.16.3 已发布，作为项目虚拟环境受管 runtime 包的来源与校验点——而非正常用户升级命令；sidecar wheel 修复（#847）已落入 v0.16.3 标签。',
+  summaryEn:
+    'This paired release reorganizes how the kernel owns tool knowledge — every built-in tool now lives in its own package directory with a CONTRACT.md, glossary files in EN/ZH/Wen, and a centralized glossary validator — while single-sourcing repeated tool guidance in the system prompt so #842 saves roughly 2,975 tokens per call (a different measurement scope; not a universal net). The TUI ships a one-shot GitHub-release installer with hardened uv/venv/portal/Go bootstrapping, a custom OpenAI wire selector, codex-pool model classification, mailbox search, session tool-call stats, loopback-only portal binding, and credential-labeling for Codex OAuth. The kernel adds a codex-pool exact-model auth lane, backend flag-discovery submanuals for 9 backends, IMAP attachment filename sanitization, extended credential redaction, AED manifest recognition, a skill/glossary i18n migration that grows ZH prompt descriptions by +5,224 chars (+221.17%) and Wen by +5,106 chars (+212.66%) while EN adds 0 new chars from glossary-only files (#844), and a final packaging repair (#847) that makes the native lingtai-search-sidecar platform wheels platlib-compliant.',
+  summaryZh:
+    '这次成对发布重组了 kernel 对工具知识的拥有方式——每个内置工具现在位于自己的包目录中，配备 CONTRACT.md、EN/ZH/Wen 的术语表文件和集中式术语校验器——同时在系统提示中单一来源化重复的工具指导，使 #842 每次调用节省约 2975 token（使用不同的测量范围，不能作为通用净减量）。TUI 新增一键 GitHub-release 安装脚本（加固的 uv/venv/portal/Go 引导）、自定义 OpenAI wire 选择器、codex-pool 模型分类、邮箱搜索与归档扫描、会话工具调用统计、仅回环 portal 绑定、以及 Codex OAuth 凭证标签。Kernel 新增 codex-pool 精确模型认证通道、9 个后端的 flag-discovery 子手册、IMAP 附件文件名消毒、扩展凭证脱敏、AED manifest 字段识别、一次将 i18n 从 lingtai_kernel 迁入工具术语表的重构（使中文提示描述增长 +5,224 字符（+221.17%）、文言增长 +5,106 字符（+212.66%），而英文从术语表文件新增 0 字符（#844）），以及一次收尾的打包修复（#847）——使原生 lingtai-search-sidecar 平台 wheel 符合 platlib 规范。',
+  features: [
+    {
+      titleEn: 'Tool knowledge ownership: packages, contracts, glossaries, and a validator',
+      titleZh: '工具知识归宿：包目录、契约、术语表与校验器',
+      leadEn:
+        'Every built-in tool is reorganized into its own package under src/tools/ with a CONTRACT.md that documents its public API, per-language glossary files (en/zh/wen) that move localized terminology out of runtime i18n JSON, and a centralized glossary_validator that enforces structure and cross-language parity at test time.',
+      leadZh:
+        '每个内置工具被重组到 src/tools/ 下自己的包目录中，配有记录公开 API 的 CONTRACT.md、将本地化术语从运行时 i18n JSON 中迁出的按语言术语表文件（en/zh/wen），以及在测试时强制执行结构和跨语言对等的集中式 glossary_validator。',
+      bulletsEn: [
+        'Kernel #839 consolidates 14 tool packages (bash, read, edit, glob, grep, daemon, email, mcp, notification, psyche, soul, system, skills, knowledge, vision, web_search, avatar, write) from scattered locations (lingtai/core, lingtai/capabilities, lingtai/intrinsics) into a unified src/tools/ namespace with per-tool ANATOMY.md updates.',
+        'Kernel #844 adds glossary-en.md, glossary-zh.md, and glossary-wen.md to every tool package, plus a tools/i18n/ directory with en.json/zh.json/wen.json and a glossary_validator.py (171 lines) that checks structure, required keys, and cross-language key parity. ZH glossary content grows +5,224 chars (+221.17%), Wen +5,106 chars (+212.66%); EN glossary files add 0 new chars because the EN terms are already present in the tool source; this is a glossary-file-only delta (#844).',
+        'TUI #614 adds lingtai-preset-skill router documentation with 12 child manuals covering Codex, Claude Agent SDK, custom, DeepSeek, Gemini, Kimi, MiMo, MiniMax, NVIDIA, OpenRouter, and Zhipu providers — so preset configuration is documented where operators actually look.',
+      ],
+      bulletsZh: [
+        'Kernel #839 将 14 个工具包（bash、read、edit、glob、grep、daemon、email、mcp、notification、psyche、soul、system、skills、knowledge、vision、web_search、avatar、write）从分散位置（lingtai/core、lingtai/capabilities、lingtai/intrinsics）整合到统一的 src/tools/ 命名空间中，每个工具附带更新的 ANATOMY.md。',
+        'Kernel #844 为每个工具包添加 glossary-en.md、glossary-zh.md 和 glossary-wen.md，外加一个 tools/i18n/ 目录（含 en.json/zh.json/wen.json）和一个 glossary_validator.py（171 行），用于检查结构、必需键和跨语言键对等。中文术语表内容增长 +5,224 字符（+221.17%），文言 +5,106 字符（+212.66%）；英文术语表文件新增 0 字符，因为英文术语已在工具源码中存在；这是一次仅术语表文件的增量（#844）。',
+        'TUI #614 添加了 lingtai-preset-skill 路由文档，含 12 个子手册，涵盖 Codex、Claude Agent SDK、custom、DeepSeek、Gemini、Kimi、MiMo、MiniMax、NVIDIA、OpenRouter 和 Zhipu 提供商——让 preset 配置文档出现在操作者实际查看的地方。',
+      ],
+      whyEn:
+        'When tool descriptions, localized terms, and public contracts live in the same package directory, a contributor can find and modify them without searching three separate codebases. The glossary validator ensures that adding a term in one language does not silently break another.',
+      whyZh:
+        '当工具描述、本地化术语和公开契约位于同一包目录中时，贡献者可以在不搜索三个独立代码库的情况下找到和修改它们。术语表校验器确保在一种语言中添加术语不会悄然破坏另一种语言。',
+    },
+    {
+      titleEn: 'Single-sourced tool guidance and the OpenAI wire selector',
+      titleZh: '单一来源化的工具指导与 OpenAI wire 选择器',
+      leadEn:
+        'Kernel #842 single-sources repeated tool guidance strings in the system prompt by referencing the glossary rather than inlining full descriptions per tool, saving approximately 2,975 tokens per API call on the measured test prompt. This measurement scope (the specific test prompt and model used) differs from universal token accounting and the -2,975 figure cannot be taken as a universal net saving across all configurations.',
+      leadZh:
+        'Kernel #842 通过引用术语表而非内联每个工具的完整描述，在系统提示中单一来源化重复的工具指导字符串，在所测量的测试提示上每次 API 调用节省约 2975 token。此测量范围（特定的测试提示和使用的模型）不同于通用 token 计算，-2975 的数字不能作为跨所有配置的通用净减量。',
+      bulletsEn: [
+        'Kernel #842 refactors tool guidance in the system prompt to reference glossary files instead of inline localized strings, yielding a measured -2,975 token saving on the test prompt used for validation. The measurement scope is specific to that test prompt and model; it cannot be extrapolated as a universal net saving across all operator configurations and prompts. This -2,975-token figure is a wire-saving on a specific test prompt and is a different scope from the #844 glossary-file character deltas.',
+        'Kernel #843 adds a custom OpenAI wire API selector so operators can choose the exact OpenAI-compatible wire format (e.g. chat completions vs. responses API) per agent or preset, rather than relying on a single hardcoded default.',
+        'TUI #613 mirrors the kernel-side custom wire selector in the TUI preset editor, so the wire API choice is a first-class TUI setting rather than a manifest-only override.',
+      ],
+      bulletsZh: [
+        'Kernel #842 将系统提示中的工具指导重构为引用术语表文件而非内联本地化字符串，在用于验证的测试提示上产生 -2,975 token 的实测节省。测量范围限于该测试提示和模型；不能外推为跨所有操作者配置和提示的通用净减量。这个 -2,975 token 是特定测试提示上的 wire 节省，与 #844 术语表文件字符增量属于不同的测量范围。',
+        'Kernel #843 添加自定义 OpenAI wire API 选择器，使操作者可以按 agent 或 preset 选择确切的 OpenAI 兼容 wire 格式（如 chat completions vs. responses API），而非依赖单一硬编码默认值。',
+        'TUI #613 在 TUI preset 编辑器中镜像了 kernel 端的自定义 wire 选择器，使 wire API 选择成为一等 TUI 设置，而非仅限 manifest 的覆盖。',
+      ],
+      whyEn:
+        'The -2,975 token saving is real for the measured prompt, but it is not a universal floor; different prompts, languages, and tool counts will yield different savings. Stating the measurement scope honestly prevents operators from expecting a fixed saving that does not hold in their configuration.',
+      whyZh:
+        '-2,975 token 的节省对所测量的提示是真实的，但它不是通用下限；不同的提示、语言和工具数量会产生不同的节省。诚实地说明测量范围可以防止操作者期待在他们的配置中不会成立的固定节省。',
+    },
+    {
+      titleEn: 'Codex-pool model classification and auth metadata',
+      titleZh: 'codex-pool 模型分类与认证元数据',
+      leadEn:
+        'The codex-pool auth lane now classifies shared OAuth pools by exact model identifier rather than treating all models behind one credential as interchangeable, and the token ledger records safe auth metadata for auditability.',
+      leadZh:
+        'codex-pool 认证通道现在按精确模型标识符分类共享 OAuth 池，而非将一个凭证背后的所有模型视为可互换的；token 账本记录安全的认证元数据以便审计。',
+      bulletsEn: [
+        'Kernel #841 classifies the codex-pool auth pool by exact model, so a single OAuth credential serving multiple models is no longer treated as one undifferentiated pool.',
+        'Kernel codex/token-ledger-auth-metadata records safe auth metadata (pool, model, source) in the token ledger without exposing credential material.',
+        'TUI #612 preserves and truthfully renders model-classified codex pools in the setup and pool management UI.',
+      ],
+      bulletsZh: [
+        'Kernel #841 按精确模型分类 codex-pool 认证池，使一个为多个模型服务的 OAuth 凭证不再被当作一个未分化的池。',
+        'Kernel codex/token-ledger-auth-metadata 在 token 账本中记录安全的认证元数据（池、模型、来源），不暴露凭证材料。',
+        'TUI #612 在 setup 和池管理 UI 中保留并如实渲染模型分类的 codex pool。',
+      ],
+      whyEn:
+        'When multiple models share one OAuth credential, cost attribution and rate-limit troubleshooting require knowing exactly which model consumed the tokens; classification makes that attribution automatic rather than a manual log hunt.',
+      whyZh:
+        '当多个模型共享一个 OAuth 凭证时，成本归因和限流排查需要准确知道是哪个模型消耗了 token；分类使归因自动化，而不需要手动翻日志。',
+    },
+    {
+      titleEn: 'One-shot installer, portal security, and TUI cockpit improvements',
+      titleZh: '一键安装脚本、portal 安全与 TUI 座舱改进',
+      leadEn:
+        'The TUI ships a GitHub-release one-shot installer that bootstraps Go, Node, uv, and the venv runtime from a single curl command, hardens WSL and broken-venv fallbacks, and adds portal loopback-only binding as the secure default.',
+      leadZh:
+        'TUI 新增一个从单条 curl 命令启动 Go、Node、uv 和 venv runtime 的 GitHub-release 一键安装脚本，加固了 WSL 和损坏 venv 的回退，并将 portal 仅回环绑定设为安全默认值。',
+      bulletsEn: [
+        'TUI #595 adds install.sh — a GitHub-release one-shot installer with Go, Node, uv, and venv bootstrapping, portal build support, and fallback to source builds (#596, #598, #599, #601–#604, #606).',
+        'TUI portal loopback binding is the default (TUI fix/portal-loopback): the portal no longer binds 0.0.0.0 by default, closing the exposure reported in earlier security audits.',
+        'TUI #610 adds mailbox search and archive scanning so operators can find messages by keyword without leaving the cockpit; TUI #611 shows session tool-call stats in the Details panel.',
+        'Codex OAuth credentials can now be labeled (TUI BatalloLu: allow labeling Codex OAuth credentials), making multi-account setups distinguishable in the login UI.',
+      ],
+      bulletsZh: [
+        'TUI #595 添加 install.sh——一个含 Go、Node、uv 和 venv 引导、portal 构建支持和源码构建回退的 GitHub-release 一键安装脚本（#596、#598、#599、#601–#604、#606）。',
+        'TUI portal 回环绑定成为默认值（TUI fix/portal-loopback）：portal 不再默认绑定 0.0.0.0，关闭了早期安全审计中报告的暴露。',
+        'TUI #610 添加邮箱搜索和归档扫描，让操作者可以按关键词查找消息而不离开座舱；TUI #611 在 Details 面板中显示会话工具调用统计。',
+        'Codex OAuth 凭证现在可以打标签（TUI BatalloLu: allow labeling Codex OAuth credentials），使多账户设置在登录 UI 中可区分。',
+      ],
+      whyEn:
+        'A one-command installer that actually bootstraps every dependency (Go, Node, uv, the venv runtime) removes the largest adoption friction for new operators. Loopback-only portal binding is the secure default for a local-first tool.',
+      whyZh:
+        '一个真正引导每个依赖（Go、Node、uv、venv runtime）的一键安装脚本消除了新操作者最大的采用摩擦。仅回环 portal 绑定是一个本地优先工具的安全默认值。',
+    },
+    {
+      titleEn: 'Backend knowledge, credential hardening, and the sidecar wheel repair',
+      titleZh: '后端知识、凭证加固与 sidecar wheel 修复',
+      leadEn:
+        'The kernel adds flag-discovery submanuals for 9 daemon backends, extends credential redaction and IMAP attachment sanitization, recognizes AED manifest fields, fixes pseudo-agent mail polling, and closes the release with #847 — a packaging repair that makes the native lingtai-search-sidecar platform wheels install into platlib.',
+      leadZh:
+        'kernel 为 9 个 daemon 后端添加了 flag-discovery 子手册，扩展了凭证脱敏和 IMAP 附件消毒，识别了 AED manifest 字段，修复了伪 agent 邮件轮询，并以 #847 收尾——一次让原生 lingtai-search-sidecar 平台 wheel 安装进 platlib 的打包修复。',
+      bulletsEn: [
+        'Kernel #830–#837 adds flag-discovery submanuals for Codex, OpenCode, claude-p, MiMo Code, built-in LingTai, Kimi Code, Qwen Code, Cursor, and Oh-My-Pi daemon backends — each documenting the exact flags, environment variables, and discovery flow for that backend.',
+        'Kernel #824 extends trace redaction to cover additional credential key names; kernel #770 sanitizes IMAP attachment filenames before writing to disk; kernel #825 recognizes AED (agent entity descriptor) manifest fields; kernel #806 fixes pseudo-agent outbox polling priority.',
+        'Kernel #828 clarifies rebuild context observation timing, and #838 clarifies peer mail during refresh. Kernel #846 fixes prompt-related-files runtime path resolution and adds tests that ignore external paths in prompt crawl checks.',
+        'Kernel #847 makes the native lingtai-search-sidecar platform-wheel layout correctly install into platlib rather than purelib; the Ubuntu, Intel-macOS, ARM-macOS, and Windows wheel jobs plus an independent sdist all passed on wheels-workflow run 29108219136. Intel/ARM macOS wheels declare 10.12 / 11.0 deployment-target floors, and a dependency-free sidecar smoke test avoids the unrelated PyAV/FFmpeg dependency resolution. This is a CI/packaging fix for the existing Python wheel runner, not a new Windows product or tool.',
+      ],
+      bulletsZh: [
+        'Kernel #830–#837 为 Codex、OpenCode、claude-p、MiMo Code、内置 LingTai、Kimi Code、Qwen Code、Cursor 和 Oh-My-Pi daemon 后端添加了 flag-discovery 子手册——每个都记录了该后端的确切标志、环境变量和发现流程。',
+        'Kernel #824 扩展了 trace 脱敏以覆盖额外的凭证键名；kernel #770 在写入磁盘前消毒 IMAP 附件文件名；kernel #825 识别 AED（agent entity descriptor）manifest 字段；kernel #806 修复了伪 agent 发件箱轮询优先级。',
+        'Kernel #828 澄清了重建上下文观察时机，#838 澄清了刷新期间的对等邮件。Kernel #846 修复了 prompt 相关文件的运行时路径解析，并添加了在 prompt 爬取检查中忽略外部路径的测试。',
+        'Kernel #847 让原生 lingtai-search-sidecar 平台 wheel 布局正确安装进 platlib 而非 purelib；Ubuntu、Intel macOS、ARM macOS 和 Windows wheel 作业外加一个独立 sdist 均在 wheels 工作流 run 29108219136 上通过。Intel/ARM macOS wheel 声明 10.12 / 11.0 部署目标下限，且一个无依赖的 sidecar 冒烟测试避开了无关的 PyAV/FFmpeg 依赖解析。这是对既有 Python wheel 运行器的 CI/打包修复，而非新的 Windows 产品或工具。',
+      ],
+      whyEn:
+        'Each daemon backend has its own flag conventions and environment quirks; a submanual per backend means the runtime can surface exact setup guidance instead of generic advice. Credential redaction and attachment sanitization are table-stakes for a tool that reads mail and runs unattended. And a wheel that lays its native sidecar into platlib is the difference between an install that imports and one that silently ships files to the wrong place.',
+      whyZh:
+        '每个 daemon 后端有自己的标志约定和环境怪癖；每个后端一个子手册意味着运行时可以呈现确切的设置指导而非通用建议。凭证脱敏和附件消毒是一个读取邮件且无人值守运行的工具的基本门槛。而把原生 sidecar 放进 platlib 的 wheel，决定了一次安装是能正常 import，还是把文件悄悄装到了错误的位置。',
+    },
+    {
+      titleEn: 'Release-window audit and contributors',
+      titleZh: '发布窗口审计与贡献者',
+      leadEn:
+        'This entry accounts for every commit author, with strict ranges from the previous release tags through the release tags: TUI/Portal v0.10.5..v0.10.6 (41 commits; author breakdown 30 @huangzesen, 7 @TZZheng, 3 @github-actions[bot], 1 @BatalloLu) and Kernel v0.16.2..v0.16.3 (54 commits; author breakdown 48 @huangzesen, 5 @TZZheng, 1 @wchwawa). GitHub merge-commit committers and @github-actions[bot] are automation, not human authorship; @9s5bz2jvd2-lang co-authored kernel #843; AI co-authors (Claude Fable 5, Claude Opus 4.8) appear on some commit trailers.',
+      leadZh:
+        '本条目记录每个 commit 作者，采用从上一发布标签到本次发布标签的严格范围：TUI/Portal v0.10.5..v0.10.6（41 个 commit；作者分布 30 个 @huangzesen、7 个 @TZZheng、3 个 @github-actions[bot]、1 个 @BatalloLu），Kernel v0.16.2..v0.16.3（54 个 commit；作者分布 48 个 @huangzesen、5 个 @TZZheng、1 个 @wchwawa）。GitHub merge commit 的提交者与 @github-actions[bot] 属于自动化而非人类作者；@9s5bz2jvd2-lang 是 kernel #843 的共同作者；部分 commit trailer 上有 AI 共同作者（Claude Fable 5、Claude Opus 4.8）。',
+      bulletsEn: [
+        'TUI/Portal: 41 commits (30 @huangzesen, 7 @TZZheng, 3 @github-actions[bot] daily star-count updates, 1 @BatalloLu; the 13 merge commits are committed by GitHub); 149 files changed, +7,573 / -1,007 lines.',
+        'Kernel: 54 commits (48 @huangzesen, 5 @TZZheng, 1 @wchwawa; the merge commits are committed by GitHub/@huangzesen); 392 files changed, +12,506 / -2,718 lines through the candidate, and 396 files changed, +13,306 / -2,780 lines through the v0.16.3 tag once the #847 sidecar-wheel repair (5 files, +809 / -71) is included.',
+        'Note: kernel #842 removed -2,975 tokens of system-prompt tool guidance via single-sourcing on the measured test prompt; this measurement scope (the specific test prompt) differs from universal net accounting and the -2,975 figure is not a universal saving, and is a different scope from the #844 glossary-file character deltas (EN 0; ZH +5,224/+221.17%; Wen +5,106/+212.66%).',
+        'Human contributors/authors in the window: @huangzesen, @TZZheng, @9s5bz2jvd2-lang (kernel #843 co-author), @BatalloLu, @wchwawa. Automation: @github-actions[bot] (daily star updates) and the GitHub merge committer. AI co-authors: Claude Fable 5, Claude Opus 4.8.',
+      ],
+      bulletsZh: [
+        'TUI/Portal：41 个 commit（30 个 @huangzesen、7 个 @TZZheng、3 个 @github-actions[bot] 每日 star 更新、1 个 @BatalloLu；其中 13 个 merge commit 由 GitHub 提交）；149 个文件变更，+7,573 / -1,007 行。',
+        'Kernel：54 个 commit（48 个 @huangzesen、5 个 @TZZheng、1 个 @wchwawa；merge commit 由 GitHub/@huangzesen 提交）；至候选提交为 392 个文件变更，+12,506 / -2,718 行；纳入 #847 sidecar wheel 修复（5 个文件，+809 / -71）后，至 v0.16.3 标签为 396 个文件变更，+13,306 / -2,780 行。',
+        '注：kernel #842 在所测量的测试提示上通过单一来源化移除了 -2,975 token 的系统提示工具指导；此测量范围（特定测试提示）不同于通用净计算，-2,975 的数字不是通用节省，且与 #844 的术语表文件字符增量（英文 0；中文 +5,224/+221.17%；文言 +5,106/+212.66%）属于不同范围。',
+        '窗口内的人类贡献者/作者：@huangzesen、@TZZheng、@9s5bz2jvd2-lang（kernel #843 共同作者）、@BatalloLu、@wchwawa。自动化：@github-actions[bot]（每日 star 更新）与 GitHub merge 提交者。AI 共同作者：Claude Fable 5、Claude Opus 4.8。',
+      ],
+      whyEn:
+        'The contributor list intentionally names every human commit author, separates automation (the bot and GitHub merge committers) from humans, and acknowledges the measurement caveat around #842 so operators can form their own judgment about prompt cost changes.',
+      whyZh:
+        '贡献者名单刻意列出每位人类 commit 作者，将自动化（bot 与 GitHub merge 提交者）与人类分开，并说明 #842 的测量注意事项，让操作者可以自行判断提示成本的变化。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng', '9s5bz2jvd2-lang', 'BatalloLu', 'wchwawa'],
+  validation: {
+    commit:
+      'kernel f3971f254d9f918715cf0099678a089628cb364f (v0.16.3) · tui 7f9ea9efa2fa45d354d2ba8852d015734542d334 (v0.10.6)',
+    items: [
+      { label: 'TUI strict range', result: 'v0.10.5..v0.10.6 — 41 commits, 149 files changed, +7,573 / -1,007' },
+      { label: 'Kernel strict range', result: 'v0.16.2..v0.16.3 — 54 commits, 396 files changed, +13,306 / -2,780' },
+      { label: 'Web archive build', result: 'npm ci && npm run build passed from the clean release worktree' },
+      { label: 'Kernel tool glossary validator', result: 'glossary_validator.py enforces structure, required keys, and cross-language key parity' },
+      { label: 'Kernel #844 i18n delta', result: 'EN 0 new chars; ZH +5,224 chars (+221.17%); Wen +5,106 chars (+212.66%) — glossary-file-only delta' },
+      { label: 'Kernel #842 single-source', result: '-2,975 tokens on measured test prompt; measurement scope caveat documented; not a universal net saving' },
+      { label: 'Kernel #847 sidecar wheels', result: 'platlib-compliant native wheels; Ubuntu/Intel-macOS/ARM-macOS/Windows wheel jobs + independent sdist passed on run 29108219136; macOS floors 10.12/11.0; dependency-free sidecar smoke test' },
+    ],
+  },
+  links: [
+    { label: 'TUI/Portal v0.10.6 release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.6' },
+    { label: 'Kernel v0.16.3 release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.3' },
+    { label: 'TUI/Portal compare', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.10.5...v0.10.6' },
+    { label: 'Kernel compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.16.2...v0.16.3' },
+    { label: 'Kernel #839 tools consolidation', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/839' },
+    { label: 'Kernel #844 tool glossaries', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/844' },
+    { label: 'Kernel #842 single-source guidance', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/842' },
+    { label: 'Kernel #843 OpenAI wire API', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/843' },
+    { label: 'Kernel #847 sidecar wheel platlib repair', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/847' },
+    { label: 'TUI #595 one-shot installer', href: 'https://github.com/Lingtai-AI/lingtai/pull/595' },
+    { label: 'TUI #613 custom wire selector', href: 'https://github.com/Lingtai-AI/lingtai/pull/613' },
+    { label: 'TUI #614 preset router docs', href: 'https://github.com/Lingtai-AI/lingtai/pull/614' },
+  ],
+};
+
+const v0_16_2_kernel_v0_10_5_tui: Release = {
+  id: '20260707-1',
+  version: 'Kernel v0.16.2 · TUI/Portal v0.10.5',
+  titleEn: 'Reliability patch: safer migrations, cleaner summaries, and steadier releases',
+  titleZh: '可靠性补丁：更安全的迁移、更清爽的摘要与更稳的发布链路',
+  date: '2026-07-07',
+  pkg: 'LingTai kernel + TUI/Portal',
+  tag: 'kernel v0.16.2 · tui v0.10.5',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The TUI/Homebrew path is the normal end-user upgrade path. PyPI 0.16.2 is published as the runtime package source and verification point for project virtual environments.',
+  runtimeNoteZh:
+    '普通用户升级仍以 TUI/Homebrew 路径为主。PyPI 0.16.2 已发布，作为项目虚拟环境的 runtime 包来源与校验点。',
+  summaryEn:
+    'This paired patch release closes the loop on the July reliability batch: schema-critical migrations now fail loudly instead of advancing half-applied state, `lingtai clean` protects live agents, global config writes are atomic, and the kernel gains cleaner summary/manual/notification contracts for long-running agents.',
+  summaryZh:
+    '这次成对补丁发布收口 7 月可靠性批次：schema 关键迁移失败会明确中止而不再推进半成状态，`lingtai clean` 会保护存活 agent，全局配置写入改为原子写；kernel 侧也补齐了更清晰的摘要、manual 与通知契约，方便长任务 agent 稳定运行。',
+  features: [
+    {
+      titleEn: 'Safer TUI state transitions',
+      titleZh: '更安全的 TUI 状态转换',
+      leadEn:
+        'The TUI release focuses on protecting user projects from partial writes and unsafe cleanup commands.',
+      leadZh:
+        'TUI 侧重点是保护用户项目，不让半写入和误清理把工作目录带入危险状态。',
+      bulletsEn: [
+        'Schema-critical migrations m028/m030/m039 now propagate real transform/read/write failures instead of advancing the stored migration version after a partial failure.',
+        '`lingtai clean` refuses to remove `.lingtai/` while live or surviving agents are discoverable, or when discovery fails, unless the operator explicitly uses `--force`.',
+        'Global `config.json`, `tui_config.json`, and `.env` writes now use sibling-temp files, fsync, rename, cleanup, and permission preservation.',
+      ],
+      bulletsZh: [
+        'schema 关键迁移 m028/m030/m039 现在会传播真实的转换、读取、写入失败，不再在半失败后推进已存版本号。',
+        '`lingtai clean` 在发现存活/可恢复 agent，或 agent 探测失败时，会拒绝删除 `.lingtai/`，除非操作者明确使用 `--force`。',
+        '全局 `config.json`、`tui_config.json` 与 `.env` 写入改为 sibling-temp、fsync、rename、清理和权限保留的原子流程。',
+      ],
+      whyEn:
+        'Project state should either move forward completely or fail with evidence; cleanup must never silently erase a running network.',
+      whyZh:
+        '项目状态要么完整前进，要么带着证据失败；清理命令绝不能静默擦掉正在运行的网络。',
+    },
+    {
+      titleEn: 'Clearer setup, Codex, and operator feedback',
+      titleZh: '更清晰的 setup、Codex 与操作反馈',
+      leadEn:
+        'Several smaller TUI changes make failures visible at the surface where the operator can act.',
+      leadZh:
+        '多项较小的 TUI 改动把失败暴露在操作者可以处理的界面层。',
+      bulletsEn: [
+        'Codex OAuth/pool credentials now have clearer account labels and fallback filenames.',
+        'First-run config saves, recipe re-apply failures, preset load causes, and updater already-current states now surface more directly.',
+        'The UI gained API-call grouping, Ctrl+End tail-jump coverage, refreshed knowledge entries, async home telemetry, and network activity evidence.',
+      ],
+      bulletsZh: [
+        'Codex OAuth / pool 凭证现在有更清楚的账号标签与 fallback 文件名。',
+        'first-run 配置保存、recipe re-apply、preset 加载原因、updater 已是最新版等状态会更直接地暴露出来。',
+        'UI 增加 API call 分组、Ctrl+End 跳到尾部覆盖、knowledge 刷新、异步 home telemetry 与网络活动证据。',
+      ],
+      whyEn:
+        'When setup fails, the fastest fix is a precise surface message rather than another hidden log hunt.',
+      whyZh:
+        'setup 失败时，最快的修复方式是准确的界面信息，而不是再去翻隐藏日志。',
+    },
+    {
+      titleEn: 'Kernel summary and manual contracts',
+      titleZh: 'Kernel 摘要与 manual 契约',
+      leadEn:
+        'Kernel v0.16.2 continues the progressive-disclosure work needed by long-lived agents.',
+      leadZh:
+        'kernel v0.16.2 继续补强长驻 agent 所需的 progressive-disclosure 基础。',
+      bulletsEn: [
+        'Daemon/glob results now participate in summary flows, with better a-priori compression metadata and documentation.',
+        'Info/manual signpost actions are split so tools can report runtime health separately from bundled manuals.',
+        'Prompt section contracts, adapt-from-evidence guidance, retention footprint reports, and timely transient `_meta` filtering reduce stale or noisy context.',
+      ],
+      bulletsZh: [
+        'daemon / glob 结果纳入摘要流，并补上更明确的 a-priori compression metadata 与文档。',
+        'info / manual signpost action 拆开，工具可以把 runtime health 与 bundled manual 分开呈现。',
+        'prompt section contract、adapt-from-evidence 指引、retention footprint report 与及时 transient `_meta` 过滤，减少陈旧或嘈杂上下文。',
+      ],
+      whyEn:
+        'Agents doing release work need to preserve evidence without dragging every raw log through the next hundred calls.',
+      whyZh:
+        '做发布这类长任务时，agent 需要保留证据，但不能把每段原始日志拖进后续上百次调用。',
+    },
+    {
+      titleEn: 'Daemon, MCP, and messaging resilience',
+      titleZh: 'Daemon、MCP 与消息韧性',
+      leadEn:
+        'The runtime side adds more explicit contracts for delegated work and notification delivery.',
+      leadZh:
+        'runtime 侧为委托执行与通知传递补上更明确的契约。',
+      bulletsEn: [
+        'Kimi native MCP config, parent MCP propagation into CLI backends, and daemon architecture docs make delegated coding/review work easier to reproduce.',
+        'Codex pool provider/preset support and external skill intake docs make tool routing more explicit.',
+        'Persistent Telegram notification/reply context and the LICC notification contract reduce lost context across message surfaces.',
+      ],
+      bulletsZh: [
+        'Kimi native MCP config、父级 MCP 向 CLI backend 传播、daemon 架构文档，让委托代码/审核任务更可复现。',
+        'Codex pool provider / preset 支持与外部 skill intake 文档让工具路由更明确。',
+        'Telegram 持久通知/回复上下文与 LICC notification contract 降低跨消息面丢上下文的概率。',
+      ],
+      whyEn:
+        'Delegated work is only useful if the parent can reconstruct what happened and why the result is safe to ship.',
+      whyZh:
+        '委托任务只有在父 agent 能重建发生了什么、为什么可发布时，才真正有价值。',
+    },
+    {
+      titleEn: 'Release-window audit and contributors',
+      titleZh: '发布窗口审计与贡献者',
+      leadEn:
+        'Following the previous release-log structure, this entry accounts for actual commit authors as well as every issue and PR closed in the release window, including closed-unmerged PRs and triaged/rejected issues.',
+      leadZh:
+        '沿用上一版 release log 的结构，这条记录同时补齐实际 commit author，以及发布窗口内所有已关闭 issue 与 PR，包括未合并关闭的 PR、已分流或拒绝的问题。',
+      bulletsEn: [
+        'TUI/Portal: 45 commits (39 @huangzesen, 2 @TZZheng, 4 @github-actions[bot]); 20 PRs closed (19 merged, 1 closed unmerged); 31 issues closed.',
+        'Kernel: 51 commits (29 @9s5bz2jvd2-lang, 20 @huangzesen, 2 @TZZheng); 26 PRs closed (20 merged, 6 closed unmerged); 15 issues closed.',
+        'Release-window contributors/authors: @huangzesen, @TZZheng, @9s5bz2jvd2-lang, @ZigongXu, @BrianLiubr, and @888yzbt888.',
+      ],
+      bulletsZh: [
+        'TUI/Portal：45 个 commit（39 个 @huangzesen、2 个 @TZZheng、4 个 @github-actions[bot]）；关闭 20 个 PR（19 个合并、1 个未合并关闭）与 31 个 issue。',
+        'Kernel：51 个 commit（29 个 @9s5bz2jvd2-lang、20 个 @huangzesen、2 个 @TZZheng）；关闭 26 个 PR（20 个合并、6 个未合并关闭）与 15 个 issue。',
+        '发布窗口贡献者/作者：@huangzesen、@TZZheng、@9s5bz2jvd2-lang、@ZigongXu、@BrianLiubr、@888yzbt888。',
+      ],
+      whyEn:
+        'The contributor list intentionally includes issue/PR authors from the release window even when a specific issue or PR was closed, rejected, or unmerged.',
+      whyZh:
+        '贡献者名单刻意纳入发布窗口内的 issue/PR 作者，即使某个 issue 或 PR 最终被关闭、拒绝或未合并。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng', 'ZigongXu', 'BrianLiubr', '888yzbt888', '9s5bz2jvd2-lang'],
+  validation: {
+    commit:
+      'kernel ae53b4173a0373475e4f4a3a4d399d552a46f5c0 · tui 031b5ea8d01a8ffd4cdd0d01698fe7bd901704fa',
+    items: [
+      { label: 'TUI diff check', result: 'passed with documented docs/stars/stars.csv CRLF caveat' },
+      { label: 'TUI Go tests', result: 'targeted tests passed; full suite passed after known flaky rerun' },
+      { label: 'Portal validation', result: 'web build and Go tests passed' },
+      { label: 'TUI/Portal release builds', result: 'both binaries built successfully from the release candidate' },
+      { label: 'Kernel validation', result: 'diff check, compileall, and pytest passed (3798 passed, 4 skipped)' },
+      { label: 'Kernel packaging', result: 'build and twine check passed for wheel + sdist' },
+      { label: 'PyPI publication', result: 'lingtai 0.16.2 uploaded and visible on PyPI' },
+      { label: 'Homebrew tap', result: 'formula v0.10.5, SHA256 verified, ruby syntax and strict audit passed' },
+      { label: 'Release-window audit', result: '96 commits and 92 closed items accounted: TUI/Portal 45 commits, 20 PRs, 31 issues; kernel 51 commits, 26 PRs, 15 issues; 6 human contributors/authors listed' },
+    ],
+  },
+  links: [
+    { label: 'TUI/Portal v0.10.5 release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.5' },
+    { label: 'Kernel v0.16.2 release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.2' },
+    { label: 'PyPI lingtai 0.16.2', href: 'https://pypi.org/project/lingtai/0.16.2/' },
+    { label: 'Homebrew formula', href: 'https://github.com/Lingtai-AI/homebrew-lingtai/blob/main/lingtai-tui.rb' },
+    { label: 'TUI tag commit', href: 'https://github.com/Lingtai-AI/lingtai/commit/031b5ea8d01a8ffd4cdd0d01698fe7bd901704fa' },
+    { label: 'Kernel tag commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/ae53b4173a0373475e4f4a3a4d399d552a46f5c0' },
+    { label: 'TUI compare', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.10.4...v0.10.5' },
+    { label: 'Kernel compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.16.1...v0.16.2' },
+  ],
+};
+
+const v0_16_1_kernel_v0_10_4_tui: Release = {
+  id: '20260703-1',
+  version: 'Kernel v0.16.1 · TUI/Portal v0.10.4',
+  titleEn: 'Summarize rebuilds, portal reliability, and a cleaner update path',
+  titleZh: '总结重构、Portal 可靠性与更清晰的更新路径',
+  date: '2026-07-03',
+  pkg: 'LingTai kernel + TUI/Portal',
+  tag: 'kernel v0.16.1 · tui v0.10.4',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui && python -m pip install --upgrade lingtai==0.16.1',
+  runtimeNoteEn:
+    'Existing agents should refresh at the next safe boundary after upgrading the kernel so the new summarize/rebuild prompts and runtime guidance are active.',
+  runtimeNoteZh:
+    '升级 kernel 后，已有智能体应在安全边界 refresh，让新的 summarize/rebuild 提示与运行时指导生效。',
+  summaryEn:
+    'This paired release makes LingTai\'s context-rebuild behavior explicit, ships a safer TUI/Portal update and replay path, and closes another round of runtime reliability work across logging, addons, MCP workbench docs, and security hygiene.',
+  summaryZh:
+    '这一组配套发布把 LingTai 的上下文重构语义讲清楚，补上更安全的 TUI/Portal 更新与 replay 路径，并继续修复日志、插件、MCP workbench 文档与安全卫生等运行时边缘问题。',
+  features: [
+    {
+      titleEn: 'Context rebuild semantics are now explicit',
+      titleZh: '上下文重构语义显式化',
+      leadEn:
+        'Kernel v0.16.1 clarifies what summarize does immediately, what waits for reconstruction, and when the runtime forces a rebuild.',
+      leadZh:
+        'Kernel v0.16.1 明确区分 summarize 立即记录什么、什么要等重构才生效，以及运行时何时强制重构。',
+      bulletsEn: [
+        'Public `system(action="summarize", rebuild=true)` replaces the older rebuild-only/dry-run wording.',
+        'Summary markers now move through pending/done states, making delayed reconstruction easier to reason about.',
+        'The runtime documents the 0.75 proactive hint, the 1.0 hard forced-rebuild boundary, and the 0.6 recovery target in one place.',
+      ],
+      bulletsZh: [
+        '公开的 `system(action="summarize", rebuild=true)` 取代旧的 rebuild-only / dry-run 说法。',
+        'summary 标记现在区分 pending/done，延迟重构何时真正生效更容易判断。',
+        '运行时把 0.75 主动提示、1.0 强制重构边界与 0.6 恢复目标放到同一套说明里。',
+      ],
+      whyEn:
+        'Long-lived agents can now choose between continuing, applying pending summaries, or molting without guessing which layer owns the active provider context.',
+      whyZh:
+        '长会话智能体现在可以更有把握地选择继续、应用 pending summaries，或直接凝蜕，而不是猜当前 provider context 里到底有什么。',
+    },
+    {
+      titleEn: 'Runtime reliability and integration edges were tightened',
+      titleZh: '运行时可靠性与集成边缘继续收紧',
+      leadEn:
+        'The kernel release also fixes multiple edges around token accounting, logging, empty responses, lifecycle signals, and addon/MCP documentation.',
+      leadZh:
+        'kernel 这轮还修复了 token accounting、日志、空响应、生命周期信号与 addon/MCP 文档等多个边缘。',
+      bulletsEn: [
+        'Token usage layout, since-molt session accounting, cache-miss telemetry, and refresh rebuild opt-in were clarified.',
+        'JSONL close races, streamed tool-call argument fallback logging, empty-response usage handling, and atomic chat-history writes were hardened.',
+        'Telegram dynamic slash commands, WeChat filename sanitization, lifecycle/nirvana safeguards, gitignore/secrets hygiene, and NoKV workbench metadata validation landed together.',
+      ],
+      bulletsZh: [
+        'token usage 布局、since-molt 会话统计、cache-miss 遥测与 refresh rebuild opt-in 说明得到统一。',
+        'JSONL close race、streamed tool-call argument fallback logging、空响应 usage 处理与 chat-history 原子写入都更稳。',
+        'Telegram 动态 slash commands、WeChat 文件名清洗、生命周期/nirvana 防护、gitignore/secrets 卫生与 NoKV workbench metadata 验证一起落地。',
+      ],
+      whyEn:
+        'These changes reduce the number of cases where a live agent, its durable logs, and its prompt guidance disagree about what just happened.',
+      whyZh:
+        '这些变化减少了 live agent、持久日志与 prompt 指导对“刚刚发生了什么”理解不一致的情况。',
+    },
+    {
+      titleEn: 'TUI and Portal startup/replay paths are safer',
+      titleZh: 'TUI 与 Portal 的启动 / replay 路径更安全',
+      leadEn:
+        'TUI/Portal v0.10.4 focuses on update flows, portal startup cleanup, replay reconstruction, and small UI/setup correctness fixes.',
+      leadZh:
+        'TUI/Portal v0.10.4 重点收敛更新流程、Portal 启动清理、replay reconstruction，以及 UI/setup 的小型正确性修复。',
+      bulletsEn: [
+        'Portal startup timeout cleanup, replay-cache writer sharing, and the `rehydrateDone` deadlock fix improve replay reliability.',
+        'The `/update-tui` self-update command, explicit utility refresh behavior, runtime venv marker, and stricter `config.json` permissions make setup/update safer.',
+        'Verbose-toggle bottom anchoring, credential Esc handling, canonical recipe preview resolvers, inactive workflow cleanup, release docs, and normalized stars CSV whitespace round out the TUI polish.',
+      ],
+      bulletsZh: [
+        'Portal startup timeout cleanup、replay-cache writer sharing 与 `rehydrateDone` deadlock 修复提升 replay 可靠性。',
+        '`/update-tui` 自更新命令、显式 utility refresh、runtime venv marker 与更严格的 `config.json` 权限让 setup/update 更安全。',
+        'verbose toggle 后贴底、credential Esc 返回、canonical recipe preview resolvers、清理 inactive workflow、release docs 与 stars CSV whitespace 规范化则补齐 TUI 打磨。',
+      ],
+      whyEn:
+        'The release keeps local developer installations predictable while making the user-facing startup and replay surfaces less fragile.',
+      whyZh:
+        '这轮让本地开发安装路径更可预期，也让面向用户的启动与 replay 表面更不脆弱。',
+    },
+    {
+      titleEn: 'The release window was audited end to end',
+      titleZh: '发布窗口完成端到端审计',
+      leadEn:
+        'The public release log covers 84 commits, 34 merged PRs, 96 issue records updated in the Jul 1–3 release window, and 136 files changed with +7,665 / -1,378 lines across the kernel and TUI/Portal repositories.',
+      leadZh:
+        '公开 release log 覆盖 kernel 与 TUI/Portal 两个仓库合计 84 个 commits、34 个 merged PR、7 月 1–3 日发布窗口内更新的 96 条 issue 记录，以及 136 个文件、+7,665 / -1,378 行代码变更。',
+      bulletsEn: [
+        'TUI/Portal: 28 commits, 12 merged PRs, 40 issue records updated in the release window, 57 files changed, +1,798 / -583 lines.',
+        'Kernel: 56 commits, 22 merged PRs, 56 issue records updated in the release window, 79 files changed, +5,867 / -795 lines.',
+        'Gates covered TUI/Portal Go tests, portal web build, release binary builds, kernel compileall, focused 400-test pytest run, package build, twine checks, PyPI verification, and Homebrew audit/fetch.',
+      ],
+      bulletsZh: [
+        'TUI/Portal：28 个 commits、12 个 merged PR、发布窗口内更新的 40 条 issue 记录、57 个文件、+1,798 / -583 行。',
+        'Kernel：56 个 commits、22 个 merged PR、发布窗口内更新的 56 条 issue 记录、79 个文件、+5,867 / -795 行。',
+        '验证覆盖 TUI/Portal Go tests、portal web build、release binary builds、kernel compileall、400 个 focused pytest、package build、twine checks、PyPI verification 与 Homebrew audit/fetch。',
+      ],
+      whyEn:
+        'The contributor list intentionally includes human issue/PR authors from the release window even when a specific issue or PR was closed, rejected, or unmerged.',
+      whyZh:
+        '贡献者名单刻意纳入发布窗口内的人类 issue/PR 作者，即使某个 issue 或 PR 最终被关闭、拒绝或未合并。',
+    },
+  ],
+  contributors: ['huangzesen', 'BrianLiubr', 'TZZheng', 'ZigongXu', 'BatalloLu', 'wchwawa', 'Thibaultjaigu', 'rawpaper123', '9s5bz2jvd2-lang'],
+  validation: {
+    commit: 'kernel 69ce16bcdd435ef89ae6b1fcdaa755eddb396d37 · tui 813d66abbb130f15a4d2eb160f9e0a23c514a474',
+    items: [
+      { label: 'Release-window totals', result: '84 commits; 34 merged PRs; 96 issue records updated Jul 1–3; 136 files changed; +7,665 / -1,378 lines' },
+      { label: 'TUI diff whitespace', result: 'git diff --check v0.10.3...HEAD passed' },
+      { label: 'TUI tests', result: 'cd tui && go test -count=1 ./... passed' },
+      { label: 'Portal web build', result: 'cd portal/web && npm ci && npm run build passed' },
+      { label: 'Portal tests', result: 'cd portal && go test -count=1 ./... passed' },
+      { label: 'TUI/Portal binaries', result: 'make clean && make build passed for both binaries' },
+      { label: 'Kernel diff whitespace', result: 'git diff --check v0.16.0...HEAD passed' },
+      { label: 'Kernel compile/test', result: 'python -m compileall -q src tests; focused pytest set: 400 passed in 20.36s' },
+      { label: 'Kernel artifacts', result: 'python -m build and python -m twine check dist/* passed' },
+      { label: 'PyPI', result: 'lingtai 0.16.1 JSON and pip index verification passed' },
+      { label: 'Homebrew', result: 'brew audit --strict --online and brew fetch passed for lingtai-tui v0.10.4' },
+    ],
+  },
+  links: [
+    { label: 'TUI/Portal v0.10.4 release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.4' },
+    { label: 'Kernel v0.16.1 release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.1' },
+    { label: 'PyPI lingtai 0.16.1', href: 'https://pypi.org/project/lingtai/0.16.1/' },
+    { label: 'TUI tag commit', href: 'https://github.com/Lingtai-AI/lingtai/commit/813d66abbb130f15a4d2eb160f9e0a23c514a474' },
+    { label: 'Kernel tag commit', href: 'https://github.com/Lingtai-AI/lingtai-kernel/commit/69ce16bcdd435ef89ae6b1fcdaa755eddb396d37' },
+    { label: 'Homebrew formula', href: 'https://github.com/Lingtai-AI/homebrew-lingtai/blob/main/Formula/lingtai-tui.rb' },
+  ],
+};
+
+const v0_16_0_kernel_v0_10_3_tui: Release = {
+  id: '20260701-1',
+  version: 'Kernel v0.16.0 · TUI/Portal v0.10.3',
+  titleEn: 'LingTai release day: cache-miss budgets, soul-flow opt-in, and leaner runtime telemetry',
+  titleZh: 'LingTai release day：cache-miss 预算、soul-flow 显式启用，与更轻的运行时遥测',
+  date: '2026-07-01',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.16.0 · TUI/Portal v0.10.3',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. The kernel package `lingtai` v0.16.0 is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story. This is a paired release validated from clean release worktrees before publication.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。Kernel package `lingtai` v0.16.0 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。这是一对在发布前从干净的 release worktree 完成验证的 release。',
+  summaryEn:
+    'A paired release that puts the runtime’s cache economy and context-pressure signals under an explicit budget. The kernel adds a `cache_miss_budget` — a per-session, per-molt soft cap that defaults to a million cache-miss tokens; when it is reached the runtime restamps a `molt now` cue under durable context metadata alongside the running cache-miss count. Soul flow becomes an explicit env opt-in via `LINGTAI_SOUL_FLOW_ENABLED`, returning a stable disabled result unless enabled. Token and meta surfaces get leaner and more inspectable — flattened token diagnostics, sparse agent and notification meta, large-result ranking, and a-priori `summary=true` — while the TUI shows current-session cache-miss tokens inline, teaches the soul-flow opt-in in setup and kanban, exposes model-visible summary previews, and adds clipboard image paste. The window also broadens daemon/runtime backends (Kimi Code, claude-p wait guard, explicit daemon email tool, MCP completion, HTTP identity headers, Codex encrypted-reasoning replay self-heal).',
+  summaryZh:
+    '这是一对把运行时的缓存经济与 context-pressure 信号纳入显式预算的 release。kernel 新增 `cache_miss_budget`——一个 per-session、per-molt 的软上限，默认一百万 cache-miss token；一旦触及，运行时会在持久的 context metadata 下重新盖上 `molt now` 提示，并附上正在累计的 cache-miss 计数。soul flow 变为通过 `LINGTAI_SOUL_FLOW_ENABLED` 的显式环境启用，未启用时返回稳定的 disabled 结果。token 与 meta 表面更精简也更可检视——扁平化的 token 诊断、稀疏的 agent 与 notification meta、大结果排序，以及 a-priori 的 `summary=true`——同时 TUI 内联显示 current-session cache-miss token、在 setup 与 kanban 中教授 soul-flow 的显式启用、暴露 model-visible 的 summary 预览，并加入剪贴板图片粘贴。本窗口还拓宽了 daemon/runtime 后端（Kimi Code、claude-p 等待守护、显式 daemon email 工具、MCP 补全、HTTP identity headers、Codex 加密推理 replay 自愈）。',
+  features: [
+    {
+      titleEn: 'Cache-miss budgets and honest context-pressure reminders',
+      titleZh: 'cache-miss 预算与诚实的 context-pressure 提醒',
+      leadEn:
+        'The kernel gives every session and molt a spendable cache-miss budget, and moves the current context-pressure reminders to durable metadata so a `molt now` cue survives instead of flickering. The TUI surfaces the same number inline.',
+      leadZh:
+        'kernel 为每个 session 与 molt 赋予一个可消耗的 cache-miss 预算，并把当前的 context-pressure 提醒移到持久 metadata，让 `molt now` 提示得以留存而非一闪而过。TUI 把同一数字内联呈现。',
+      bulletsEn: [
+        '`manifest.cache_miss_budget` and `AgentConfig.cache_miss_budget` add a per-session, per-molt cache-miss soft cap defaulting to 1,000,000 tokens; when it is reached the runtime restamps `cache miss budget {budget} reached, molt now` under `_meta.tool_meta.context.molt`, alongside `cache_miss_budget` and `cache_miss_tokens` (kernel #641).',
+        'Current context-pressure reminders now live in durable `_meta.tool_meta.context.molt`, while reconstruction one-shots stay under `_meta.tool_meta.reconstruction.molt`, so a standing molt cue is no longer confused with a one-time rebuild (kernel #640, #638, #607).',
+        'The TUI mail/home telemetry shows current-session cache-miss tokens immediately after the token total, e.g. `tok 1.1M (miss 8.6k)  cache …` (TUI #498).',
+      ],
+      bulletsZh: [
+        '`manifest.cache_miss_budget` 与 `AgentConfig.cache_miss_budget` 增加了一个 per-session、per-molt 的 cache-miss 软上限，默认 1,000,000 token；触及后运行时会在 `_meta.tool_meta.context.molt` 下重新盖上 `cache miss budget {budget} reached, molt now`，并附上 `cache_miss_budget` 与 `cache_miss_tokens`（kernel #641）。',
+        '当前的 context-pressure 提醒现在存放在持久的 `_meta.tool_meta.context.molt`，而重建的一次性信息保留在 `_meta.tool_meta.reconstruction.molt`，使长期存在的 molt 提示不再与一次性重建混淆（kernel #640、#638、#607）。',
+        'TUI 的 mail/home 遥测在 token 总量之后立即显示 current-session cache-miss token，例如 `tok 1.1M (miss 8.6k)  cache …`（TUI #498）。',
+      ],
+      whyEn:
+        'A cache miss is where a long run quietly burns money and context; making it a budget with a visible running count and a durable `molt now` cue turns a hidden cost into a spendable one the operator and the agent can both see and act on.',
+      whyZh:
+        'cache miss 正是长任务悄悄烧钱与烧上下文的地方；把它变成一个带可见累计计数与持久 `molt now` 提示的预算，就把一项隐藏成本变成了操作者与 agent 都能看见、都能据以行动的可消耗成本。',
+    },
+    {
+      titleEn: 'Soul flow becomes an explicit opt-in',
+      titleZh: 'soul flow 变为显式启用',
+      leadEn:
+        'Soul flow no longer runs by default. It is gated behind an environment flag, and the TUI setup and kanban teach that model so operators know exactly when it is on.',
+      leadZh:
+        'soul flow 不再默认运行。它由一个环境标志控制，TUI 的 setup 与 kanban 教授这一模型，让操作者清楚它究竟何时开启。',
+      bulletsEn: [
+        'Soul flow is env opt-in by default via `LINGTAI_SOUL_FLOW_ENABLED`; `soul(action="flow")` returns a stable disabled result unless the flag is set (kernel #639).',
+        'The TUI setup and kanban reflect the opt-in model: soul flow is disabled by default unless `LINGTAI_SOUL_FLOW_ENABLED` is set, so the cockpit and the runtime agree on the same default (TUI #497).',
+      ],
+      bulletsZh: [
+        'soul flow 默认通过 `LINGTAI_SOUL_FLOW_ENABLED` 显式启用；未设置该标志时，`soul(action="flow")` 返回稳定的 disabled 结果（kernel #639）。',
+        'TUI 的 setup 与 kanban 反映这一显式启用模型：未设置 `LINGTAI_SOUL_FLOW_ENABLED` 时 soul flow 默认关闭，使座舱与运行时对同一默认值达成一致（TUI #497）。',
+      ],
+      whyEn:
+        'A powerful behavior that runs silently by default is a surprise waiting to happen; making soul flow an explicit flag with a stable disabled result means it is on only when someone chose it, and the cockpit shows that choice rather than guessing at it.',
+      whyZh:
+        '一个默认静默运行的强力行为，是一个迟早会发生的意外；把 soul flow 变成带稳定 disabled 结果的显式标志，意味着它只在有人主动选择时才开启，而座舱如实展示这个选择，而不是去猜。',
+    },
+    {
+      titleEn: 'Leaner, more inspectable runtime metadata',
+      titleZh: '更精简、更可检视的运行时 metadata',
+      leadEn:
+        'Progressive disclosure gets sharper on both sides: the kernel flattens and thins its token/meta surfaces, and the TUI exposes the model-visible summaries those surfaces produce.',
+      leadZh:
+        '渐进式披露在两侧都更锋利：kernel 把它的 token/meta 表面扁平化并削薄，TUI 则暴露这些表面产出的 model-visible summary。',
+      bulletsEn: [
+        'Kernel token/meta surfaces are tightened: compact flattened token diagnostics, current time under `tool_meta`, sparse `agent_meta`, sparse notifications, and large-result ranking in `agent_meta` (kernel #608, #618, #620, #609).',
+        'A-priori `summary=true` support lands for `bash`, `read`, and `grep`, so a tool call can declare up front that its result should be summarized for the model (kernel #586).',
+        'The TUI presents `summary=true` tool results as a model-visible summary after the raw tool output, and Ctrl+O / soul-mode tool-call previews expose summarized model-visible results with longer summary previews (TUI #477, #481, #480, #479).',
+      ],
+      bulletsZh: [
+        'kernel 的 token/meta 表面被收紧：紧凑的扁平化 token 诊断、`tool_meta` 下的 current time、稀疏的 `agent_meta`、稀疏的 notification，以及 `agent_meta` 中的大结果排序（kernel #608、#618、#620、#609）。',
+        '`bash`、`read`、`grep` 获得 a-priori 的 `summary=true` 支持，使一次工具调用可以预先声明其结果应为模型做摘要（kernel #586）。',
+        'TUI 把 `summary=true` 工具结果作为 model-visible summary 呈现在原始工具输出之后，Ctrl+O / soul-mode 的工具调用预览暴露摘要后的 model-visible 结果并提供更长的 summary 预览（TUI #477、#481、#480、#479）。',
+      ],
+      whyEn:
+        'An agent reasons better on a lean, ranked view than on a wall of raw meta, and an operator trusts the cockpit more when it shows exactly what the model saw; flattening the surfaces and surfacing their summaries keeps both looking at the same honest, inspectable picture.',
+      whyZh:
+        'agent 在精简、排序过的视图上比在一堵原始 meta 墙前推理得更好，而当座舱展示模型确切看到的内容时操作者也更信任它；把这些表面扁平化并浮现它们的 summary，能让两者看着同一幅诚实、可检视的画面。',
+    },
+    {
+      titleEn: 'Daemon and runtime backend safety and breadth',
+      titleZh: 'daemon 与 runtime 后端的安全与广度',
+      leadEn:
+        'The runtime widens which backends it can drive and hardens the seams where long-lived daemons wait, send mail, and replay provider state.',
+      leadZh:
+        '运行时拓宽了它能驱动的后端范围，并加固了长生命周期 daemon 等待、发信与重放 provider 状态的接缝。',
+      bulletsEn: [
+        'A Kimi Code backend is added, and a claude-p background wait guard keeps a backgrounded run from racing ahead of its own completion (kernel #634, #611).',
+        'Daemon email is surfaced as an explicit tool, common daemon MCP completion is filled in, and HTTP identity headers are attached to outbound runtime calls (kernel #584, #636).',
+        'Codex encrypted-reasoning replay now self-heals, so a provider-side reasoning-replay hiccup no longer strands the run; backend, runtime, and helper refactors round out the window (kernel #633).',
+      ],
+      bulletsZh: [
+        '新增 Kimi Code 后端，claude-p 的后台等待守护避免被后台化的运行抢先于自身完成（kernel #634、#611）。',
+        'daemon email 以显式工具浮现，补齐了常见的 daemon MCP 补全，并为出站运行时调用附加 HTTP identity headers（kernel #584、#636）。',
+        'Codex 加密推理 replay 现在能自愈，使 provider 侧的推理重放小故障不再让运行卡死；backend、runtime 与 helper 重构收尾本窗口（kernel #633）。',
+      ],
+      whyEn:
+        'A fleet that runs unattended for hours fails at the seams — a backgrounded wait that races, a daemon that cannot send mail, a provider replay that stalls; closing those seams and adding a backend is how the runtime stays reliable across more of the ways people actually run it.',
+      whyZh:
+        '一支无人值守运行数小时的 fleet 会在接缝处失败——一个抢跑的后台等待、一个发不出信的 daemon、一个卡住的 provider replay；堵住这些接缝并新增一个后端，正是运行时在人们实际运行它的更多方式下保持可靠的办法。',
+    },
+    {
+      titleEn: 'Cockpit polish, maintenance, and release hygiene',
+      titleZh: '座舱打磨、维护与 release hygiene',
+      leadEn:
+        'Around the headline work, the cockpit gains a small everyday convenience, a dead surface is removed, and the paired versions were validated from clean release worktrees before publication.',
+      leadZh:
+        '围绕主线工作，座舱获得一个日常小便利，一个已死的表面被移除，且这对版本在发布前从干净的 release worktree 完成验证。',
+      bulletsEn: [
+        'Clipboard image paste support landed for chat input, and the stamina surfaces were removed, with bundled skill/anatomy/frontmatter metadata refreshed (TUI #467, #478, #464–#459).',
+        'Kernel-side documentation, anatomy, and frontmatter maintenance continued alongside the feature work (many TZZheng-led docs/helper refactors; nudge-storm fix #576).',
+        'Strict ranges: kernel `v0.15.3..v0.16.0` (88 commits, 283 files changed, +15,005/-6,365) and TUI/Portal `v0.10.2..v0.10.3` (32 commits, 117 files changed, +2,904/-450).',
+      ],
+      bulletsZh: [
+        '聊天输入新增剪贴板图片粘贴支持，stamina 表面被移除，随包的 skill/anatomy/frontmatter metadata 得到刷新（TUI #467、#478、#464–#459）。',
+        'kernel 侧的文档、anatomy 与 frontmatter 维护与功能工作并行推进（多为 TZZheng 主导的 docs/helper 重构；nudge-storm 修复 #576）。',
+        '严格范围：kernel `v0.15.3..v0.16.0`（88 个 commit、283 个文件变更、+15,005/-6,365）与 TUI/Portal `v0.10.2..v0.10.3`（32 个 commit、117 个文件变更、+2,904/-450）。',
+      ],
+      whyEn:
+        'A release earns trust in the small things too — a paste that just works, a dead readout removed rather than left to mislead, and full gate evidence cut from the exact validated commits; recording that hygiene is part of shipping responsibly.',
+      whyZh:
+        '一次 release 也在小事上赢得信任——一个直接可用的粘贴、一个被移除而非留着误导的死读数，以及从确切经过验证的 commit 切出的完整 gate 证据；记录这份 hygiene 是负责任地发布的一部分。',
+    },
+  ],
+  contributors: [
+    'huangzesen',
+    'TZZheng',
+    'ZigongXu',
+    'BrianLiubr',
+    '9s5bz2jvd2-lang',
+    'BatalloLu',
+    'houleixx',
+    'Keesan12',
+    'LinnkidChen',
+    'LuuOW',
+    'rawpaper123',
+    'wchwawa',
+    'xczics',
+    'github-actions[bot]',
+  ],
+  validation: {
+    commit: 'cabb6a6fb7cad93caedb4b6f7fd5be7f082de5c8',
+    items: [
+      { label: 'Kernel release head', result: 'v0.16.0 tag at cabb6a6fb7ca' },
+      { label: 'TUI/Portal release head', result: 'v0.10.3 tag at d54217b290e2' },
+      { label: 'Kernel strict range', result: 'v0.15.3..v0.16.0 — 88 commits, 48 merged PRs, 283 files changed, +15,005/-6,365' },
+      { label: 'TUI strict range', result: 'v0.10.2..v0.10.3 — 32 commits, 14 merged PRs, 117 files changed, +2,904/-450' },
+      { label: 'Kernel diff-check', result: 'clean against v0.15.3' },
+      { label: 'Kernel validation gate', result: 'Dev-1/Dev-2/Dev-3 independent post-v0.15.3 gate PASS after cleanup #642' },
+      { label: 'Kernel focused suite', result: 'dev-1 suite after #642: 309 passed, 1 known warning' },
+      { label: 'Kernel full release validation', result: 'from #643 head: 3,475 passed, 4 skipped, 1 known warning' },
+      { label: 'Kernel build and twine check', result: 'Python 3.11 build from merge commit; twine check PASSED for both artifacts' },
+      { label: 'Kernel import smoke', result: 'clean no-deps wheel import passed (import lingtai, lingtai_kernel)' },
+      { label: 'Kernel artifact hashes', result: 'wheel c0b5f526…8588d; sdist 22c7486c…2330' },
+      { label: 'TUI diff-check', result: 'clean' },
+      { label: 'TUI Go tests', result: 'go test ./internal/tui ./internal/preset and go test ./... passed' },
+      { label: 'Portal web/module', result: 'npm ci + build passed (4 pre-existing audit advisories); portal go test ./... passed' },
+      { label: 'Homebrew tap', result: 'formula updated to v0.10.3; SHA256 ee1043cc…fb7a71; brew info stable 0.10.3' },
+      { label: 'Contributor audit', result: 'last two release windows scanned: 160 PR records and 128 issue records, including closed/unmerged/commented PRs and closed/commented issues' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.0' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.3' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.16.0/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Kernel compare v0.15.3...v0.16.0', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.15.3...v0.16.0' },
+    { label: 'TUI compare v0.10.2...v0.10.3', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.10.2...v0.10.3' },
+    { label: 'Previous release log', href: 'https://lingtai.ai/en/releases/20260628-1/' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-07-01/' },
+  ],
+};
+
+const v0_15_3_kernel_v0_10_2_tui: Release = {
+  id: '20260628-1',
+  version: 'Kernel v0.15.3 · TUI/Portal v0.10.2',
+  titleEn: 'LingTai release day: an honest init contract and steadier reconstruction signals',
+  titleZh: 'LingTai release day：诚实的 init 契约，与更稳的重建信号',
+  date: '2026-06-28',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.15.3 · TUI/Portal v0.10.2',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. The kernel package `lingtai` v0.15.3 is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story. This is a paired patch release validated from clean release worktrees before publication.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。Kernel package `lingtai` v0.15.3 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。这是一对在发布前从干净的 release worktree 完成验证的 patch release。',
+  summaryEn:
+    'A small paired patch that makes two runtime contracts honest. Generated, template, and example init.json no longer seed legacy `prompt` or empty `lingtai` fields — long-lived character state is owned by `system/lingtai.md` / psyche after creation, and the kernel treats a missing seed as a valid empty seed. The kernel also makes context-pressure signals more truthful: a delayed-summarization reconstruction now reports one-shot evidence while sustained high-context pressure is surfaced separately as a molt warning. The window rounds out with system-prompt resources refactored into Markdown catalogs, a WeChat MCP config-path fix and stronger inbound-media validation, grep and IMAP ergonomics, runtime-identity stamps on event logs, and the usual release hygiene.',
+  summaryZh:
+    '这是一对让两条运行时契约变诚实的小 patch。生成、模板与示例 init.json 不再写入 legacy `prompt` 或空的 `lingtai` 字段——长生命周期的 character state 在创建之后由 `system/lingtai.md` / psyche 拥有，kernel 把缺失的 seed 视为合法的空 seed。kernel 也让 context-pressure 信号更如实：延迟的 summarization 重建现在报告一次性证据，而持续的高 context 压力作为 molt warning 单独浮现。本窗口还包括把系统提示资源重构为 Markdown 目录、WeChat MCP 配置路径修复与更强的入站媒体校验、grep 与 IMAP 的人体工学、事件日志上的运行时身份戳，以及一贯的 release hygiene。',
+  features: [
+    {
+      titleEn: 'An honest init contract: no more seeded `prompt` / `lingtai`',
+      titleZh: '诚实的 init 契约：不再 seed `prompt` / `lingtai`',
+      leadEn:
+        'Generated, template, and example init.json stop writing character-seed fields that the runtime no longer honors. Created character state is owned afterward by `system/lingtai.md` / psyche, and the kernel accepts a missing seed as a valid empty seed.',
+      leadZh:
+        '生成、模板与示例 init.json 不再写入运行时已不再认可的 character-seed 字段。创建后的 character state 由 `system/lingtai.md` / psyche 拥有，kernel 把缺失的 seed 当作合法的空 seed。',
+      bulletsEn: [
+        'The kernel formalizes the init contract: `prompt` is not a legacy alias, a missing `lingtai` / `lingtai_file` is valid and means an empty initial seed, and deprecated brief fields are ignored (kernel #550, #551, #552, #557).',
+        'The TUI stops seeding the character field in generated init.json and ships a guard regression test that generated init JSON omits `prompt`, `prompt_file`, `lingtai`, and `lingtai_file` (TUI #458).',
+        'Stale init-schema tests are aligned with the optional `lingtai` seed, and avatar-anatomy docs clarify how the lingtai seed is inherited (kernel #553 plus the release-hygiene test alignment).',
+      ],
+      bulletsZh: [
+        'kernel 把 init 契约正式化：`prompt` 不是 legacy alias；缺失的 `lingtai` / `lingtai_file` 是合法的，表示空的初始 seed；deprecated 的 brief 字段被忽略（kernel #550、#551、#552、#557）。',
+        'TUI 不再在生成的 init.json 里 seed character 字段，并附带一个守护回归测试，确保生成的 init JSON 不含 `prompt`、`prompt_file`、`lingtai`、`lingtai_file`（TUI #458）。',
+        '陈旧的 init-schema 测试已与可选的 `lingtai` seed 对齐，avatar-anatomy 文档澄清了 lingtai seed 的继承方式（kernel #553，以及 release-hygiene 的测试对齐）。',
+      ],
+      whyEn:
+        'An init file that seeds fields the runtime ignores is a quiet lie about where character state lives; aligning the generator, templates, examples, and schema means a freshly created agent starts from one honest source of truth instead of stale, never-honored prompt text.',
+      whyZh:
+        '一个 seed 了运行时会忽略的字段的 init 文件，是对「character state 住在哪里」的一种悄悄的谎言；把生成器、模板、示例与 schema 对齐，意味着一个新建 agent 从一个诚实的事实来源出发，而不是从陈旧的、从未被认可的 prompt 文本出发。',
+    },
+    {
+      titleEn: 'Reconstruction-aware molt warnings',
+      titleZh: '感知重建的 molt warning',
+      leadEn:
+        'Context-pressure signals are made more truthful: a delayed-summarization reconstruction reports its evidence once, while sustained high-context pressure is surfaced separately so the two are not conflated.',
+      leadZh:
+        '让 context-pressure 信号更如实：延迟的 summarization 重建一次性报告它的证据，而持续的高 context 压力被单独浮现，使两者不再被混为一谈。',
+      bulletsEn: [
+        'A delayed summarization reconstruction now reports one-shot reconstruction evidence, while sustained high-context pressure is surfaced separately as a molt warning (kernel #556).',
+        'Resident meta-guidance ordering and prompt-layer documentation were tightened, with delayed-summarize guidance made more precise (kernel #542, #558).',
+        'Event logs are stamped with the kernel runtime identity so a long unattended run can be attributed to the runtime that produced it (kernel #540).',
+      ],
+      bulletsZh: [
+        '延迟的 summarization 重建现在报告一次性的重建证据，而持续的高 context 压力作为 molt warning 单独浮现（kernel #556）。',
+        '常驻 meta-guidance 的排序与 prompt-layer 文档被收紧，延迟 summarize 的引导更精确（kernel #542、#558）。',
+        '事件日志被打上 kernel runtime identity 戳，使一次长时间无人值守的运行能归因到产生它的运行时（kernel #540）。',
+      ],
+      whyEn:
+        'A single reconstruction event and ongoing context pressure are different facts that ask for different responses; reporting the reconstruction once and surfacing sustained pressure on its own keeps an agent from over-reading a one-time rebuild as a standing emergency.',
+      whyZh:
+        '一次重建事件与持续的 context 压力是两个不同的事实，需要不同的应对；把重建只报告一次、把持续压力单独浮现，能避免 agent 把一次性重建误读成长期的紧急状态。',
+    },
+    {
+      titleEn: 'System-prompt catalogs, MCP, and utility polish',
+      titleZh: '系统提示目录、MCP 与工具打磨',
+      leadEn:
+        'Around the two headline contracts, the kernel refactors its system-prompt resources into Markdown catalogs and lands a round of integration and utility fixes.',
+      leadZh:
+        '围绕两条主线契约，kernel 把系统提示资源重构为 Markdown 目录，并落地一轮集成与工具修复。',
+      bulletsEn: [
+        'System-prompt resources are refactored into Markdown catalogs with clearer related-file behavior, and the runtime principle layer is kernel-managed rather than injected at runtime (kernel #555, #547, #549).',
+        'WeChat MCP config-path resolution is fixed and inbound media is validated by magic bytes (kernel #554, #543).',
+        'Grep prunes its glob filter before reading files, and IMAP empty-argument ergonomics and flag diagnostics are clearer (kernel #544, #548).',
+      ],
+      bulletsZh: [
+        '系统提示资源被重构为 Markdown 目录，related-file 行为更清晰，运行时 principle 层改为由 kernel 管理而非运行时注入（kernel #555、#547、#549）。',
+        'WeChat MCP 配置路径解析被修复，入站媒体按 magic bytes 校验（kernel #554、#543）。',
+        'grep 在读文件之前先裁剪 glob filter，IMAP 空参数的人体工学与 flag 诊断更清晰（kernel #544、#548）。',
+      ],
+      whyEn:
+        'These are the seams a long-running fleet rubs against most — a misresolved MCP config path, an unvalidated inbound file, a grep that reads more than it needs; tidying them keeps the runtime predictable without changing the cockpit operators already know.',
+      whyZh:
+        '这些正是长任务 fleet 最常摩擦到的接缝——一个解析错的 MCP 配置路径、一个未校验的入站文件、一个读得比需要更多的 grep；把它们整理干净，能在不改动操作者已熟悉的座舱的前提下让运行时更可预测。',
+    },
+    {
+      titleEn: 'TUI ledger fidelity and cockpit ergonomics',
+      titleZh: 'TUI ledger 保真与座舱人体工学',
+      leadEn:
+        'On the cockpit side, the TUI improves how refresh and context-rebuild events are accounted for and restores roomier mail defaults.',
+      leadZh:
+        '在座舱一侧，TUI 改进了 refresh 与 context-rebuild 事件的计入方式，并恢复了更宽的 mail 默认值。',
+      bulletsEn: [
+        'Refresh rebuilds and context rebuilds are now marked in the call ledger so the recent-call view distinguishes a rebuild from an ordinary API call (TUI #457, #455).',
+        'Larger mail page-size defaults are restored and mail renderers are reused across mail views, and `ctrl-y` select mode is now available globally with a prominent indicator (TUI #454, #453, #452).',
+      ],
+      bulletsZh: [
+        'refresh 重建与 context 重建现在被标记在 call ledger 中，使 recent-call 视图能把重建与普通 API 调用区分开（TUI #457、#455）。',
+        '恢复了更大的 mail page-size 默认值并在 mail 视图间复用 mail renderer，`ctrl-y` 选择模式现在全局可用并带显著指示（TUI #454、#453、#452）。',
+      ],
+      whyEn:
+        'A ledger that reads a rebuild as a normal call misleads an operator reading per-round cost; marking rebuilds keeps the call view honest, and the mail and select-mode polish removes day-to-day cockpit papercuts.',
+      whyZh:
+        '一个把重建读成普通调用的 ledger，会误导查看按轮成本的操作者；标记重建让 call 视图保持诚实，而 mail 与选择模式的打磨清掉了日常座舱的小毛刺。',
+    },
+    {
+      titleEn: 'Release hygiene, validation, and contributors',
+      titleZh: 'release hygiene、验证与贡献者',
+      leadEn:
+        'The paired patch versions — TUI/Portal v0.10.2 and kernel v0.15.3 — were validated from clean release worktrees off `origin/main` before the publish step.',
+      leadZh:
+        '这对 patch 版本——TUI/Portal v0.10.2 与 kernel v0.15.3——在 publish 步骤之前从 `origin/main` 的干净 release worktree 完成验证。',
+      bulletsEn: [
+        'Strict ranges: TUI `v0.10.1..v0.10.2` (12 commits, 38 files changed, +1612/-177) and kernel `v0.15.2..v0.15.3` (38 commits, 99 files changed, +6331/-829).',
+        'Kernel gates: `git diff --check` clean; `compileall` clean; full `pytest` passed; `python -m build` produced sdist + wheel; `twine check` PASSED. Release hygiene aligned the init-schema tests with the optional `lingtai` seed and bumped the package version to `0.15.3`.',
+        'TUI/Portal gates: `git diff --check` clean against v0.10.1; full `tui` and `portal` Go tests passed; `portal/web npm ci && npm run build` passed; `make build` produced the TUI and Portal binaries. Release hygiene normalized `docs/stars/stars.csv` whitespace and isolated the Homebrew install-detection tests from real developer-machine symlinks.',
+        'Contributors in this window: @huangzesen (lead, scope and validation owner across both repos) and @TZZheng (kernel dry-run retention reporter, #541).',
+      ],
+      bulletsZh: [
+        '严格范围：TUI `v0.10.1..v0.10.2`（12 个 commit、38 个文件变更、+1612/-177）与 kernel `v0.15.2..v0.15.3`（38 个 commit、99 个文件变更、+6331/-829）。',
+        'kernel gate：`git diff --check` 干净；`compileall` 通过；完整 `pytest` 通过；`python -m build` 产出 sdist + wheel；`twine check` PASSED。release hygiene 把 init-schema 测试与可选的 `lingtai` seed 对齐，并把包版本 bump 到 `0.15.3`。',
+        'TUI/Portal gate：对比 v0.10.1 的 `git diff --check` 干净；完整 `tui` 与 `portal` Go 测试通过；`portal/web npm ci && npm run build` 通过；`make build` 产出 TUI 与 Portal 二进制。release hygiene 规范化了 `docs/stars/stars.csv` 的空白，并把 Homebrew 安装检测测试与真实开发者机器的符号链接隔离。',
+        '本窗口贡献者：@huangzesen（lead，两个仓库的 scope 与验证负责人）与 @TZZheng（kernel dry-run retention reporter，#541）。',
+      ],
+      whyEn:
+        'A patch still deserves full gate evidence and an honest contributor list; recording that the publish artifacts and tags are cut from these exact validated commits is part of shipping responsibly.',
+      whyZh:
+        '一次 patch 同样值得有完整的 gate 证据与诚实的贡献者列表；记录「publish 工件与 tag 正是从这些经过验证的 commit 切出」，是负责任地发布的一部分。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng'],
+  validation: {
+    commit:
+      'kernel v0.15.3 release head 543d210 / TUI/Portal v0.10.2 release head 7233e49',
+    items: [
+      { label: 'TUI strict range', result: 'v0.10.1..v0.10.2 — 12 commits, 38 files changed, +1612/-177' },
+      { label: 'Kernel strict range', result: 'v0.15.2..v0.15.3 — 38 commits, 99 files changed, +6331/-829' },
+      { label: 'Kernel diff-check', result: 'passed against v0.15.2' },
+      { label: 'Kernel compileall', result: 'src + tests compiled clean' },
+      { label: 'Kernel full pytest', result: 'passed' },
+      { label: 'Kernel build and twine check', result: 'sdist + wheel built; both PASSED' },
+      { label: 'TUI diff-check', result: 'clean against v0.10.1' },
+      { label: 'TUI Go tests/build', result: 'go test passed; make build → lingtai-tui v0.10.2' },
+      { label: 'Portal web npm ci/build', result: 'passed' },
+      { label: 'Portal Go tests/build', result: 'go test passed; make build → lingtai-portal v0.10.2' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.15.3' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.2' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.15.3/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-28/' },
+  ],
+};
+
+const v0_15_2_kernel: Release = {
+  id: '20260627-2',
+  version: 'Kernel v0.15.2',
+  titleEn: 'LingTai kernel v0.15.2: roomier result reads and leaner runtime guidance',
+  titleZh: 'LingTai kernel v0.15.2：更宽的结果阅读，与更轻的运行时指引',
+  date: '2026-06-27',
+  pkg: 'lingtai',
+  tag: 'kernel v0.15.2',
+  runtimeNoteEn:
+    'This is a kernel-only patch release. The `lingtai` PyPI package is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path instead of treating a bare global pip command as the everyday upgrade story.',
+  runtimeNoteZh:
+    '这是一次 kernel-only patch release。`lingtai` PyPI package 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作日常升级故事。',
+  summaryEn:
+    'A compact kernel patch after v0.15.1: Codex summarize/cache behavior now waits for the real reconstruction boundary before resetting websocket continuation, summarize/molt guidance is clearer about local compaction versus provider context, `_meta` exposes current-session token efficiency while shedding duplicated notification prose, and `read` now defaults to a 100k-character page budget while retaining the 200k hard cap for short-lived long-result inspection.',
+  summaryZh:
+    '这是 v0.15.1 之后的一次紧凑 kernel patch：Codex summarize/cache 行为现在等到真正的重建边界再重置 websocket continuation；summarize/molt 指引更清楚地区分本地压缩与 provider 上下文；`_meta` 暴露 current-session token efficiency，同时移除重复的 notification 文案；`read` 默认页预算提高到 100k 字符，并保留 200k hard cap，用于短时查看长结果。',
+  features: [
+    {
+      titleEn: 'Summarize waits for the reconstruction boundary',
+      titleZh: 'summarize 等到重建边界再切换',
+      leadEn:
+        'The Codex path no longer treats every local summarize as an immediate websocket fresh-epoch event. It waits for the runtime point where provider context is actually rebuilt.',
+      leadZh:
+        'Codex 路径不再把每次本地 summarize 都当成 websocket fresh-epoch 事件，而是等到运行时真正重建 provider 上下文的边界。',
+      bulletsEn: [
+        'Codex summarize epoch resets are delayed until provider-side reconstruction is required (#534).',
+        'Summarize/molt guidance now explains that local result compaction is immediate, while provider reconstruction is delayed and task-boundary molt is the stronger completed-work boundary (#535).',
+      ],
+      bulletsZh: [
+        'Codex summarize epoch reset 推迟到确实需要 provider-side reconstruction 时才发生（#534）。',
+        'summarize/molt 指引现在说明：本地工具结果压缩立即生效，但 provider 重建会延迟；任务边界的 molt 是更强的已完成工作边界（#535）。',
+      ],
+      whyEn:
+        'Keeping the incremental Codex websocket chain alive until the real reconstruction point protects cache continuity without hiding the moment when a full context reset becomes necessary.',
+      whyZh:
+        '在真正重建之前保持 Codex websocket incremental 链路，可以保护缓存连续性，同时不隐藏必须完整重建上下文的时刻。',
+    },
+    {
+      titleEn: 'Token efficiency is visible without repeating guidance',
+      titleZh: 'token efficiency 可见，但不重复塞满指引',
+      leadEn:
+        'The runtime now gives agents the compact numbers they need to reason about current-session token economy while moving static instruction text back into resident guidance.',
+      leadZh:
+        '运行时现在给 agent 提供判断 current-session token economy 所需的紧凑数字，同时把静态说明文字移回常驻 guidance。',
+      bulletsEn: [
+        '`_meta.agent_meta.token_efficiency` exposes API calls, input/cached tokens, cache rate, average input tokens, and current context size/window (#537).',
+        'Notification guidance is now a `meta_guidance.notification_handling` hook with source names, per-channel duplicate guidance is removed, and tool-result char leaders are capped to the top five (#538).',
+        'The post-reconstruction reminder now points at `0.6 * context_window` as the summarize-then-molt threshold instead of carrying a separate guiding-average field (#538).',
+      ],
+      bulletsZh: [
+        '`_meta.agent_meta.token_efficiency` 暴露 API calls、input/cached tokens、cache rate、average input tokens，以及当前 context size/window（#537）。',
+        'notification guidance 现在是带 source 名称的 `meta_guidance.notification_handling` hook，移除 per-channel 重复 guidance，并把 tool-result char leaders 收到 top five（#538）。',
+        '重建后的提醒现在指向 `0.6 * context_window` 作为 summarize-then-molt 阈值，不再携带单独的 guiding-average 字段（#538）。',
+      ],
+      whyEn:
+        'A long-running agent needs the live budget numbers, not repeated static prose. This patch keeps the signal and cuts the duplicated context weight.',
+      whyZh:
+        '长时间运行的 agent 需要实时预算数字，而不是重复的静态长文。这次 patch 保留信号，削掉重复上下文重量。',
+    },
+    {
+      titleEn: 'A 100k read default with a 200k hard ceiling',
+      titleZh: 'read 默认 100k，hard cap 保持 200k',
+      leadEn:
+        'With summarize and molt carrying the cleanup path, short-lived long-result inspection can be roomier by default.',
+      leadZh:
+        '有 summarize 与 molt 负责后续清理后，短时间查看长结果可以默认更宽一些。',
+      bulletsEn: [
+        '`read` now defaults to a 100k-character per-call page budget while keeping the 200k runtime hard cap.',
+        'The read manual, English/Chinese/Wen tool descriptions, continuation tests, and stale tool-result-cap comments were aligned with the new budget.',
+        'Release validation covered the full kernel suite, build, `twine check`, archive inspection, PyPI upload, GitHub release, and no-cache pip index verification.',
+      ],
+      bulletsZh: [
+        '`read` 的默认每次调用页预算提高到 100k 字符，同时保持 200k runtime hard cap。',
+        'read manual、英文/中文/文言工具描述、continuation 测试，以及陈旧的 tool-result-cap 注释都已对齐新预算。',
+        'release 验证覆盖完整 kernel suite、build、`twine check`、archive inspection、PyPI 上传、GitHub release 与 no-cache pip index verification。',
+      ],
+      whyEn:
+        'The everyday page size should match the new operating model: inspect enough context to decide, then summarize or molt deliberately instead of losing useful evidence to an overly tight cap.',
+      whyZh:
+        '日常页大小应当匹配新的运行模型：先看到足够上下文做判断，再主动 summarize 或 molt，而不是让过紧的 cap 提前丢掉有用证据。',
+    },
+  ],
+  contributors: ['huangzesen'],
+  validation: {
+    commit: '603e5d854ed7b3752ab59c63cbcd09069e6494ea',
+    items: [
+      { label: 'Kernel release PR', result: '#539 merged at 603e5d854ed7b3752ab59c63cbcd09069e6494ea' },
+      { label: 'git diff --check', result: 'passed' },
+      { label: 'Kernel full pytest', result: '3040 passed, 4 skipped with PYTHONPATH=src' },
+      { label: 'Focused read/cap tests', result: '20 passed' },
+      { label: 'Build and twine check', result: 'sdist + macOS-arm64 wheel built; both PASSED twine check' },
+      { label: 'Archive inspection', result: 'no __pycache__ or .pyc files in wheel or sdist' },
+      { label: 'Artifact hashes', result: 'wheel 2854c7aa…36aa4; sdist 5bd4976b…93ae' },
+      { label: 'PyPI verification', result: 'JSON and pip index --no-cache-dir both show lingtai 0.15.2' },
+      { label: 'GitHub release', result: 'v0.15.2 published at merge commit 603e5d8' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.15.2' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.15.2/' },
+    { label: 'Release report', href: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/main/reports/kernel-release-v0.15.2-20260627' },
+    { label: 'Release PR', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/539' },
+    { label: 'Compare', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.15.1...v0.15.2' },
+  ],
+};
+
+const v0_15_1_kernel_v0_10_1_tui: Release = {
+  id: '20260627-1',
+  version: 'Kernel v0.15.1 · TUI/Portal v0.10.1',
+  titleEn: 'LingTai release day: self-updating TUI, Claude Code provider, and steadier runtime state',
+  titleZh: 'LingTai release day：自我更新的 TUI、Claude Code provider，与更稳的 runtime 状态',
+  date: '2026-06-27',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.15.1 · TUI/Portal v0.10.1',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. A source / user-local TUI can now also update itself in place (manual command or startup prompt) without Homebrew. The kernel package `lingtai` v0.15.1 is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story. This entry was prepared from clean release-worktree gates; the GitHub Releases, PyPI upload, and Homebrew tap bump for v0.10.1 / v0.15.1 are published.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。source / user-local 的 TUI 现在也可以原地自我更新（手动命令或启动提示），无需 Homebrew。Kernel package `lingtai` v0.15.1 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。本条目由干净的 release-worktree gate 准备；v0.10.1 / v0.15.1 的 GitHub Releases、PyPI 上传与 Homebrew tap bump 已发布。',
+  summaryEn:
+    'A paired patch release that finishes the self-update story the previous window started for Homebrew: the source / user-local TUI can now update itself — manually and on startup — for installs that are not Homebrew-managed. The kernel adds a `claude-code` LLM provider, an MCP manual sidecar contract with bundled manuals for curated MCPs, shared filesystem/JSON/JSONL helpers and a session-recovery refactor that de-risk kernel state writes, and honest spill/refresh failure visibility — plus cockpit, doctor, and mail polish.',
+  summaryZh:
+    '一组配套的 patch release，补完上一轮为 Homebrew 开头的「自我更新」故事：source / user-local 的 TUI 现在可以自我更新——手动地、也在启动时——面向非 Homebrew 管理的安装。kernel 新增 `claude-code` LLM provider、一份为 curated MCP 提供捆绑手册的 MCP manual sidecar 契约、降低 kernel 状态写入风险的共享文件系统/JSON/JSONL helper 与一次 session-recovery 重构，以及对 spill/refresh 失败更诚实的可见性——外加座舱、doctor 与 mail 的打磨。',
+  features: [
+    {
+      titleEn: 'The source / user-local TUI updates itself (#404 complete)',
+      titleZh: 'source / user-local 的 TUI 自我更新（#404 补完）',
+      leadEn:
+        'v0.10.0 shipped the Homebrew updater backend; v0.10.1 completes issue #404 for installs that are not Homebrew-managed, so the TUI can keep itself current however it was installed.',
+      leadZh:
+        'v0.10.0 发布了 Homebrew 更新后端；v0.10.1 为非 Homebrew 管理的安装补完 issue #404，让 TUI 无论怎样安装都能保持最新。',
+      bulletsEn: [
+        'A manual TUI self-update command (#416) and a source-install self-update backend (#417) bring update-in-place to source / user-local installs.',
+        'A startup update prompt (#418) offers the update when the on-disk source drifts behind the published TUI, so an operator is told when they are behind.',
+        'These build on the v0.10.0 foundation — Homebrew updater backend, doctor install-method detection, and source-install metadata — now extended to non-Homebrew installs.',
+      ],
+      bulletsZh: [
+        '一个手动 TUI self-update 命令（#416）与一个 source 安装的 self-update 后端（#417），把原地更新带给 source / user-local 安装。',
+        '一个启动更新提示（#418），在磁盘源码落后于已发布 TUI 时提供更新，让操作者在落后时被告知。',
+        '这些建立在 v0.10.0 的基础之上——Homebrew 更新后端、doctor 安装方式检测与 source 安装元数据——现在扩展到非 Homebrew 安装。',
+      ],
+      whyEn:
+        'A self-update path that only works for Homebrew leaves source and user-local users stranded on stale binaries; finishing #404 means the TUI stays current and honest about its own version regardless of how it was installed.',
+      whyZh:
+        '一条只对 Homebrew 有效的 self-update 路径，会把 source 与 user-local 用户搁浅在陈旧二进制上；补完 #404 意味着 TUI 无论怎样安装都保持最新，并对自己的版本保持诚实。',
+    },
+    {
+      titleEn: 'A `claude-code` provider for the kernel (#525)',
+      titleZh: '给 kernel 的 `claude-code` provider（#525）',
+      leadEn:
+        'The kernel gains a new `claude-code` LLM provider that drives a Claude subscription through the `claude` CLI, widening how an operator can back the runtime without changing the cockpit they already use.',
+      leadZh:
+        'kernel 新增一个 `claude-code` LLM provider，经由 `claude` CLI 驱动一个 Claude 订阅，拓宽操作者在不改动既有座舱的前提下支撑运行时的方式。',
+      bulletsEn: [
+        'The `claude-code` provider drives the `claude` CLI on a Claude subscription as an LLM provider (#525).',
+        'It was originally proposed in closed PR #299 and merged this window — the originating contributor is credited.',
+      ],
+      bulletsZh: [
+        '`claude-code` provider 把 Claude 订阅上的 `claude` CLI 当作 LLM provider 来驱动（#525）。',
+        '它最初由已 closed 的 PR #299 提出，并在本窗口合并——原始贡献者已致谢。',
+      ],
+      whyEn:
+        'More provider choices behind the same runtime mean an operator can back a fleet the way their account and budget allow, without re-learning the cockpit.',
+      whyZh:
+        '同一个运行时背后更多的 provider 选择，意味着操作者可以按自己的账户与预算来支撑 fleet，而无需重新学习座舱。',
+    },
+    {
+      titleEn: 'MCP manual sidecars and bundled curated manuals',
+      titleZh: 'MCP manual sidecar 与捆绑的 curated 手册',
+      leadEn:
+        'The kernel documents a manual sidecar contract for MCP addons and ships bundled manuals for curated MCPs, so an MCP can carry usage guidance the runtime can surface.',
+      leadZh:
+        'kernel 为 MCP addon 记录了一份 manual sidecar 契约，并为 curated MCP 附带捆绑手册，让一个 MCP 能携带运行时可呈现的使用引导。',
+      bulletsEn: [
+        'The MCP manual sidecar anatomy and a minimal sidecar contract are documented (#529, #530).',
+        'Bundled manuals ship for curated MCPs (#528), and a Telegram media guidance manual is added (#526).',
+      ],
+      bulletsZh: [
+        'MCP manual sidecar 的结构与一份最小 sidecar 契约被记录在案（#529、#530）。',
+        '为 curated MCP 附带捆绑手册（#528），并新增一份 Telegram 媒体引导手册（#526）。',
+      ],
+      whyEn:
+        'An MCP that carries its own manual lets the runtime answer "how do I use this addon" from a documented source instead of guesswork, which matters most for media and messaging surfaces.',
+      whyZh:
+        '一个自带手册的 MCP，让运行时能从有据可查的来源回答「我该怎么用这个 addon」，而不是靠猜——这对媒体与消息类接口尤其重要。',
+    },
+    {
+      titleEn: 'Safer kernel state writes and a recovery refactor',
+      titleZh: '更安全的 kernel 状态写入与一次 recovery 重构',
+      leadEn:
+        'Two kernel refactors reduce the number of hand-rolled, slightly-different state writes that a long-running fleet can corrupt: shared filesystem helpers, and a session-recovery / tool-execution consolidation.',
+      leadZh:
+        '两次 kernel 重构减少了那些手写的、各自略有差异、可能被长任务 fleet 写坏的状态写入：共享的文件系统 helper，以及 session-recovery / 工具执行的合并。',
+      bulletsEn: [
+        'Shared `_fsutil` filesystem / JSON / JSONL helpers consolidate how the kernel reads and writes state (#510, #522), with migration references documented.',
+        'Session-recovery and ToolExecutor helpers are consolidated in `turn.py`, renaming `_post_send_housekeeping` to `_turn_boundary_housekeeping` (#511, #523).',
+      ],
+      bulletsZh: [
+        '共享的 `_fsutil` 文件系统 / JSON / JSONL helper 统一了 kernel 读写状态的方式（#510、#522），并记录了迁移引用。',
+        'session-recovery 与 ToolExecutor helper 在 `turn.py` 中合并，把 `_post_send_housekeeping` 重命名为 `_turn_boundary_housekeeping`（#511、#523）。',
+      ],
+      whyEn:
+        'Every slightly-different state-write path is a place a fleet can corrupt a file under load; routing them through shared, tested helpers makes the runtime steadier across long unattended sessions.',
+      whyZh:
+        '每一条略有差异的状态写入路径，都是 fleet 在负载下写坏文件的潜在地点；把它们经由共享且经过测试的 helper，让运行时在长时间无人值守的会话里更稳。',
+    },
+    {
+      titleEn: 'Spill and refresh told truthfully',
+      titleZh: '把 spill 与 refresh 如实说清',
+      leadEn:
+        'Failures that used to pass silently now surface: an expired spill artifact says so, a permanent refresh failure is visible, and headless runtime liveness can be proven.',
+      leadZh:
+        '过去会悄悄通过的失败现在会浮现：过期的 spill 工件会说明、refresh 的永久失败可见，且 headless 运行时存活性可被证明。',
+      bulletsEn: [
+        'Expired-spill artifacts now carry messaging instead of failing opaquely (#192, #291), and a permanent refresh failure is made visible (#292).',
+        'A headless runtime liveness proof confirms an unattended runtime is actually alive (#351).',
+        'Codex pre-molt summarize guidance is made clearer (#531).',
+      ],
+      bulletsZh: [
+        '过期的 spill 工件现在带消息，而不是不透明地失败（#192、#291），refresh 的永久失败被变得可见（#292）。',
+        '一份 headless 运行时存活性证明，确认一个无人值守的运行时确实活着（#351）。',
+        'Codex pre-molt summarize 引导被变得更清晰（#531）。',
+      ],
+      whyEn:
+        'A spill or refresh that fails silently is exactly the kind of fault a long autonomy run discovers too late; surfacing them lets an operator act before the failure compounds.',
+      whyZh:
+        '一个悄悄失败的 spill 或 refresh，正是长时间自治运行会发现得太晚的那类故障；把它们浮现出来，让操作者能在失败累积之前行动。',
+    },
+    {
+      titleEn: 'Cockpit and doctor polish',
+      titleZh: '座舱与 doctor 打磨',
+      leadEn:
+        'Around the headline work, the cockpit and doctor got a focused polish pass, and a headless agent-readiness reliability fix landed alongside.',
+      leadZh:
+        '围绕主线工作，座舱与 doctor 经过一轮聚焦的打磨，并随之落地一个 headless agent 就绪可靠性修复。',
+      bulletsEn: [
+        'Cockpit: a live agent-activity indicator on the mail view footer (#422), mail view copy mode (#402), and the live `/viz` ghost-avatar visibility fix (#354).',
+        'Doctor: a saved redacted report bundle with a privacy notice and export hint, install-method detection, and a diagnostic-section layout clarification (#406, #407, #409, #449, #450).',
+        'Reliability: wait for headless agent readiness before proceeding (#365), plus dev-guide release-workflow docs and README install-method output (#448).',
+      ],
+      bulletsZh: [
+        '座舱：mail 视图底栏的实时 agent 活动指示（#422）、mail 视图复制模式（#402），以及实时 `/viz` ghost-avatar 可见性修复（#354）。',
+        'doctor：保存一份脱敏的报告 bundle，带隐私提示与导出提示、安装方式检测，以及诊断分区布局澄清（#406、#407、#409、#449、#450）。',
+        '可靠性：在继续之前等待 headless agent 就绪（#365），外加 dev-guide 的 release-workflow 文档与 README 安装方式输出（#448）。',
+      ],
+      whyEn:
+        'A patch window is the right place to clear small cockpit and doctor papercuts; an operator who can see agent activity, copy from the mail view, and read a clean diagnostic report trusts the surface more in a long session.',
+      whyZh:
+        '一个 patch 窗口正是清理座舱与 doctor 小毛刺的好时机；一个能看到 agent 活动、能从 mail 视图复制、能读到干净诊断报告的操作者，会在长会话里更信任这个界面。',
+    },
+    {
+      titleEn: 'Release hygiene, validation, and contributors',
+      titleZh: 'release hygiene、验证与贡献者',
+      leadEn:
+        'The paired patch versions — TUI/Portal v0.10.1 and kernel v0.15.1 — were validated from clean release worktrees before the publish step.',
+      leadZh:
+        '这对 patch 版本——TUI/Portal v0.10.1 与 kernel v0.15.1——在 publish 步骤之前从干净的 release worktree 完成验证。',
+      bulletsEn: [
+        'Kernel gates at the v0.15.1 bump commit `2d23801` (on base `834ce8b`): `compileall` clean; full `pytest` 3034 passing, 4 skipped, 0 genuine failures (three subprocess-import failures proven to be local PYTHONPATH / non-installed-package artifacts, green on re-check with `PYTHONPATH=src`); `python -m build` produced sdist + wheel; `twine check` PASSED on both.',
+        'TUI/Portal gates at candidate head `418e470` (build version injected via `make ... VERSION=v0.10.1`, no source bump): `git diff --check` against v0.10.0 clean; full Portal Go tests passed; `portal/web npm ci && npm run build` passed; `make build` produced the TUI and Portal binaries.',
+        'Noted, non-blocking: two `internal/config` install-detection tests failed only on the maintainer machine because local `/usr/local`/`/opt/homebrew` dev symlinks resolve out of the Homebrew prefix — classified as host / test-isolation sensitivity, with the underlying classifier verified to return `homebrew` on a clean path; the `portal/web` npm-audit advisories affect dev-only tooling, not the embedded static assets the Go binary ships; the locally built kernel wheel is macOS-arm64 platform-tagged, so the portable sdist is the artifact for PyPI.',
+        'Contributors in this window: @huangzesen (lead, scope and validation owner), @TZZheng (the source self-update epic and the kernel filesystem/recovery refactors), @wchwawa (the live mail-view agent activity indicator), @rawpaper123 (headless readiness and liveness reliability fixes), @LuuOW (review of the `/viz` ghost-avatar fix), @zechenzhangAGI (originated the `claude-code` provider in a closed kernel PR before the shipped implementation landed through #525), and @9s5bz2jvd2-lang (closed/unmerged `/kanban` main/daemon API-call split PR #367, reviewed and thanked inside the release window).',
+      ],
+      bulletsZh: [
+        '在 v0.15.1 bump commit `2d23801`（基于 `834ce8b`）上的 kernel gate：`compileall` 通过；完整 `pytest` 3034 passing、4 skipped、0 真实失败（三个 subprocess-import 失败被证明是本地 PYTHONPATH / 包未安装的工件，用 `PYTHONPATH=src` 复查转绿）；`python -m build` 产出 sdist + wheel；`twine check` 两者均 PASSED。',
+        '在候选 head `418e470`（构建版本经由 `make ... VERSION=v0.10.1` 注入，无源码 bump）上的 TUI/Portal gate：对比 v0.10.0 的 `git diff --check` 干净；完整 Portal Go 测试通过；`portal/web npm ci && npm run build` 通过；`make build` 产出 TUI 与 Portal 二进制。',
+        '记录在案、不阻塞发布：两个 `internal/config` 安装检测测试只在维护者机器上失败，因为本地 `/usr/local`/`/opt/homebrew` dev 符号链接被解析到 Homebrew prefix 之外——归类为 host / 测试隔离敏感性，底层分类器已验证在干净路径上返回 `homebrew`；`portal/web` 的 npm-audit 警告只影响 dev-only 工具链，不影响 Go 二进制实际打包的静态资产；本地构建的 kernel wheel 带 macOS-arm64 平台标签，因此 PyPI 的工件是可移植的 sdist。',
+        '本窗口贡献者：@huangzesen（lead，scope 与验证负责人）、@TZZheng（source self-update epic 与 kernel 的文件系统/recovery 重构）、@wchwawa（mail 视图实时 agent 活动指示）、@rawpaper123（headless 就绪与存活性可靠性修复）、@LuuOW（`/viz` ghost-avatar 修复的 review）、@zechenzhangAGI（在 closed kernel PR 中提出 `claude-code` provider，后由 #525 落地），以及 @9s5bz2jvd2-lang（closed/unmerged `/kanban` main/daemon API-call 拆分 PR #367，在窗口内完成 review 与致谢后关闭）。',
+      ],
+      whyEn:
+        'A patch still deserves full gate evidence and an honest contributor list; recording that the publish artifacts and tags are cut from these exact validated commits is part of shipping responsibly.',
+      whyZh:
+        '一次 patch 同样值得有完整的 gate 证据与诚实的贡献者列表；记录「publish 工件与 tag 正是从这些经过验证的 commit 切出」，是负责任地发布的一部分。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng', 'wchwawa', 'rawpaper123', 'LuuOW', 'zechenzhangAGI', '9s5bz2jvd2-lang'],
+  validation: {
+    commit:
+      '2d2380186ace612770b91d4c93260318618020bf (kernel v0.15.1 bump, base 834ce8b) / 418e4706277bbf12e4366ad81696284cd6160012 (TUI/Portal v0.10.1 build target)',
+    items: [
+      { label: 'Kernel compileall', result: 'src + tests compiled clean' },
+      { label: 'Kernel full pytest', result: '3034 passing, 4 skipped, 0 genuine failures (3 subprocess-import failures proven local-env artifacts, green on re-check with PYTHONPATH=src)' },
+      { label: 'Kernel build and twine check', result: 'sdist + wheel built; both PASSED' },
+      { label: 'Kernel version bump', result: 'single pyproject.toml line, 0.15.0 → 0.15.1' },
+      { label: 'TUI diff-check', result: 'clean against v0.10.0' },
+      { label: 'TUI Go tests/build', result: 'go test passed (2 install-detection tests failed only on host dev-symlinks, non-blocking); make build → lingtai-tui v0.10.1' },
+      { label: 'Portal web npm ci/build', result: 'passed (dev-only npm audit advisories noted, not in shipped static assets)' },
+      { label: 'Portal Go tests/build', result: 'go test passed; make build → lingtai-portal v0.10.1' },
+      { label: 'PyPI artifact policy', result: 'portable sdist is the PyPI artifact; local wheel is macOS-arm64 platform-tagged' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.15.1' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.1' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.15.1/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-27/' },
+  ],
+};
+
+const v0_15_0_kernel_v0_10_0_tui: Release = {
+  id: '20260626-1',
+  version: 'Kernel v0.15.0 · TUI/Portal v0.10.0',
+  titleEn: 'LingTai release day: a cockpit that shows where the tokens go',
+  titleZh: 'LingTai release day：让座舱看清 token 花在哪里',
+  date: '2026-06-26',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.15.0 · TUI/Portal v0.10.0',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface once tag v0.10.0 is published. The kernel package `lingtai` v0.15.0 is the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story. This entry was prepared from clean release-worktree gates; the GitHub Releases, PyPI upload, and Homebrew tap bump for v0.10.0 / v0.15.0 are cut as part of the publish step.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令在 tag v0.10.0 发布后用于更新 TUI/Portal。Kernel package `lingtai` v0.15.0 是 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。本条目由干净的 release-worktree gate 准备；v0.10.0 / v0.15.0 的 GitHub Releases、PyPI 上传与 Homebrew tap bump 在 publish 步骤中完成。',
+  summaryEn:
+    'A paired kernel and TUI/Portal release built around one idea: make the cockpit honest about where a session spends its tokens. The TUI grows home and session token telemetry — a context-percentage bar and per-round usage — followed by a focused copy and layout pass, bilingual status hints, less noisy replay, richer session/kanban observability, and faster SQLite-indexed session loading. The kernel makes bash results report inner failures, routes refresh-watcher events through the secret redactor, indexes the token ledger in SQLite with an explicit reporting scope, writes a per-run daemon artifact manifest, nudges agents when on-disk source drifts from the running runtime, and tunes Codex summarize guidance after framing it as an investment ratio.',
+  summaryZh:
+    '这是一组配套的 kernel 与 TUI/Portal 发布，围绕一个想法：让座舱对「一个会话把 token 花在哪里」保持诚实。TUI 新增了 home 与 session 的 token 遥测——context 百分比条与按轮用量——随后是一轮聚焦的文案与布局打磨、双语状态提示、更安静的回放、更丰富的 session/kanban 可观测性，以及更快的 SQLite 索引会话加载。kernel 让 bash 结果报告内层失败，把 refresh-watcher 事件经由密钥脱敏器写出，用 SQLite 索引 token ledger 并带显式的报告 scope，为每次 daemon run 写出 artifact manifest，在磁盘源码与运行时漂移时提醒 agent，并在把 Codex summarize 引导表述为一个投资比率之后微调了它的阈值。',
+  features: [
+    {
+      titleEn: 'A cockpit that shows where the tokens go',
+      titleZh: '看清 token 花在哪里的座舱',
+      leadEn:
+        'TUI/Portal v0.10.0 brings token and context telemetry into the places operators already look — the home view and the per-round API-call footer — instead of hiding it behind a metadata dump.',
+      leadZh:
+        'TUI/Portal v0.10.0 把 token 与 context 遥测带到操作者本就会看的地方——home 视图与按轮的 API-call 底栏——而不是藏在一段 metadata 转储后面。',
+      bulletsEn: [
+        'API-call group footers now show current-round token usage — input, cache miss, output, and cache rate — so the price of a turn is visible right where the call is (#441).',
+        'The home view bottom row shows current-session token telemetry plus a compact context-percentage bar, so a session\'s budget is legible at a glance (#441).',
+        'Ctrl+O replay hides the bulky `_meta` envelope by default and points to `/notification` when full metadata is actually wanted (#440).',
+      ],
+      bulletsZh: [
+        'API-call 分组底栏现在显示当前轮的 token 用量——input、cache miss、output 与 cache rate——让一个 turn 的代价就出现在调用旁边（#441）。',
+        'home 视图底部一行显示当前会话的 token 遥测与一个紧凑的 context 百分比条，让一个会话的预算一眼可读（#441）。',
+        'Ctrl+O 回放默认隐藏臃肿的 `_meta` 信封，并在真正需要完整 metadata 时指向 `/notification`（#440）。',
+      ],
+      whyEn:
+        'You cannot trim what you cannot see; putting per-round token cost and session context in the default view is the first step toward an operator noticing a session that is quietly burning budget.',
+      whyZh:
+        '看不见就无法削减；把按轮 token 代价与会话 context 放进默认视图，是让操作者注意到「某个会话正在悄悄烧预算」的第一步。',
+    },
+    {
+      titleEn: 'Telemetry copy and layout, made legible (#442–#447)',
+      titleZh: '把遥测文案与布局打磨清楚（#442–#447）',
+      leadEn:
+        'New telemetry is only useful if it reads cleanly, so the home telemetry work was followed by a focused copy-and-layout pass that kept the footer, fixed the layout, and made the status hints bilingual and correct.',
+      leadZh:
+        '新遥测只有读起来干净才有用，因此 home 遥测之后跟着一轮聚焦的文案与布局打磨：保留底栏、修正布局，并让状态提示双语且正确。',
+      bulletsEn: [
+        'The footer is preserved while session telemetry is shown (#442), and session telemetry no longer requires Ctrl+O to appear (#443).',
+        'The home telemetry context row layout is fixed (#444), and the home status hint and zh telemetry copy are cleaned up (#445).',
+        'The home status hint is corrected to say "expand" (#446) and then localized so it speaks the operator\'s language (#447, the TUI candidate head).',
+      ],
+      bulletsZh: [
+        '在显示 session 遥测时保留底栏（#442），且 session 遥测不再需要 Ctrl+O 才出现（#443）。',
+        '修正 home 遥测的 context 行布局（#444），并清理 home 状态提示与中文遥测文案（#445）。',
+        'home 状态提示改正为「expand」（#446），随后被本地化，让它用操作者的语言说话（#447，即 TUI 候选 head）。',
+      ],
+      whyEn:
+        'A telemetry row that overflows, hides the footer, or shows an English-only hint to a Chinese operator undoes the value of the data; this pass is what turns a feature into something readable by default.',
+      whyZh:
+        '一个会溢出、会盖住底栏、或对中文操作者只显示英文提示的遥测行，会抵消数据本身的价值；这一轮打磨，正是把一个功能变成「默认可读」的关键。',
+    },
+    {
+      titleEn: 'Richer session observability and faster loading',
+      titleZh: '更丰富的会话可观测性与更快的加载',
+      leadEn:
+        'Beyond the home row, session and kanban detail panels carry more cached per-session stats, keyed to molt windows so a refresh stops drifting, and session events now load from a SQLite index instead of re-scanning files.',
+      leadZh:
+        '除了 home 行之外，session 与 kanban 详情面板携带更多缓存的按会话统计，并以 molt 窗口为键，使 refresh 不再漂移；会话事件现在从 SQLite 索引加载，而不是重新扫描文件。',
+      bulletsEn: [
+        'Session/kanban detail panels show richer cached per-session stats — API call stats, expanded token breakdowns, and agent paths — keyed to molt windows so refreshes stop drifting (#428, #430, #432, #433, #438, #439).',
+        'Session events load from the SQLite index instead of re-scanning event files, so opening a long session is faster (#435).',
+        'The markdown viewer renders YAML front matter (`name` / `description` / `version`) instead of silently stripping it (#426).',
+      ],
+      bulletsZh: [
+        'session/kanban 详情面板显示更丰富的缓存按会话统计——API 调用统计、展开的 token 拆分与 agent 路径——并以 molt 窗口为键，使 refresh 不再漂移（#428、#430、#432、#433、#438、#439）。',
+        '会话事件从 SQLite 索引加载，而不是重新扫描事件文件，因此打开一个长会话更快（#435）。',
+        'markdown 查看器渲染 YAML front matter（`name` / `description` / `version`），而不是悄悄把它剥掉（#426）。',
+      ],
+      whyEn:
+        'Observability that drifts on every refresh or pays a full re-scan to open a session is observability operators stop trusting; pinning stats to molt windows and reading from the index keeps it both correct and fast.',
+      whyZh:
+        '每次 refresh 都漂移、或每次打开会话都要重新全扫的可观测性，会让操作者逐渐不再信任它；把统计钉在 molt 窗口、从索引读取，让它既正确又快。',
+    },
+    {
+      titleEn: 'Bash results and the token ledger tell the truth',
+      titleZh: 'bash 结果与 token ledger 说真话',
+      leadEn:
+        'Kernel v0.15.0 makes two of the runtime\'s most-trusted signals harder to misread: a completed bash command now reports whether its inner command actually succeeded, and the token ledger is indexed with an explicit reporting scope.',
+      leadZh:
+        'Kernel v0.15.0 让运行时最被信任的两个信号更难被误读：完成的 bash 命令现在会报告它的内层命令是否真的成功，token ledger 也带着显式的报告 scope 被索引。',
+      bulletsEn: [
+        'Completed bash commands carry additive, model-visible `ok` / `command_status` / `warning` fields, so a nonzero inner exit or a Python traceback no longer hides under `status: ok`; the `status` field keeps its old meaning for compatibility.',
+        'The token ledger is indexed in SQLite, and `sum_token_ledger` gains an explicit `scope` — `main_agent` excludes daemon rows, `all` includes them — with parent/child double-count semantics documented and tested.',
+        'Tool-result top-list metadata is trimmed and the latest agent-meta payload is slimmed, so the model spends fewer tokens on its own bookkeeping (#490, #516).',
+      ],
+      bulletsZh: [
+        '完成的 bash 命令携带附加的、模型可见的 `ok` / `command_status` / `warning` 字段，使得非零内层退出或 Python traceback 不再藏在 `status: ok` 之下；`status` 字段为兼容保留旧含义。',
+        'token ledger 在 SQLite 中被索引，`sum_token_ledger` 新增显式 `scope`——`main_agent` 排除 daemon 行，`all` 包含它们——并记录与测试了 parent/child 重复计数语义。',
+        'tool-result 顶部列表 metadata 被精简，最新的 agent-meta 负载被瘦身，让模型在自己的记账上花更少 token（#490、#516）。',
+      ],
+      whyEn:
+        'An agent that reads `status: ok` as success when the inner command failed, or that cannot say whether a token total includes its daemons, makes confidently wrong decisions; these changes make the signal match reality.',
+      whyZh:
+        '一个把 `status: ok` 当成成功（而内层命令其实失败了），或说不清一个 token 总数是否包含它的 daemon 的 agent，会自信地做出错误决定；这些改动让信号与现实一致。',
+    },
+    {
+      titleEn: 'Secret redaction, source drift, and daemon artifacts',
+      titleZh: '密钥脱敏、源码漂移与 daemon 工件',
+      leadEn:
+        'Several kernel changes harden the seams where a long-running fleet is most exposed: a separate-process event log that could leak secrets, source that silently drifts from the running runtime, and daemon runs that were expensive to inspect.',
+      leadZh:
+        '若干 kernel 改动加固了长任务 fleet 最暴露的接缝：一个可能泄露密钥的独立进程事件日志、悄悄与运行时漂移的源码，以及检查代价高昂的 daemon run。',
+      bulletsEn: [
+        'The relaunch/refresh watcher subprocess now routes `events.jsonl` writes through the kernel redactor (key-aware, fail-open with a diagnosable `redaction_unavailable` marker), closing a separate-process gap where stderr tails, cmdlines, or errors could persist secret-shaped values.',
+        'Startup runtime fingerprints (git HEAD + source digest) land in `.status.json`; agents emit `source_drift` nudges when on-disk source diverges from the running runtime, and `lingtai-doctor` reports them — skipped in dev runtimes (closes #178).',
+        'Each daemon run writes a metadata-only `artifacts.json`, so `daemon(action="check")` can surface path, size, mtime, and role without scanning the run directory, with safe fallback for older runs.',
+      ],
+      bulletsZh: [
+        'relaunch/refresh watcher 子进程现在把 `events.jsonl` 写入经由 kernel 脱敏器（key-aware、fail-open，并带可诊断的 `redaction_unavailable` 标记），堵住了一个独立进程里 stderr 尾部、命令行或错误可能持久化密钥状值的缺口。',
+        '启动时的运行时指纹（git HEAD + 源码摘要）写入 `.status.json`；当磁盘源码与运行时分叉时，agent 发出 `source_drift` 提醒，`lingtai-doctor` 也会报告——在 dev 运行时跳过（关闭 #178）。',
+        '每次 daemon run 写出一个仅含 metadata 的 `artifacts.json`，使 `daemon(action="check")` 无需扫描 run directory 即可呈现 path、size、mtime 与 role，并为旧 run 提供安全回退。',
+      ],
+      whyEn:
+        'These are exactly the failure modes a fleet hits only after hours of unattended work — a secret persisted by a side process, an agent acting on stale source, a daemon too costly to audit; fixing them keeps long autonomy trustworthy.',
+      whyZh:
+        '这些正是 fleet 在数小时无人值守后才会撞上的失败模式——被旁路进程持久化的密钥、在陈旧源码上动手的 agent、贵到无法审计的 daemon；修好它们，让长时间自治保持可信。',
+    },
+    {
+      titleEn: 'Codex summarize guidance, framed as an investment ratio',
+      titleZh: '把 Codex summarize 引导表述为一个投资比率',
+      leadEn:
+        'The Codex adapter\'s summarize guidance was reframed from stale wait/countdown fields into an investment ratio, and then its thresholds were tuned — the newest functional change in this release window.',
+      leadZh:
+        'Codex adapter 的 summarize 引导从陈旧的 wait/countdown 字段，被重新表述为一个投资比率，随后它的阈值被微调——这是本发布窗口里最新的功能改动。',
+      bulletsEn: [
+        '`_meta.agent_meta.adapter_comment` now reports full / incremental counts, a `full_to_incremental_ratio`, a target of `1:10`, and dynamic `summarize_economy` maintenance hints instead of stale wait/countdown fields (#518).',
+        'The summarize guidance thresholds were then tuned so the hint fires at the right moment rather than over- or under-prompting (#519) — the newest functional change before the version bump.',
+        'Supporting Codex work decouples continuation from transport, makes session identity molt-aware, rotates and allows overriding the endpoint pool at molt boundaries, and surfaces the WebSocket cache ledger (#486, #495, #498, #502, #504, #517).',
+      ],
+      bulletsZh: [
+        '`_meta.agent_meta.adapter_comment` 现在报告 full / incremental 计数、一个 `full_to_incremental_ratio`、`1:10` 的目标，以及动态的 `summarize_economy` 维护提示，而不是陈旧的 wait/countdown 字段（#518）。',
+        '随后微调了 summarize 引导阈值，让提示在正确的时机触发，而不是过度或不足地催促（#519）——版本 bump 之前最新的功能改动。',
+        '配套的 Codex 工作把 continuation 与 transport 解耦，让 session identity 感知 molt，在 molt 边界轮换并允许覆盖 endpoint pool，并暴露 WebSocket cache ledger（#486、#495、#498、#502、#504、#517）。',
+      ],
+      whyEn:
+        'Summarization is a tax on every long session; framing it as a maintainable ratio with tuned thresholds turns a vague "summarize soon" nag into guidance an agent can actually budget against.',
+      whyZh:
+        'summarize 是每个长会话都要交的税；把它表述为一个可维护的比率并调好阈值，能把含糊的「快 summarize」唠叨变成 agent 真正能据以做预算的引导。',
+    },
+    {
+      titleEn: 'Release hygiene, validation, and contributors',
+      titleZh: 'release hygiene、验证与贡献者',
+      leadEn:
+        'The paired versions were re-targeted to TUI/Portal v0.10.0 and kernel v0.15.0 (kernel bump PR #521) and validated from clean release worktrees before any publish step.',
+      leadZh:
+        '这对版本被重新定位为 TUI/Portal v0.10.0 与 kernel v0.15.0（kernel bump PR #521），并在任何 publish 步骤之前从干净的 release worktree 完成验证。',
+      bulletsEn: [
+        'Kernel gates at the v0.15.0 bump commit `c365eec` (on base `0797e93`): `compileall` clean; full `pytest` 2935 passed, 4 skipped; `python -m build` produced sdist + wheel; `twine check` PASSED on both.',
+        'TUI/Portal gates at candidate head `37be28b` (= origin/main, build version injected via `make ... VERSION=v0.10.0`, no source bump): `git diff --check` clean apart from the known generated `docs/stars/stars.csv` CRLF caveat; full TUI and Portal Go tests passed; `portal/web npm ci && npm run build` passed; `make build` produced `lingtai-tui v0.10.0` and `lingtai-portal v0.10.0`.',
+        'Noted, non-blocking: the `portal/web` npm-audit advisories affect dev-only tooling, not the embedded `web/dist` the Go binary ships; the locally built kernel wheel is macOS-arm64 platform-tagged, so the portable sdist is the artifact for PyPI unless per-platform wheels are intended.',
+        'Contributors in this window: @huangzesen (lead, scope and validation owner), @ktwu01 (TUI preset refactor), @9s5bz2jvd2-lang (TUI beginner work-manual rewrite), and @TZZheng (kernel runtime source-drift nudge and MCP inbox latency diagnostics).',
+        'Issue reporters whose reports drove shipped/completed work this window: @lin-du (kernel #301 → shipped as PR #488 "Expose Telegram rich formatting options", plus #300 completed) and @888yzbt888 (TUI #401 preset bugs; Bug 1 fixed by in-window kernel PR #479, closed COMPLETED).',
+        'Thanks also to @BrianLiubr (TUI #429/#431) and @xczics (TUI #437) for in-window bug reports still under triage — noted here, not yet shipped fixes.',
+      ],
+      bulletsZh: [
+        '在 v0.15.0 bump commit `c365eec`（基于 `0797e93`）上的 kernel gate：`compileall` 通过；完整 `pytest` 2935 passed、4 skipped；`python -m build` 产出 sdist + wheel；`twine check` 两者均 PASSED。',
+        '在候选 head `37be28b`（= origin/main，构建版本经由 `make ... VERSION=v0.10.0` 注入，无源码 bump）上的 TUI/Portal gate：除已知生成文件 `docs/stars/stars.csv` 的 CRLF 注脚外 `git diff --check` 干净；完整 TUI 与 Portal Go 测试通过；`portal/web npm ci && npm run build` 通过；`make build` 产出 `lingtai-tui v0.10.0` 与 `lingtai-portal v0.10.0`。',
+        '记录在案、不阻塞发布：`portal/web` 的 npm-audit 警告只影响 dev-only 工具链，不影响 Go 二进制实际打包的 `web/dist`；本地构建的 kernel wheel 带 macOS-arm64 平台标签，因此除非有意发布按平台的 wheel，PyPI 的工件应为可移植的 sdist。',
+        '本窗口贡献者：@huangzesen（lead，scope 与验证负责人）、@ktwu01（TUI preset 重构）、@9s5bz2jvd2-lang（TUI 新手工作手册重写）、@TZZheng（kernel 运行时 source-drift 提醒与 MCP inbox 延迟诊断）。',
+        '本窗口因 issue 报告而推动落地/完成的报告者：@lin-du（kernel #301 → 以 PR #488「Expose Telegram rich formatting options」落地，另有 #300 completed）与 @888yzbt888（TUI #401 preset bug；Bug 1 由窗口内 kernel PR #479 修复，issue 标记 COMPLETED）。',
+        '同样感谢 @BrianLiubr（TUI #429/#431）与 @xczics（TUI #437）在窗口内提交的 bug 报告——这些仍在 triage 中，此处仅作致谢记录，尚非已发布的修复。',
+      ],
+      whyEn:
+        'A version bump still deserves full gate evidence and an honest contributor list; recording that the publish artifacts and tags are cut from these exact validated commits is part of shipping responsibly.',
+      whyZh:
+        '一次版本 bump 同样值得有完整的 gate 证据与诚实的贡献者列表；记录「publish 工件与 tag 正是从这些经过验证的 commit 切出」，是负责任地发布的一部分。',
+    },
+  ],
+  contributors: ['huangzesen', 'ktwu01', '9s5bz2jvd2-lang', 'TZZheng', 'lin-du', '888yzbt888'],
+  validation: {
+    commit: 'c365eec927eb8f0b9d557ced3f127cf4759b8153 (kernel v0.15.0 bump) / 37be28b09b3a9d16b3c9daccb408698b56a38f30 (TUI/Portal v0.10.0 build target)',
+    items: [
+      { label: 'Kernel compileall', result: 'src + tests compiled clean' },
+      { label: 'Kernel full pytest', result: '2935 passed, 4 skipped' },
+      { label: 'Kernel build and twine check', result: 'sdist + wheel built; both PASSED' },
+      { label: 'Kernel diff-check', result: 'only delta vs origin/main is the pyproject.toml version bump to 0.15.0' },
+      { label: 'TUI diff-check', result: 'clean apart from known generated docs/stars/stars.csv CRLF caveat' },
+      { label: 'TUI Go tests/build', result: 'go test passed; make build → lingtai-tui v0.10.0' },
+      { label: 'Portal web npm ci/build', result: 'passed (dev-only npm audit advisories noted, not blocking)' },
+      { label: 'Portal Go tests/build', result: 'go test passed; make build → lingtai-portal v0.10.0' },
+      { label: 'PyPI artifact policy', result: 'portable sdist is the PyPI artifact; local wheel is macOS-arm64 platform-tagged' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.15.0' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.10.0' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.15.0/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-26/' },
+  ],
+};
+
+const v0_14_2_kernel_v0_9_6_tui: Release = {
+  id: '20260624-1',
+  version: 'Kernel v0.14.2 · TUI/Portal v0.9.6',
+  titleEn: 'LingTai release day: multi-account Codex, trend reports, and a calmer cockpit',
+  titleZh: 'LingTai release day：多账号 Codex、趋势报告，与更安静的座舱',
+  date: '2026-06-24',
+  pkg: 'lingtai + lingtai-tui',
+  tag: 'kernel v0.14.2 · TUI/Portal v0.9.6',
+  install: 'brew update && brew upgrade lingtai-ai/lingtai/lingtai-tui',
+  runtimeNoteEn:
+    'The Homebrew command updates the TUI/Portal surface. The kernel package `lingtai` v0.14.2 is published on PyPI as the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path rather than treating a bare global pip command as the user upgrade story.',
+  runtimeNoteZh:
+    '上面的 Homebrew 命令用于更新 TUI/Portal。Kernel package `lingtai` v0.14.2 已发布到 PyPI，作为 LingTai-managed environment 使用的 runtime package source；已有项目仍应按 TUI 管理的 refresh / setup 路径更新，不应把全局裸 pip 命令当作普通用户升级故事。',
+  summaryEn:
+    'A paired kernel and TUI/Portal release centered on running several Codex identities side by side and seeing how a fleet actually spends its calls: per-agent and per-preset Codex OAuth token files, a multi-OAuth setup UI, swiss-knife tool-call and API-call trend reports, a scrollable `/doctor`, bilingual loading strings, a lower default context cap, cache-miss detail in the kanban call view, and the daemon and bash fixes that keep long-running work honest.',
+  summaryZh:
+    '这是一组围绕「让多个 Codex 身份并行运行」与「看清一支 fleet 的调用究竟花在哪里」的 kernel 与 TUI/Portal 配套发布：按 agent、按 preset 的 Codex OAuth token 文件，多 OAuth 的 setup UI，swiss-knife 的 tool-call / API-call 趋势报告，可滚动的 `/doctor`，双语加载文案，更低的默认 context 上限，看板调用视图里的 cache-miss 细节，以及让长任务保持诚实的 daemon 与 bash 修复。',
+  features: [
+    {
+      titleEn: 'Many Codex identities, one fleet',
+      titleZh: '多个 Codex 身份，一支 fleet',
+      leadEn:
+        'Kernel v0.14.2 and TUI/Portal v0.9.6 let different agents and presets sign in to Codex as different OAuth identities instead of sharing one global token.',
+      leadZh:
+        'Kernel v0.14.2 与 TUI/Portal v0.9.6 让不同 agent、不同 preset 以不同的 Codex OAuth 身份登录，而不是共用一个全局 token。',
+      bulletsEn: [
+        'A new `manifest.llm.codex_auth_path` lets each agent or preset point at its own Codex OAuth token file, so multiple ChatGPT accounts can run side by side (kernel #484).',
+        'TUI/Portal setup gained multi-OAuth UI and preset support, so picking which Codex identity a preset uses is a first-class choice rather than a manual file edit (TUI #415).',
+        'The default falls back to the shared token path, so existing single-account setups keep working untouched.',
+      ],
+      bulletsZh: [
+        '新增的 `manifest.llm.codex_auth_path` 让每个 agent 或 preset 指向自己的 Codex OAuth token 文件，从而让多个 ChatGPT 账号并行运行（kernel #484）。',
+        'TUI/Portal setup 新增多 OAuth 的 UI 与 preset 支持，让「某个 preset 用哪个 Codex 身份」成为一等选择，而不是手动改文件（TUI #415）。',
+        '默认仍回退到共享 token 路径，因此已有的单账号配置无需改动即可继续工作。',
+      ],
+      whyEn:
+        'A fleet that mixes accounts needs each agent to authenticate as itself; one shared token makes attribution and rate limits everyone\'s problem at once.',
+      whyZh:
+        '当一支 fleet 混用多个账号时，每个 agent 都需要以自己的身份认证；共用一个 token 会让归属与限流瞬间变成所有人的共同问题。',
+    },
+    {
+      titleEn: 'Seeing where the calls go',
+      titleZh: '看清调用花在哪里',
+      leadEn:
+        'TUI/Portal v0.9.6 turns raw call logs into trend reports, so a fleet\'s tool-call and API-call behavior becomes something operators can read at a glance.',
+      leadZh:
+        'TUI/Portal v0.9.6 把原始调用日志变成趋势报告，让一支 fleet 的 tool-call 与 API-call 行为变得能一眼读懂。',
+      bulletsEn: [
+        'A new swiss-knife script and skill produce tool-call and API-call trend reports, with wording aligned across the script and the skill (#414).',
+        'The kanban call view now shows cache-miss detail, so a turn that paid full price instead of hitting cache is visible where operators already look (#410).',
+        '`/doctor` is scrollable and has section headers, so a long diagnostic readout is navigable instead of a single wall of text (#413).',
+      ],
+      bulletsZh: [
+        '新增的 swiss-knife 脚本与 skill 产出 tool-call 与 API-call 趋势报告，脚本与 skill 的措辞保持一致（#414）。',
+        '看板调用视图现在显示 cache-miss 细节，让「这个 turn 付了全价而不是命中 cache」出现在操作者本就会看的地方（#410）。',
+        '`/doctor` 变得可滚动并带分节标题，让冗长的诊断输出可以导航，而不是一整面文字墙（#413）。',
+      ],
+      whyEn:
+        'You cannot tune what you cannot see; making call trends and cache misses legible is the first step toward trimming them.',
+      whyZh:
+        '看不见就无法调优；让调用趋势与 cache miss 变得可读，是削减它们的第一步。',
+    },
+    {
+      titleEn: 'A calmer, more legible cockpit',
+      titleZh: '更安静、更易读的座舱',
+      leadEn:
+        'Several smaller TUI changes lower the noise floor and make the default cockpit kinder to readers of more than one language.',
+      leadZh:
+        '几处较小的 TUI 改动降低了噪声底线，也让默认座舱对不止一种语言的读者更友好。',
+      bulletsEn: [
+        'Loading strings are bilingual and i18n-aware, so the cockpit speaks the operator\'s language while it warms up (#412).',
+        'The default context/token cap was lowered to 250k, a more conservative working budget out of the box (#411).',
+        'These defaults can still be raised per setup; the change is about what an unconfigured cockpit does, not a hard ceiling.',
+      ],
+      bulletsZh: [
+        '加载文案改为双语且支持 i18n，让座舱在预热时也用操作者的语言说话（#412）。',
+        '默认 context/token 上限降到 250k，开箱即用时是更保守的工作预算（#411）。',
+        '这些默认值仍可按 setup 调高；这次改的是「未配置的座舱默认怎么做」，而不是一个硬上限。',
+      ],
+      whyEn:
+        'Defaults are what most sessions actually run with, so a saner default cap and language-aware text matter more than any single advanced toggle.',
+      whyZh:
+        '默认值才是大多数会话实际跑的配置，因此更合理的默认上限与感知语言的文案，比任何单个高级开关都更重要。',
+    },
+    {
+      titleEn: 'Daemon and bash fixes that keep long work honest',
+      titleZh: '让长任务保持诚实的 daemon 与 bash 修复',
+      leadEn:
+        'Kernel v0.14.2 repairs two run-directory and working-directory edge cases that previously made long-running daemon work misreport its own state.',
+      leadZh:
+        'Kernel v0.14.2 修复了两处 run-directory 与 working-directory 的边界情况，它们此前会让长时间运行的 daemon 工作误报自己的状态。',
+      bulletsEn: [
+        'A daemon historical check now resolves run directories correctly after a refresh or molt, so prior-run inspection no longer breaks across a context shed (#483).',
+        'An empty `working_dir` in a bash call is now treated as unset and falls back to the default agent directory, instead of running against an ambiguous path (#480).',
+        'Both fixes target the moments — post-molt, empty-field — where a long session is most likely to lose track of where it is.',
+      ],
+      bulletsZh: [
+        'daemon 历史检查现在能在 refresh 或 molt 之后正确解析 run directory，使得跨 context 凝蜕的历史回看不再失效（#483）。',
+        'bash 调用里空的 `working_dir` 现在被视为未设置，并回退到默认 agent 目录，而不是在一个含糊的路径上运行（#480）。',
+        '这两处修复都瞄准最容易让长会话「丢失自己在哪里」的时刻——凝蜕之后、字段为空时。',
+      ],
+      whyEn:
+        'A long-running agent that loses track of its run directory or working directory will quietly act on the wrong place; these fixes keep it honest about where it is.',
+      whyZh:
+        '一个丢失了自己 run directory 或 working directory 的长任务 agent，会悄悄地在错误的位置动手；这两处修复让它对「自己在哪里」保持诚实。',
+    },
+    {
+      titleEn: 'Release hygiene, validation, and contributors',
+      titleZh: 'release hygiene、验证与贡献者',
+      leadEn:
+        'The window also carried release-hygiene work and was validated from clean release worktrees before publication.',
+      leadZh:
+        '本窗口同样包含 release-hygiene 工作，并在发布前从干净的 release worktree 完成验证。',
+      bulletsEn: [
+        'The kernel update command is confirm-gated, and a destructive global preset-split migration was neutralized so it can no longer rewrite operator presets.',
+        'TUI release version comparisons are now classified explicitly (@TZZheng), and the release star CSV was normalized as release hygiene.',
+        'Kernel gates: `compileall` clean; focused/expanded pytest over daemon/bash/notification/preset/deep-refresh/tool-executor/openai/codex/provider/auth surfaces `513 passed`; `python -m build` plus `twine check` PASSED; PyPI reports `info.version=0.14.2`.',
+        'TUI/Portal gates: `git diff --check` clean; TUI and Portal Go tests passed; `portal/web npm ci && npm run build` passed; TUI and Portal `make clean && make build` passed; Homebrew Release workflow succeeded for tag v0.9.6.',
+      ],
+      bulletsZh: [
+        'kernel 更新命令改为 confirm-gated，并中和了一个具破坏性的全局 preset-split migration，使其不再能重写操作者的 preset。',
+        'TUI release 版本比较现在被显式分类（@TZZheng），release star CSV 也作为 release hygiene 做了归一化。',
+        'Kernel 验证：`compileall` 通过；针对 daemon/bash/notification/preset/deep-refresh/tool-executor/openai/codex/provider/auth 面的聚焦/扩展 pytest `513 passed`；`python -m build` 与 `twine check` 均 PASSED；PyPI 报告 `info.version=0.14.2`。',
+        'TUI/Portal 验证：`git diff --check` 干净；TUI 与 Portal Go 测试通过；`portal/web npm ci && npm run build` 通过；TUI 与 Portal `make clean && make build` 通过；tag v0.9.6 的 Homebrew Release workflow 成功。',
+      ],
+      whyEn:
+        'A small version bump still deserves confirm-gated mutations, neutralized destructive migrations, and full gate evidence before it ships.',
+      whyZh:
+        '一次小版本 bump 同样值得在发布前有 confirm-gated 的变更、被中和的破坏性 migration，以及完整的 gate 证据。',
+    },
+  ],
+  contributors: ['huangzesen', 'TZZheng'],
+  validation: {
+    commit: '009f1aa84eb6926f88001ad284d435181e758fa5 / 3460ece328c60b80a2a6a8c5431c96f1cb25e210',
+    items: [
+      { label: 'Kernel compileall', result: 'src + tests compiled clean' },
+      { label: 'Kernel focused/expanded pytest', result: '513 passed' },
+      { label: 'Kernel build and twine check', result: 'wheel + sdist built; both PASSED' },
+      { label: 'PyPI verification', result: 'info.version = 0.14.2' },
+      { label: 'TUI diff-check', result: 'git diff --check clean (v0.9.5...HEAD)' },
+      { label: 'TUI Go tests/build', result: 'go test + make clean && make build passed' },
+      { label: 'Portal web npm ci/build', result: 'passed (npm audit warnings noted, not blocking)' },
+      { label: 'Portal Go tests/build', result: 'go test + make clean && make build passed' },
+      { label: 'Homebrew tap', result: 'Release workflow auto-bumped lingtai-tui to 0.9.6 (sha256 c944…2aca)' },
+    ],
+  },
+  links: [
+    { label: 'Kernel release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.14.2' },
+    { label: 'TUI/Portal release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.9.6' },
+    { label: 'PyPI kernel package', href: 'https://pypi.org/project/lingtai/0.14.2/' },
+    { label: 'Homebrew tap', href: 'https://github.com/Lingtai-AI/homebrew-lingtai' },
+    { label: 'Companion blog', href: 'https://lingtai.ai/en/blog/release-day-2026-06-24/' },
+  ],
+};
+
 const v0_14_1_kernel: Release = {
   id: '20260623-1',
   version: 'Kernel v0.14.1',
@@ -2046,7 +3691,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);

@@ -1,0 +1,705 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const bestPicks = [
+  '开普勒系外行星凌星——制作光变曲线，找出行星经过恒星前方时的亮度下凹。',
+  'Gaia 银河系地图 / 赫罗图——绘制真实恒星，显现恒星族群。',
+  'DART 小行星撞击——用探测器接近图像做一段接近动画。',
+  '新视野号飞掠冥王星——动画呈现冥王星在接近过程中逐渐变大。',
+  'JWST 或哈勃深场——制作彩色合成图，并统计星系。',
+];
+
+const projectCandidates = [
+  {
+    event: '开普勒通过恒星亮度下凹发现系外行星',
+    year: '2009–2018',
+    idea: '载入一条开普勒光变曲线，按行星周期折叠，并显示凌星下凹。学生可以用下凹深度估计行星与恒星的半径比例。',
+    archives: [
+      { label: 'MAST 开普勒档案', href: 'https://archive.stsci.edu/missions-and-data/kepler' },
+      { label: 'Lightkurve', href: 'https://lightkurve.github.io/lightkurve/' },
+      { label: 'NASA Exoplanet Archive 开普勒数据', href: 'https://exoplanetarchive.ipac.caltech.edu/docs/Kepler_Data_Products_Overview.html' },
+    ],
+    difficulty: '容易',
+  },
+  {
+    event: 'Gaia 以前所未有的精度绘制银河系',
+    year: '2016–至今',
+    idea: '查询附近恒星，绘制赫罗图、全天图，或恒星颜色与亮度的关系图。',
+    archives: [
+      { label: 'ESA Gaia Archive', href: 'https://gea.esac.esa.int/archive/' },
+      { label: 'ESA Gaia 赫罗图示例', href: 'https://sci.esa.int/web/gaia/-/60198-gaia-hertzsprung-russell-diagram' },
+    ],
+    difficulty: '容易',
+  },
+  {
+    event: 'DART 故意撞击小行星卫星 Dimorphos',
+    year: '2022',
+    idea: '下载 DRACO 图像并制作逐帧接近动画。学生可以测量 Dimorphos 在撞击前的表观大小如何增加。',
+    archives: [
+      { label: 'NASA PDS DART 任务档案', href: 'https://pds-smallbodies.astro.umd.edu/data_sb/missions/dart/index.shtml' },
+      { label: 'DART DRACO 原始图像', href: 'https://pds.nasa.gov/ds-view/pds/viewCollection.jsp?identifier=urn%3Anasa%3Apds%3Adart%3Adata_dracoraw' },
+    ],
+    difficulty: '容易–中等',
+  },
+  {
+    event: '新视野号飞掠冥王星',
+    year: '2015',
+    idea: '载入 LORRI 图像，制作冥王星接近动画。学生可以测量不同时刻冥王星的像素直径。',
+    archives: [
+      { label: 'NASA PDS 新视野号档案', href: 'https://pds-smallbodies.astro.umd.edu/data_sb/missions/newhorizons/index.shtml' },
+    ],
+    difficulty: '容易–中等',
+  },
+  {
+    event: 'JWST 发布第一张深场图像',
+    year: '2022',
+    idea: '载入 SMACS 0723 的 JWST 图像，将不同滤镜合成为彩色图像，并识别星系或引力弧。',
+    archives: [
+      { label: 'MAST JWST 档案', href: 'https://archive.stsci.edu/missions-and-data/jwst' },
+      { label: 'Webb 首批图像数据说明', href: 'https://www.stsci.edu/contents/news/jwst/2022/science-data-for-webbs-first-images-now-available' },
+    ],
+    difficulty: '中等',
+  },
+  {
+    event: '哈勃深场揭示数千个遥远星系',
+    year: '1995–1996',
+    idea: '使用不同滤镜的哈勃图像制作彩色合成图，统计源数量，或比较这片极小天空区域与可见星系数量之间的关系。',
+    archives: [
+      { label: 'MAST 哈勃档案', href: 'https://archive.stsci.edu/missions-and-data/hst' },
+      { label: '哈勃深场论文', href: 'https://arxiv.org/abs/astro-ph/9607174' },
+    ],
+    difficulty: '中等',
+  },
+  {
+    event: '苏梅克–列维 9 号彗星撞击木星',
+    year: '1994',
+    idea: '制作木星撞击前后的图像序列，并测量撞击痕迹如何变化或消退。',
+    archives: [
+      { label: 'NASA 哈勃 SL9 图像页', href: 'https://science.nasa.gov/asset/hubble/comet-shoemaker-levy-9-impact-sites-on-jupiter/' },
+      { label: 'ESA/Hubble SL9 图像搜索', href: 'https://esahubble.org/images/?search=shoemaker+levy+9' },
+    ],
+    difficulty: '中等',
+  },
+  {
+    event: '超新星 1987A 出现在大麦哲伦云',
+    year: '1987',
+    idea: '下载亮度观测数据，绘制超新星光变曲线：快速变亮、达到峰值、随后长期变暗。',
+    archives: [
+      { label: 'AAVSO 国际数据库', href: 'https://www.aavso.org/aavso-international-database' },
+      { label: 'AAVSO 光度搜索', href: 'https://apps.aavso.org/data/search/photometry/' },
+    ],
+    difficulty: '中等',
+  },
+  {
+    event: '旅行者 1 号穿越日球层顶，进入星际空间',
+    year: '2012',
+    idea: '绘制 2012 年 8 月 25 日前后的带电粒子变化：日球层粒子减少，而银河宇宙线增加。',
+    archives: [
+      { label: 'NASA 旅行者星际任务', href: 'https://science.nasa.gov/mission/voyager/interstellar-mission/' },
+      { label: 'NASA CDAWeb/SPDF', href: 'https://cdaweb.gsfc.nasa.gov/' },
+    ],
+    difficulty: '中等–进阶',
+  },
+  {
+    event: '帕克太阳探测器“触碰”太阳',
+    year: '2021',
+    idea: '绘制帕克太阳探测器与太阳的距离，并把它与近距离掠日时的磁场或太阳风测量进行比较。',
+    archives: [
+      { label: 'NASA 帕克太阳探测器任务', href: 'https://science.nasa.gov/mission/parker-solar-probe/' },
+      { label: 'NASA CDAWeb/SPDF', href: 'https://cdaweb.gsfc.nasa.gov/' },
+      { label: 'WISPR 数据', href: 'https://wispr.nrl.navy.mil/wisprdata' },
+    ],
+    difficulty: '中等–进阶',
+  },
+];
+
+const projectAssets: Record<string, { bestFor: string; output: string; promptHref: string }> = {
+  '开普勒通过恒星亮度下凹发现系外行星': {
+    bestFor: '第一次做真实天文时间序列',
+    output: '光变曲线 + 凌星下凹解释',
+    promptHref: '/astronomy-examples/prompts/kepler-transit.md',
+  },
+  'Gaia 以前所未有的精度绘制银河系': {
+    bestFor: '想把真实恒星画成一张地图',
+    output: '赫罗图或附近恒星 sky map',
+    promptHref: '/astronomy-examples/prompts/gaia-hr-diagram.md',
+  },
+  'DART 故意撞击小行星卫星 Dimorphos': {
+    bestFor: '喜欢航天器影像和动画',
+    output: 'DART 接近动画或尺寸变化图',
+    promptHref: '/astronomy-examples/prompts/dart-impact-movie.md',
+  },
+  '新视野号飞掠冥王星': {
+    bestFor: '想做太阳系远方探测故事',
+    output: '冥王星接近动画 + 像素直径测量',
+    promptHref: '/astronomy-examples/prompts/new-horizons-pluto.md',
+  },
+  'JWST 发布第一张深场图像': {
+    bestFor: '喜欢彩色图像和星系',
+    output: '深场彩色合成图 + 星系标注',
+    promptHref: '/astronomy-examples/prompts/jwst-deep-field.md',
+  },
+  '哈勃深场揭示数千个遥远星系': {
+    bestFor: '想比较经典深空影像',
+    output: '哈勃深场合成图或源计数',
+    promptHref: '/astronomy-examples/prompts/hubble-deep-field.md',
+  },
+  '苏梅克–列维 9 号彗星撞击木星': {
+    bestFor: '想做前后对比图像序列',
+    output: '木星撞击痕迹变化图',
+    promptHref: '/astronomy-examples/prompts/shoemaker-levy-9.md',
+  },
+  '超新星 1987A 出现在大麦哲伦云': {
+    bestFor: '想研究恒星爆炸如何变亮变暗',
+    output: '超新星光变曲线 + 峰值解释',
+    promptHref: '/astronomy-examples/prompts/supernova-1987a.md',
+  },
+  '旅行者 1 号穿越日球层顶，进入星际空间': {
+    bestFor: '想做空间物理时间序列',
+    output: '粒子变化时间序列 + 日球层顶解释',
+    promptHref: '/astronomy-examples/prompts/voyager-heliopause.md',
+  },
+  '帕克太阳探测器“触碰”太阳': {
+    bestFor: '想研究探测器靠近太阳的过程',
+    output: '距离太阳曲线 + 一个太阳风/磁场指标',
+    promptHref: '/astronomy-examples/prompts/parker-solar-probe.md',
+  },
+};
+
+const formats = [
+  {
+    title: '选项 A：单一事件小项目',
+    items: [
+      '一张图或一段动画。',
+      '对事件的简短说明。',
+      '所使用的数据来源。',
+      '用 3–5 句话解释图像或曲线说明了什么。',
+    ],
+  },
+  {
+    title: '选项 B：比较两个事件',
+    items: [
+      '开普勒 vs. Gaia：寻找恒星周围的行星 vs. 绘制恒星地图。',
+      '哈勃深场 vs. JWST 深场：跨越两代望远镜的光学 / 近红外深空成像。',
+      '旅行者 1 号 vs. 帕克太阳探测器：最远的人造探测器 vs. 最近距离接近太阳的探测器。',
+      'DART vs. 新视野号：对小天体和遥远太阳系天体的航天器成像。',
+    ],
+  },
+  {
+    title: '选项 C：智能体辅助笔记本',
+    items: [
+      '识别正确的公共档案。',
+      '下载一小份样本数据。',
+      '用 Python 载入数据。',
+      '制作一张图或一段图像序列。',
+      '用适合高中生的语言解释结果含义。',
+    ],
+  },
+];
+
+const prompts = [
+  {
+    title: '开普勒凌星提示词',
+    text: '使用某个已知系外行星系统的公开开普勒光变曲线数据。下载一小份光变曲线文件，绘制亮度随时间变化的图，按行星周期折叠光变曲线，并用高中生能理解的语言解释凌星下凹。',
+  },
+  {
+    title: 'Gaia 赫罗图提示词',
+    text: '查询一小批带有视差和颜色信息的附近 Gaia 恒星。以颜色为横轴、绝对星等为纵轴绘制赫罗图，并标出主序星和巨星分支。',
+  },
+  {
+    title: 'DART 图像提示词',
+    text: '下载 DART 撞击前的一小组 DRACO 接近图像。制作有序图像序列或 GIF，并估计 Dimorphos 的表观大小如何随时间变化。',
+  },
+  {
+    title: '新视野号冥王星提示词',
+    text: '下载几张最接近前的新视野号 LORRI 冥王星图像。制作简单的接近动画，并测量每一帧中冥王星的像素直径。',
+  },
+  {
+    title: '旅行者日球层顶提示词',
+    text: '使用 2012 年 8 月 25 日前后旅行者 1 号的粒子或磁场数据。绘制穿越前后的时间序列，并解释为什么这种变化说明它进入了星际空间。',
+  },
+  {
+    title: '帕克太阳探测器提示词',
+    text: '使用帕克太阳探测器在一次近距离掠日附近的轨道数据、太阳风数据或磁场数据。绘制它与太阳距离随时间的变化，并与一个物理量测量进行比较。',
+  },
+];
+---
+
+<BaseLayout title="天文数据项目菜单" lang="zh">
+  <main class="astronomy-page">
+    <section class="hero">
+      <p class="eyebrow">高中项目菜单 · 公共档案数据</p>
+      <h1>高中生天文数据项目选题菜单</h1>
+      <p class="lede">
+        先选一个你感兴趣的天文事件，再下载对应的 LingTai agent prompt。
+        每个项目都配有公开数据源、建议产出和可直接交给智能体的 Markdown 任务说明，
+        适合高中生做成图表、动画、图像合成、光变曲线、轨迹图或短报告。
+      </p>
+      <aside class="note" aria-label="旅行者术语说明">
+        <strong>措辞说明：</strong>“离开太阳系”通常是对<strong>旅行者 1 号穿越日球层顶、进入星际空间</strong>的非正式说法。
+        旅行者 1 号还没有穿越太阳系所有可能的外边界，例如遥远的奥尔特云。
+      </aside>
+    </section>
+
+    <section class="panel picks">
+      <div class="section-heading">
+        <p class="eyebrow">从这里开始</p>
+        <h2>最适合作为第一批项目的选题</h2>
+      </div>
+      <ol class="pick-grid">
+        {bestPicks.map((pick) => <li>{pick}</li>)}
+      </ol>
+    </section>
+
+    <section class="panel chooser">
+      <div class="section-heading">
+        <p class="eyebrow">选一个开始</p>
+        <h2>学生项目卡片</h2>
+        <p class="section-copy">
+          每张卡片都是一个可完成的公开数据项目。下载 Markdown prompt 后，可以把它交给 LingTai agent，
+          让 agent 帮你找小样本数据、写 notebook、生成图表，并把结果解释成高中生能讲清楚的短报告。
+        </p>
+      </div>
+      <div class="project-choice-grid">
+        {projectCandidates.map((project, index) => (
+          <article class="project-choice-card">
+            <div class="project-card-topline">
+              <span class="rank compact">{index + 1}</span>
+              <span class="badge">{project.difficulty}</span>
+            </div>
+            <h3>{project.event}</h3>
+            <p class="best-for">适合：{projectAssets[project.event].bestFor}</p>
+            <p>{project.idea}</p>
+            <dl class="project-facts">
+              <div>
+                <dt>预计产出</dt>
+                <dd>{projectAssets[project.event].output}</dd>
+              </div>
+              <div>
+                <dt>数据入口</dt>
+                <dd><a href={project.archives[0].href} target="_blank" rel="noreferrer">{project.archives[0].label}</a></dd>
+              </div>
+            </dl>
+            <a class="download-link" href={projectAssets[project.event].promptHref} download>
+              下载 LingTai 项目 prompt (.md)
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <p class="eyebrow">项目候选</p>
+        <h2>10 个公共档案天文项目</h2>
+      </div>
+      <div class="table-scroll" role="region" aria-label="天文项目候选表" tabindex="0">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">事件</th>
+              <th scope="col">年份</th>
+              <th scope="col">学生项目想法</th>
+              <th scope="col">公共数据 / 档案</th>
+              <th scope="col">难度</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projectCandidates.map((project, index) => (
+              <tr>
+                <td class="rank">{index + 1}</td>
+                <td><strong>{project.event}</strong></td>
+                <td>{project.year}</td>
+                <td>{project.idea}</td>
+                <td>
+                  <ul class="archive-links">
+                    {project.archives.map((archive) => (
+                      <li>
+                        <a href={archive.href} target="_blank" rel="noreferrer">{archive.label}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </td>
+                <td><span class="badge">{project.difficulty}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel formats">
+      <div class="section-heading">
+        <p class="eyebrow">课堂形式</p>
+        <h2>推荐项目形式</h2>
+      </div>
+      <div class="card-grid three">
+        {formats.map((format) => (
+          <article class="card">
+            <h3>{format.title}</h3>
+            <ul>
+              {format.items.map((item) => <li>{item}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="panel prompts">
+      <div class="section-heading">
+        <p class="eyebrow">复制后改写</p>
+        <h2>适合学生使用的智能体提示词</h2>
+      </div>
+      <div class="card-grid two">
+        {prompts.map((prompt) => (
+          <article class="prompt-card">
+            <h3>{prompt.title}</h3>
+            <blockquote>{prompt.text}</blockquote>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="panel practical">
+      <div class="section-heading">
+        <p class="eyebrow">保持小规模</p>
+        <h2>实用注意事项</h2>
+      </div>
+      <ul class="practical-list">
+        <li>从<strong>小样本</strong>开始，不要一上来下载完整任务档案。</li>
+        <li>尽量优先选择 <strong>CSV、FITS 或简单图像文件</strong>。</li>
+        <li>图像项目的最终成果可以是 PNG、GIF 或带注释的图像。</li>
+        <li>时间序列项目应包含标注清楚的坐标轴、单位和简短说明。</li>
+        <li>最适合课堂的项目通常是<strong>开普勒</strong>、<strong>Gaia</strong>、<strong>DART</strong>、<strong>新视野号</strong>和<strong>深场成像</strong>。</li>
+      </ul>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .astronomy-page {
+    width: min(1120px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 96px 0 72px;
+  }
+
+  .hero,
+  .panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--vermilion) 22%, transparent);
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at top left, color-mix(in srgb, var(--gold) 18%, transparent), transparent 34rem),
+      linear-gradient(145deg, color-mix(in srgb, var(--bg-alt) 84%, transparent), color-mix(in srgb, var(--bg) 94%, transparent));
+    box-shadow: 0 28px 70px color-mix(in srgb, var(--ink) 13%, transparent);
+  }
+
+  .hero {
+    min-height: 520px;
+    display: grid;
+    align-content: center;
+    gap: 24px;
+    padding: clamp(40px, 7vw, 88px);
+  }
+
+  .hero::after {
+    content: "✦";
+    position: absolute;
+    right: clamp(24px, 7vw, 90px);
+    top: clamp(20px, 6vw, 72px);
+    color: color-mix(in srgb, var(--vermilion) 52%, transparent);
+    font-size: clamp(4rem, 14vw, 11rem);
+    line-height: 1;
+    transform: rotate(18deg);
+    opacity: 0.18;
+  }
+
+  .eyebrow {
+    color: var(--vermilion);
+    font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--title-color);
+    line-height: 1.08;
+  }
+
+  h1 {
+    max-width: 920px;
+    font-size: clamp(3rem, 8vw, 6.4rem);
+    font-weight: 500;
+    letter-spacing: -0.07em;
+  }
+
+  h2 {
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 500;
+    letter-spacing: -0.055em;
+  }
+
+  h3 {
+    margin-bottom: 0.7rem;
+    font-size: 1.25rem;
+  }
+
+  .lede {
+    max-width: 780px;
+    color: var(--text-dim);
+    font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+  }
+
+  .note {
+    max-width: 780px;
+    padding: 18px 20px;
+    border-left: 4px solid var(--vermilion);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--seal-paper) 52%, transparent);
+    color: var(--text-dim);
+  }
+
+  [data-theme="dark"] .note {
+    background: color-mix(in srgb, var(--bg-alt) 72%, transparent);
+  }
+
+  .panel {
+    margin-top: 28px;
+    padding: clamp(28px, 5vw, 52px);
+  }
+
+  .section-heading {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .pick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    list-style: none;
+    counter-reset: pick;
+  }
+
+  .pick-grid li {
+    counter-increment: pick;
+    min-height: 150px;
+    padding: 22px;
+    border: 1px solid color-mix(in srgb, var(--accent-warm) 34%, transparent);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    color: var(--text-dim);
+  }
+
+  .pick-grid li::before {
+    content: counter(pick, decimal-leading-zero);
+    display: block;
+    margin-bottom: 18px;
+    color: var(--vermilion);
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 2.4rem;
+    line-height: 1;
+  }
+
+
+  .section-copy {
+    max-width: 820px;
+    color: var(--text-dim);
+    font-size: 1.05rem;
+  }
+
+  .project-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 18px;
+  }
+
+  .project-choice-card {
+    display: flex;
+    min-height: 390px;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    border: 1px solid color-mix(in srgb, var(--accent-warm) 32%, transparent);
+    border-radius: 24px;
+    background: color-mix(in srgb, var(--bg) 74%, transparent);
+  }
+
+  .project-card-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .rank.compact {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .best-for {
+    color: var(--vermilion);
+    font-weight: 700;
+  }
+
+  .project-choice-card p {
+    color: var(--text-dim);
+  }
+
+  .project-facts {
+    display: grid;
+    gap: 12px;
+    margin-top: auto;
+  }
+
+  .project-facts div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .project-facts dt {
+    color: var(--text-faint);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .project-facts dd {
+    color: var(--text-dim);
+  }
+
+  .download-link {
+    display: inline-flex;
+    justify-content: center;
+    margin-top: 6px;
+    padding: 12px 16px;
+    border: 1px solid var(--vermilion);
+    border-radius: 999px;
+    color: var(--vermilion);
+    font-weight: 700;
+  }
+
+  .download-link:hover {
+    background: var(--vermilion);
+    color: var(--seal-paper);
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid color-mix(in srgb, var(--accent-warm) 32%, transparent);
+    border-radius: 24px;
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+
+  table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 18px;
+    border-bottom: 1px solid color-mix(in srgb, var(--accent-warm) 25%, transparent);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--vermilion);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .rank {
+    color: var(--text-faint);
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 1.6rem;
+  }
+
+  .archive-links {
+    display: grid;
+    gap: 8px;
+    padding-left: 1rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    padding: 6px 10px;
+    border: 1px solid color-mix(in srgb, var(--vermilion) 34%, transparent);
+    border-radius: 999px;
+    color: var(--vermilion);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .card-grid {
+    display: grid;
+    gap: 18px;
+  }
+
+  .card-grid.two {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .card-grid.three {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .card,
+  .prompt-card {
+    padding: 24px;
+    border: 1px solid color-mix(in srgb, var(--accent-warm) 32%, transparent);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+  }
+
+  .card ul,
+  .practical-list {
+    display: grid;
+    gap: 10px;
+    padding-left: 1.1rem;
+    color: var(--text-dim);
+  }
+
+  blockquote {
+    position: relative;
+    margin: 0;
+    padding-left: 18px;
+    border-left: 3px solid var(--vermilion);
+    color: var(--text-dim);
+  }
+
+  .practical-list {
+    max-width: 840px;
+    font-size: 1.04rem;
+  }
+
+  @media (max-width: 720px) {
+    .astronomy-page {
+      width: min(100% - 24px, 1120px);
+      padding-top: 72px;
+    }
+
+    .hero,
+    .panel {
+      border-radius: 22px;
+    }
+
+    .hero {
+      min-height: auto;
+    }
+  }
+</style>

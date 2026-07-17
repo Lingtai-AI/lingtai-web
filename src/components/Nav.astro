@@ -26,9 +26,8 @@ const currentPath = isLangPrefixed ? rawPath.slice(langPrefix.length) || '/' : r
   </a>
   <div class="nav-right">
     <a href={langPath(lang, '/')}>{tr.nav.home}</a>
-    <a href={langPath(lang, '/xingtan/')}>{tr.nav.xingtan}</a>
+    <a href={langPath(lang, '/tutorial/')}>{tr.nav.tutorial}</a>
     <a href={langPath(lang, '/opportunities/')}>{tr.nav.opportunities}</a>
-    <a href={langPath(lang, '/agora/')}>{tr.nav.agora}</a>
     <a href={langPath(lang, '/projects/')}>{tr.nav.projects}</a>
     <a href={langPath(lang, '/blog/')}>{tr.nav.blog}</a>
     <a href={langPath(lang, '/releases/')}>{tr.nav.releases}</a>
@@ -168,4 +167,36 @@ const currentPath = isLangPrefixed ? rawPath.slice(langPrefix.length) || '/' : r
   .icon-moon { display: block; }
   :global([data-theme="dark"]) .icon-sun { display: block; }
   :global([data-theme="dark"]) .icon-moon { display: none; }
+
+  /* Responsive: with the extra Tutorial link the single row overflows at tablet widths, not just phone widths.
+     Root cause of the earlier clip: .nav-right is a flex row whose items default to
+     min-width:auto, so it sizes to max-content and grows WIDER than the viewport; under
+     justify-content:space-between the trailing links then sit past the right edge and get
+     clipped. Fix (CSS-only, no hamburger): let the nav wrap, then force .nav-right to take
+     the full row width and be allowed to shrink to the viewport (width/flex-basis 100% +
+     min-width:0 + box-sizing:border-box), so its own flex-wrap can actually break the
+     links onto multiple lines. nowrap is applied per-link (not to the row) so a single
+     label never breaks mid-word. Desktop is untouched — all rules live inside the query. */
+  @media (max-width: 1100px) {
+    .nav {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 12px 0;
+      padding: 16px 20px;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .nav-right {
+      flex-wrap: wrap;
+      flex-basis: 100%;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      gap: 10px 16px;
+    }
+    .nav-right > a {
+      white-space: nowrap;
+    }
+  }
 </style>
