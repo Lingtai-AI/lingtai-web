@@ -65,12 +65,12 @@ export interface Release {
 
 
 
-const v0_16_4_kernel_v0_11_0_tui: Release = {
+const v0_16_5_kernel_v0_11_0_tui: Release = {
   id: '20260717-1',
   date: '2026-07-17',
   type: 'Release',
   pkg: 'LingTai Kernel + TUI/Portal',
-  version: 'Kernel v0.16.4 · TUI/Portal v0.11.0',
+  version: 'Kernel v0.16.5 · TUI/Portal v0.11.0',
   title: {
     en: 'Native release bundles, live Task Cards, and a clearer first-run journey',
     zh: '原生发布包、实时任务卡与更清晰的首次启动体验',
@@ -81,9 +81,9 @@ const v0_16_4_kernel_v0_11_0_tui: Release = {
   },
   tags: ['release', 'kernel', 'tui', 'portal', 'task-card', 'daemon', 'github', 'gitee', 'homebrew'],
   links: [
-    { label: 'Kernel v0.16.4', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.4' },
+    { label: 'Kernel v0.16.5', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.5' },
     { label: 'TUI/Portal v0.11.0', url: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.11.0' },
-    { label: 'Kernel source', url: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/763d35a33b769f5cc2e9029ee1e6fb23f9d448be' },
+    { label: 'Kernel source', url: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/11a39bac412b69cda6a668128e1b638c36b9e2d7' },
     { label: 'TUI/Portal source', url: 'https://github.com/Lingtai-AI/lingtai/tree/0e5d1e46babde17f3c6985f045dd7af41ba2e8cc' },
   ],
   install: [
@@ -92,8 +92,8 @@ const v0_16_4_kernel_v0_11_0_tui: Release = {
       command: 'curl -fsSL https://lingtai.ai/install.sh | bash',
       scope: { en: 'LingTai TUI, Portal, and managed runtime', zh: 'LingTai TUI、Portal 与受管运行时' },
       note: {
-        en: 'Kernel v0.16.4 is distributed through the release bundle manifest rather than PyPI. The TUI/Portal v0.11.0 bundle pins and verifies that exact kernel release.',
-        zh: 'Kernel v0.16.4 通过发布包清单而非 PyPI 分发；TUI/Portal v0.11.0 发布包会锁定并校验这一精确内核版本。',
+        en: 'Kernel v0.16.5 is distributed through the release bundle manifest rather than PyPI. The TUI/Portal v0.11.0 bundle pins and verifies that exact kernel release.',
+        zh: 'Kernel v0.16.5 通过发布包清单而非 PyPI 分发；TUI/Portal v0.11.0 发布包会锁定并校验这一精确内核版本。',
       },
     },
   ],
@@ -106,7 +106,7 @@ const v0_16_4_kernel_v0_11_0_tui: Release = {
     },
   },
   source: [
-    { repo: 'lingtai-kernel', commit: '763d35a33b769f5cc2e9029ee1e6fb23f9d448be', tag: 'v0.16.4' },
+    { repo: 'lingtai-kernel', commit: '11a39bac412b69cda6a668128e1b638c36b9e2d7', tag: 'v0.16.5' },
     { repo: 'lingtai', commit: '0e5d1e46babde17f3c6985f045dd7af41ba2e8cc', tag: 'v0.11.0' },
   ],
   contributors: ['9s5bz2jvd2-lang', 'huangzesen', 'TZZheng', 'Wang Runyuan'],
@@ -119,12 +119,12 @@ const v0_16_4_kernel_v0_11_0_tui: Release = {
   bodyMarkdown: {
     en: `## What ships together
 
-Kernel v0.16.4 and TUI/Portal v0.11.0 are published as one verified release train. The kernel tag produces native-platform artifacts and a provenance manifest; the TUI tag consumes that exact manifest and builds the user-facing bundle, Gitee mirror, and Homebrew update.
+Kernel v0.16.5 and TUI/Portal v0.11.0 are published as one verified release train. The kernel tag produces native-platform artifacts and a provenance manifest; the TUI tag consumes that exact manifest and builds the user-facing bundle, Gitee mirror, and Homebrew update.
 
 The user-visible release is intentionally broader than packaging. Telegram now shows live Task Cards for long work, the TUI starts from an explicit project journey when no project is active, daemon execution survives more backend and lifecycle edge cases, and model/setup/runtime contracts are clearer and easier to audit.`,
     zh: `## 本次协同交付
 
-Kernel v0.16.4 与 TUI/Portal v0.11.0 作为同一条经过校验的发布列车交付。内核标签会生成原生平台产物与来源清单；TUI 标签消费这一精确清单，再构建用户发布包、Gitee 镜像与 Homebrew 更新。
+Kernel v0.16.5 与 TUI/Portal v0.11.0 作为同一条经过校验的发布列车交付。内核标签会生成原生平台产物与来源清单；TUI 标签消费这一精确清单，再构建用户发布包、Gitee 镜像与 Homebrew 更新。
 
 这次面向用户的变化不只在打包。Telegram 现在能为长任务展示实时任务卡；没有活动项目时，TUI 会从明确的项目入口开始；daemon 能覆盖更多后端与生命周期边界；模型、安装和运行时契约也更清晰、更易审计。`,
   },
@@ -149,7 +149,7 @@ Kernel v0.16.4 与 TUI/Portal v0.11.0 作为同一条经过校验的发布列车
       },
       affectedAreas: ['Release automation', 'GitHub/Gitee', 'Homebrew', 'Managed runtime'],
       links: [
-        { label: 'Kernel release', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.4' },
+        { label: 'Kernel release', url: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.16.5' },
         { label: 'TUI/Portal release', url: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.11.0' },
       ],
     },
@@ -3882,7 +3882,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_16_4_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_16_5_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
