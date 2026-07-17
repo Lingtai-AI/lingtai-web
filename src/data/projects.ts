@@ -33,6 +33,33 @@ export type Project = {
 
 export const projects: Project[] = [
   {
+    id: 'nokv-lingtai-design-partner',
+    name: {
+      en: 'NoKV × Lingtai design partnership',
+      zh: 'NoKV × 灵台设计伙伴合作',
+      wen: 'NoKV × 灵台同构之盟',
+    },
+    tagline: {
+      en: 'A forward-looking design-partner collaboration on durable, snapshot-able, auditable agent workspaces.',
+      zh: '一次面向未来的设计伙伴合作：让智能体工作区更持久、可快照、可审计。',
+      wen: '二者同探器灵居所，使其可久、可还、可稽。',
+    },
+    description: {
+      en: 'NoKV and Lingtai have begun a design-partner collaboration around a shared conviction: agents want filesystem-shaped homes. Lingtai gives long-lived local agents transparent on-disk state, mailboxes, logs, and artifacts; NoKV is exploring the durable substrate underneath — workspace checkpoints, atomic crash-consistent publishing, artifact provenance, and a queryable metadata layer — while preserving the plain-file transparency of ls, cat, and grep.',
+      zh: 'NoKV 与灵台已经开始一项设计伙伴合作，出发点是同一个判断：智能体需要文件系统形态的家。灵台给长期运行的本地智能体提供透明的磁盘状态、邮箱、日志与产物；NoKV 则在探索其下方的持久底座——工作区快照、原子且崩溃一致的发布、产物溯源，以及可查询的元数据层——同时保留 ls、cat、grep 这种朴素文件透明性。',
+      wen: 'NoKV 与灵台始议同构之工：皆信器灵当有文件之宅。灵台予久居之本地器灵以盘上之态、书箱、日志、器物，皆明而可见；NoKV 则探其下之坚基——工作区可返、发布原子而遇崩不乱、器物有源、元数据可问；而仍不夺 ls、cat、grep 之明。',
+    },
+    url: 'https://github.com/orgs/NoKV-Lab/discussions/378',
+    urlLabel: 'github.com/NoKV-Lab/discussions/378',
+    tags: [
+      { en: 'Design partner', zh: '设计伙伴', wen: '盟' },
+      { en: 'Agent filesystem', zh: '智能体文件系统', wen: '文宅' },
+      { en: 'Snapshots & provenance', zh: '快照与溯源', wen: '返源' },
+    ],
+    addedAt: '2026-06-23',
+    featured: true,
+  },
+  {
     id: 'lingtai-guanji-ifm-matrix',
     name: {
       en: 'LingTai · Guanji / IFM Matrix',
