@@ -1,6 +1,6 @@
 ---
 name: lingtai-public-installation
-contract_version: 1
+contract_version: 2
 root_contract: CONTRACT.md
 related_files:
   - ANATOMY.md
@@ -12,13 +12,11 @@ related_files:
   - public/help/reference/installation/assets/dev.sh
   - public/help/reference/installation/assets/fix.sh
   - public/help/reference/installation/assets/verify.sh
-  - scripts/test-install-sh-kernel-pin.sh
-  - scripts/test-architecture-documents.py
 maintenance: |
   This component contract is governed by the root CONTRACT.md. Keep related_files
   complete and repo-relative, keep this Contract reciprocal with its ANATOMY.md,
-  and keep the public executables, installation skill, postconditions, focused
-  tests, and real acceptance evidence synchronized. Report root/pair mismatches;
+  and keep the public executables, installation skill, postconditions, and real
+  operation evidence synchronized. Report root/pair mismatches;
   do not duplicate or auto-fix the root convention here.
 ---
 
@@ -40,9 +38,9 @@ state classes, entrypoint boundaries, allowed writes, provenance requirements,
 postconditions, and failure meaning. The installation skill explains the
 surface; it does not weaken this contract or authorize a mutation.
 
-If this file, the installation skill, an executable, or its tests disagree,
-**stop and treat the disagreement as a product defect**. Do not guess, silently
-heal, or select a more permissive path.
+If this file, the installation skill, an executable, or observed operation
+evidence disagree, **stop and treat the disagreement as a product defect**. Do
+not guess, silently heal, or select a more permissive path.
 
 This is not a release-publication, deployment, refresh, or migration procedure.
 Exact release migrations remain owned by each product repository's tagged
@@ -289,20 +287,26 @@ A change is incomplete unless the same candidate updates every affected layer:
 1. this `CONTRACT.md`;
 2. `skill.md` when public selection/guidance changed;
 3. the owning executable asset;
-4. `scripts/test-install-sh-kernel-pin.sh` with a static or bounded hermetic
-   regression for the invariant;
+4. its executable-local behavior-first maintenance rule;
 5. `_headers` or routers when a public path/content type changed.
 
-At minimum, validation runs shell syntax for every executable, each asset's
-`--help`, the focused hermetic suite, and `git diff --check`. A passing test does
-not authorize merge, release, deploy, refresh, configuration changes, or cleanup.
+The acceptance test is the actual declared operation of the exact final candidate
+in a brand-new isolated non-root Linux environment, using real precondition state
+and inputs and observing postconditions or partial failure directly. Ordinary
+install additionally uses an empty `HOME`, real network/artifact inputs, and proves
+TUI, pip, pinned kernel distribution/import/version/physical provenance, and the
+strict success receipt. Update, repair, verification, and development prove their
+operation-specific state; verification also proves byte-for-byte read-only behavior.
+Source grep, shims, fake commands, static assertions, and hermetic simulations are
+not acceptance. Shell syntax, `--help`, citation inspection, and `git diff --check`
+are maintenance diagnostics only.
 
 
 ## Maintenance
 
 Before changing this component, read the repository-root `CONTRACT.md`, the
 paired `ANATOMY.md`, and this contract. Keep all five executable entrypoints,
-the installation skill, both Anatomy/Contract pairs, focused tests, and any
-affected public routing in the same change. Validate the exact final candidate;
-do not use a receipt, mock, static assertion, or intermediate head as evidence
-for a real operation it did not exercise.
+the installation skill, both Anatomy/Contract pairs, real operation evidence, and
+any affected public routing in the same change. Validate the exact final candidate;
+do not use source text, a mock, static assertion, shim, fake command, hermetic
+simulation, or intermediate head as evidence for behavior it did not exercise.

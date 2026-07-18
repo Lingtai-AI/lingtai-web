@@ -16,7 +16,6 @@ related_files:
   - public/skill.md
   - public/help/skill.md
   - public/_headers
-  - scripts/test-architecture-documents.py
 maintenance: |
   This file is both the repository-root Anatomy and the normative
   anatomy-of-anatomy for lingtai-web. Keep related_files repo-relative,
@@ -61,8 +60,8 @@ The root and governed-child Anatomy frontmatter has exactly two keys in order:
 2. `maintenance`: non-empty maintenance statement.
 
 A child lists its paired Contract, parent/root Anatomy, files it maps, public
-manual/skill, and focused tests. Paths use `/`, contain no `.` or `..` segments,
-and resolve from repository root.
+manual/skill, and directly relevant owners. Paths use `/`, contain no `.` or `..`
+segments, and resolve from repository root.
 
 ## Body convention
 
@@ -110,9 +109,9 @@ registry or create empty documents solely for filename symmetry.
 - **Public installation component** is mapped by
   [`public/help/reference/installation/ANATOMY.md`](public/help/reference/installation/ANATOMY.md)
   and governed by its paired Contract. It owns the deployed shell entrypoints,
-  operation selection, receipts, runtime provenance, and focused/real evidence.
-- **Build/deploy composition** `package.json:6-13` exposes local build, architecture
-  validation, preview, and deploy commands; `astro.config.mjs:5-8` declares a static
+  operation selection, receipts, runtime provenance, and real behavior evidence.
+- **Build/deploy composition** `package.json:6-12` exposes local build, preview,
+  and deploy commands; `astro.config.mjs:5-8` declares a static
   site with the Cloudflare adapter; `wrangler.jsonc:1-12` owns Cloudflare runtime
   configuration.
 
@@ -126,8 +125,6 @@ registry or create empty documents solely for filename symmetry.
 - `src/` owns routes, layouts, components, data, content, styles, and i18n.
 - `public/` owns bytes served without source transformation, including public
   shell entrypoints and agent manuals.
-- `scripts/` owns focused repository checks and utilities; it is not a public
-  runtime surface unless a public document explicitly invokes it.
 - `reports/` contains local review evidence and is not a deployed product input.
 
 ## Composition
@@ -158,9 +155,9 @@ Anatomy maps the component but does not duplicate its promises.
 
 Coding agents update the relevant Anatomy with structural change and the paired
 Contract with normative behavior change in the same PR. Verify every changed
-citation against the exact final head, run `npm run test:architecture`, run the
-affected product checks, and report any mismatch instead of silently weakening
-or auto-fixing the graph.
+citation against the exact final head, run each changed executable as its real
+declared operation, and report any mismatch instead of silently weakening or
+auto-fixing the graph.
 
 A real file move repairs Anatomy from code. A behavior disagreement does not
 rewrite Contract from accidental implementation; it fails until code conforms or

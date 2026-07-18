@@ -1,20 +1,18 @@
 ---
 name: component-contract-convention
-contract_version: 1
+contract_version: 2
 related_files:
   - ANATOMY.md
   - public/help/reference/installation/CONTRACT.md
   - package.json
   - astro.config.mjs
-  - scripts/test-architecture-documents.py
-  - scripts/test-install-sh-kernel-pin.sh
 maintenance: |
   This file is the normative root of the distributed code interface definition
   system and the contract-of-contract for lingtai-web. Keep the root ANATOMY.md
   reciprocal. Keep each governed child CONTRACT.md linked here exactly once,
   pointing back with root_contract: CONTRACT.md and paired with a co-located
   ANATOMY.md. Change architecture rules, schemas, maintenance contracts, public
-  behavior, tests, and final-head acceptance evidence together. Revalidate every
+  behavior and final-head real-operation evidence together. Revalidate every
   linked pair when this convention changes and bump contract_version for a
   breaking convention change.
 ---
@@ -28,16 +26,19 @@ These rules are normative for every lingtai-web change and pull request.
    identify who reaches the surface, which path they execute or open, which state
    it reads or changes, and what observable promise must remain true. A convenient
    internal unit or mocked path is not automatically the product path.
-2. **A final candidate needs real evidence.** Every PR MUST run at least one
-   risk-matched critical-path acceptance against its exact final head. Static,
-   mocked, fake-command, type, unit, or hermetic tests are useful but do not
-   replace the real path they abstract. For public installation changes, the
-   stricter child Contract requires a brand-new `HOME` ordinary install and
-   direct proof of TUI, pip, pinned Python package, import/version/provenance, and
-   the success receipt. Only explicit `--skip-python` may omit the runtime.
+2. **A final candidate needs observed behavior.** Every PR MUST run at least
+   one risk-matched critical path against its exact final head. Static, mocked,
+   fake-command, shim, type, unit, or hermetic checks may diagnose other surfaces
+   but never count as public-executable acceptance. For every public shell change,
+   the stricter child Contract requires the real declared operation in isolated
+   non-root Linux and direct proof of its postconditions or partial failure. An
+   ordinary install additionally requires a brand-new empty `HOME`, real network/
+   artifact inputs, and TUI, pip, pinned Python package, import/version/provenance,
+   and success-receipt proof. Only explicit `--skip-python` may omit the runtime.
 3. **Keep one public truth.** Pages, components, data, translations, public
-   assets, executable comments, manuals, Contracts, Anatomies, and tests change
-   together when they describe the same user-facing behavior. Do not repair a
+   assets, executable comments, manuals, Contracts, Anatomies, and real
+   conformance evidence change together when they describe the same user-facing
+   behavior. Do not repair a
    mismatch by silently weakening the normative promise.
 4. **Receipts and success UI mean completed postconditions.** A receipt, `PASS`,
    successful build, or published page is never a progress marker. Partial
@@ -87,7 +88,6 @@ Its honest boundaries are:
 - public static and executable interfaces under `public/`;
 - build/deploy composition in `astro.config.mjs`, `wrangler.jsonc`, and
   `package.json`;
-- focused repository checks under `scripts/`.
 
 A new governed child must own a coherent independently meaningful promise. A
 folder, file count, or desire for symmetry does not earn an empty Contract. The
@@ -105,8 +105,8 @@ the real files and composition.
    as final-head real acceptance.
 3. Structural changes MUST update the relevant Anatomy. Behavioral, state,
    consent, failure, ordering, provenance, or postcondition changes MUST update
-   the relevant Contract and tests. Public guidance and executable-local
-   maintainer instructions MUST stay synchronized.
+   the relevant Contract and real-operation conformance evidence. Public guidance
+   and executable-local maintainer instructions MUST stay synchronized.
 4. Agents MUST traverse YAML `related_files` as the single graph. Missing,
    stale, duplicate, unsafe, one-way, or orphaned edges are defects. Do not
    create a second component registry.
@@ -134,7 +134,7 @@ Every governed child Contract has exactly these keys in order:
 2. `contract_version`: positive integer;
 3. `root_contract`: literal `CONTRACT.md`;
 4. `related_files`: its paired Anatomy, structural parent Anatomy, public
-   interfaces, manual/skill, focused tests, and directly relevant owners;
+   interfaces, manual/skill, and directly relevant owners;
 5. `maintenance`: a concise component maintenance statement preserving this
    root convention.
 
@@ -191,30 +191,29 @@ YAML `related_files` is the graph-wiring mechanism.
 
 Every change assesses both distributed systems. Update Anatomy in the same
 change when files, symbols, connections, composition, or state ownership move.
-Update Contract and conformance evidence when behavior, consent, failure,
-ordering, provenance, postconditions, or public interfaces change. If neither
-changes, review may record that the pair was checked rather than manufacture
-meaningless doc churn.
+Update Contract and real-operation conformance evidence when behavior, consent,
+failure, ordering, provenance, postconditions, or public interfaces change. If
+neither changes, review may record that the pair was checked rather than
+manufacture meaningless doc churn.
 
 A breaking contract change makes a previously conforming caller, script,
 maintainer, or public consumer no longer conform. Bump the affected
 `contract_version` and update the implementation, paired Anatomy, guidance, and
-tests together.
+real-operation evidence together.
 
 ## Validation
 
-`scripts/test-architecture-documents.py` checks the exact root/child frontmatter
-key order, safe existing related files, reciprocal root and child twins,
-parent/child Anatomy links, the child root pointer, source citation bounds, and
-the visible `For coding-agent maintainers` block in all five public shell
-entrypoints. Run it through `npm run test:architecture`.
+For every public-shell change, run the exact final executable as its real declared
+operation in a brand-new isolated non-root Linux environment and observe the
+declared postconditions or partial failure directly. Ordinary install uses an
+empty `HOME` and real network/artifact inputs. Update, repair, verification, and
+development use real precondition state and prove their operation-specific final
+state; read-only verification also compares state before and after. Source grep,
+shim/fake commands, static assertions, and hermetic simulations do not count.
 
-`scripts/test-install-sh-kernel-pin.sh` owns the focused hermetic installation
-contract checks. It does not replace the child Contract's final-head real
-operation gate. Every affected executable also receives `bash -n`, `--help`, and
-risk-matched real acceptance; the Astro product receives `npm run build` when
-its rendered surface changes. Finish with `git diff --check` and whole-diff
-review.
+`bash -n`, `--help`, citation inspection, `git diff --check`, and whole-diff review
+remain maintenance diagnostics, not product acceptance. Run `npm run build` when
+the rendered Astro surface changes.
 
 ## Template
 
@@ -227,7 +226,6 @@ related_files:
   - <repo-relative paired ANATOMY.md>
   - <repo-relative public or implementation file>
   - <repo-relative manual or skill>
-  - <repo-relative focused test>
 maintenance: |
   This component contract is governed by the root CONTRACT.md. Keep its paired
   Anatomy, implementation, public guidance, and conformance evidence synchronized.
