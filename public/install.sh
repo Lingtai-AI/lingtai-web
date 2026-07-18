@@ -906,8 +906,11 @@ canonical_existing_dir() {
 # never adopt or mutate a venv outside the root it claims to own. Prints the
 # physical path and returns 0 only when containment holds.
 canonical_runtime_venv() {
-  local dir="$1" runtime_root="$2" physical_root physical_dir
+  local dir="$1" runtime_root="$2" physical_root physical_dir physical_home expected_root
   local parent base physical_parent root_parent root_base root_grandparent root_parent_base
+
+  physical_home="$(cd "$HOME" 2>/dev/null && pwd -P)" || return 1
+  expected_root="$physical_home/.lingtai-tui/runtime"
 
   # Ownership is both lexical and physical: a path outside the declared root
   # is not adopted merely because a symlink happens to point back inside it.
@@ -934,6 +937,11 @@ canonical_runtime_venv() {
       physical_root="$(cd "$root_grandparent" 2>/dev/null && pwd -P)/$root_parent_base/$root_base" || return 1
     fi
   fi
+  # `$HOME` itself may be a symlink, but `.lingtai-tui` and `runtime` may not
+  # redirect ownership elsewhere. The resolved root must be exactly beneath the
+  # canonical physical HOME, not merely whatever `pwd -P` found through an
+  # ancestor symlink.
+  [[ "$physical_root" == "$expected_root" ]] || return 1
 
   if [[ -d "$dir" ]]; then
     physical_dir="$(cd "$dir" 2>/dev/null && pwd -P)" || return 1
@@ -1408,12 +1416,19 @@ write_install_metadata() {
   # --skip-python), preserving the old metadata shape for that explicit opt-out.
   local bundle_json="" runtime_json=""
   if [[ -n "${RUNTIME_VENV_DIR:-}" && "$SKIP_VENV" != "1" ]]; then
+    if [[ ! ( "$DEV_MODE" == "1" && -n "${LINGTAI_DEV_RUNTIME_PYTHON:-}" && \
+              "$RUNTIME_VENV_DIR" == "$LINGTAI_DEV_RUNTIME_PYTHON" ) ]] && \
+       ! canonical_runtime_venv "$RUNTIME_VENV_DIR" "$HOME/.lingtai-tui/runtime" >/dev/null; then
+      echo "error: refusing to persist a runtime pointer outside the canonical owned runtime root: $RUNTIME_VENV_DIR" >&2
+      return 1
+    fi
     runtime_json="$(printf ',\n  "runtime_venv": "%s"' "$(json_escape "${RUNTIME_VENV_DIR%/}")")"
-  elif [[ "$SKIP_VENV" == "1" && -n "${RUNTIME_VENV_DIR:-}" && -d "$RUNTIME_VENV_DIR" ]]; then
-    # --skip-python explicitly opts out of touching or executing the runtime this
-    # run, but a validated pre-existing runtime pointer must not be silently dropped:
-    # a later automatic repair needs the truthful preserved location, not a
-    # rewrite that makes it look like no runtime was ever provisioned.
+  elif [[ "$SKIP_VENV" == "1" && -n "${DISCOVERED_RUNTIME_VENV:-}" && \
+          "${RUNTIME_VENV_DIR:-}" == "$DISCOVERED_RUNTIME_VENV" && -d "$RUNTIME_VENV_DIR" ]] && \
+       canonical_runtime_venv "$RUNTIME_VENV_DIR" "$HOME/.lingtai-tui/runtime" >/dev/null; then
+    # --skip-python may preserve only the exact ownership-validated pointer read
+    # from existing metadata, revalidated immediately before persistence. A
+    # default/legacy or newly appeared directory is not silently adopted.
     runtime_json="$(printf ',\n  "runtime_venv": "%s"' "$(json_escape "${RUNTIME_VENV_DIR%/}")")"
   fi
   if [[ "$KERNEL_SOURCE" == "bundle" ]]; then
@@ -1435,6 +1450,10 @@ write_install_metadata() {
   tmp_path="$metadata_path.tmp.$$"
   installed_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
+  if [[ -L "$global_dir" ]]; then
+    echo "error: install metadata directory is a symlink; refusing to write redirected state: $global_dir" >&2
+    return 1
+  fi
   mkdir -p "$global_dir"
   if [[ -n "$portal_path" ]]; then
     portal_json="$(printf ',\n    "%s"' "$(json_escape "$portal_path")")"
@@ -2991,6 +3010,11 @@ ensure_dev_checkout() {
 
 ensure_dev_runtime() {
   local kernel="$1" venv="${LINGTAI_DEV_RUNTIME_PYTHON:-$HOME/.lingtai-tui/runtime/venv}" py runtime_state
+  if [[ -z "${LINGTAI_DEV_RUNTIME_PYTHON:-}" ]] && \
+     ! canonical_runtime_venv "$venv" "$HOME/.lingtai-tui/runtime" >/dev/null; then
+    echo "error: default development runtime is outside the canonical owned runtime root: $venv" >&2
+    return 1
+  fi
   runtime_state="$(runtime_venv_state "$venv")"
   if [[ "$runtime_state" == broken ]]; then
     warn "existing development runtime at $venv is broken; retaining it and using the planned stable repair path."
@@ -3512,6 +3536,15 @@ if [[ "$MODE" == "update" || "$UPDATE_MODE" == "1" ]]; then
   return $?
 fi
 
+# This directory owns both install metadata and the managed runtime subtree.
+# HOME itself may be symlinked, but the ownership root must not redirect through
+# a `.lingtai-tui` symlink to external state in any install mode, including
+# --skip-python.
+if [[ -L "$HOME/.lingtai-tui" ]]; then
+  echo "error: $HOME/.lingtai-tui is a symlink; refusing to adopt or mutate redirected install/runtime state." >&2
+  return 1
+fi
+
 # With no explicit destination, adopt one unambiguous existing installation so
 # a one-shot install repairs that environment instead of creating a second copy.
 # Explicit --prefix/--bin-dir remain authoritative for WHERE to install — they
@@ -3540,7 +3573,14 @@ if [[ "$DEV_MODE" == "1" ]]; then
   if [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]]; then
     PLAN_BEFORE_TUI="$(discover_current_tui_tag "$DISCOVERED_BIN_DIR" || true)"
     PLAN_BEFORE_TUI="${PLAN_BEFORE_TUI:-not found}"
-    PLAN_BEFORE_RUNTIME="$(runtime_current_summary "$RUNTIME_VENV_DIR")"
+    if [[ "$SKIP_VENV" == "1" ]]; then
+      PLAN_BEFORE_RUNTIME="not probed (--skip-python)"
+    elif [[ "$DEV_MODE" == "1" && -n "${LINGTAI_DEV_RUNTIME_PYTHON:-}" ]] || \
+         canonical_runtime_venv "$RUNTIME_VENV_DIR" "$HOME/.lingtai-tui/runtime" >/dev/null; then
+      PLAN_BEFORE_RUNTIME="$(runtime_current_summary "$RUNTIME_VENV_DIR")"
+    else
+      PLAN_BEFORE_RUNTIME="untrusted runtime path; not probed"
+    fi
   fi
   run_dev_install || return 1
   if [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]]; then
@@ -3630,7 +3670,13 @@ resolve_bin_dir
 if [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]]; then
   PLAN_BEFORE_TUI="$(discover_current_tui_tag "$DISCOVERED_BIN_DIR" || true)"
   PLAN_BEFORE_TUI="${PLAN_BEFORE_TUI:-not found}"
-  PLAN_BEFORE_RUNTIME="$(runtime_current_summary "$RUNTIME_VENV_DIR")"
+  if [[ "$SKIP_VENV" == "1" ]]; then
+    PLAN_BEFORE_RUNTIME="not probed (--skip-python)"
+  elif canonical_runtime_venv "$RUNTIME_VENV_DIR" "$HOME/.lingtai-tui/runtime" >/dev/null; then
+    PLAN_BEFORE_RUNTIME="$(runtime_current_summary "$RUNTIME_VENV_DIR")"
+  else
+    PLAN_BEFORE_RUNTIME="untrusted runtime path; not probed"
+  fi
 fi
 
 # Decide what to install (the explicit runtime update returned above).

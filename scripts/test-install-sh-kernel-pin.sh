@@ -664,20 +664,24 @@ fi
 # pointer instead of dropping it, and install --dev must record the actual
 # selected runtime path rather than a stale metadata pointer.
 skip_meta_dir="$tmp/skip-meta"
-skip_runtime="$tmp/skip-runtime-venv"
-python3 -m venv "$skip_runtime" || fail "skip-python test venv creation"
+skip_home="$tmp/skip-home"
+skip_runtime="$skip_home/.lingtai-tui/runtime/venv"
+mkdir -p "$skip_home/.lingtai-tui/runtime"
+"$python3_path" -m venv "$skip_runtime" || fail "skip-python test venv creation"
+export HOME="$skip_home"
 RUNTIME_VENV_DIR="$skip_runtime"
+DISCOVERED_RUNTIME_VENV="$skip_runtime"
 SKIP_VENV=1
 KERNEL_SOURCE=""
 write_install_metadata "$skip_meta_dir" "$tmp/skip-prefix" "$tmp/skip-bin" "$REPO" "v0.10.0" "v0.10.0" "" "v0.10.0" "$tmp/skip-bin/lingtai-tui" ""
-python3 - "$skip_meta_dir/install.json" "$skip_runtime" <<PY
+"$python3_path" - "$skip_meta_dir/install.json" "$skip_runtime" <<PY
 import json, sys
 p = json.load(open(sys.argv[1]))
 assert p.get("runtime_venv") == sys.argv[2], p
 PY
 # Pointer preservation is filesystem-only: --skip-python must not execute a
 # discovered/runtime launcher just to decide whether to keep its location.
-skip_canary_runtime="$tmp/skip-canary-runtime"
+skip_canary_runtime="$skip_home/.lingtai-tui/runtime/venv-canary"
 skip_canary_log="$tmp/skip-canary-executions"
 mkdir -p "$skip_canary_runtime/bin"
 : > "$skip_canary_log"
@@ -688,22 +692,130 @@ exit 0
 EOF
 chmod +x "$skip_canary_runtime/bin/python"
 RUNTIME_VENV_DIR="$skip_canary_runtime"
+DISCOVERED_RUNTIME_VENV="$skip_canary_runtime"
 write_install_metadata "$tmp/skip-canary-meta" "$tmp/skip-prefix" "$tmp/skip-bin" "$REPO" "v0.10.0" "v0.10.0" "" "v0.10.0" "$tmp/skip-bin/lingtai-tui" ""
 [[ ! -s "$skip_canary_log" ]] || fail "--skip-python metadata rewrite executed the opted-out runtime"
-SKIP_VENV=0
 
 # --skip-python must NOT invent a pointer to a runtime that was never
-# actually provisioned (a missing venv_dir stays unrecorded, same as before).
+# discovered and ownership-validated, even if a default-looking directory exists.
 skip_meta_dir_missing="$tmp/skip-meta-missing"
-RUNTIME_VENV_DIR="$tmp/never-provisioned-venv"
-SKIP_VENV=1
+RUNTIME_VENV_DIR="$skip_home/.lingtai-tui/runtime/legacy-default"
+DISCOVERED_RUNTIME_VENV=""
+mkdir -p "$RUNTIME_VENV_DIR"
 write_install_metadata "$skip_meta_dir_missing" "$tmp/skip-prefix" "$tmp/skip-bin" "$REPO" "v0.10.0" "v0.10.0" "" "v0.10.0" "$tmp/skip-bin/lingtai-tui" ""
-python3 - "$skip_meta_dir_missing/install.json" <<'PY'
+"$python3_path" - "$skip_meta_dir_missing/install.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
 assert "runtime_venv" not in p, p
 PY
 SKIP_VENV=0
+DISCOVERED_RUNTIME_VENV=""
+export HOME="$saved_home"
+
+# Full-main regression: legacy metadata with no runtime pointer plus an existing
+# default-looking runtime must not execute or adopt that runtime under
+# --skip-python. Stub only the TUI source build/version checks so the complete
+# main plan -> consent -> before/after -> metadata path runs without network.
+full_skip_home="$tmp/full-main-skip-home"
+full_skip_bin="$full_skip_home/.local/bin"
+full_skip_runtime="$full_skip_home/.lingtai-tui/runtime/venv"
+full_skip_canary="$tmp/full-main-skip-runtime-executions"
+mkdir -p "$full_skip_bin" "$full_skip_runtime/bin"
+: > "$full_skip_canary"
+cat > "$full_skip_bin/lingtai-tui" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+cat > "$full_skip_runtime/bin/python" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' executed >> "$full_skip_canary"
+exit 0
+EOF
+chmod +x "$full_skip_bin/lingtai-tui" "$full_skip_runtime/bin/python"
+export HOME="$full_skip_home"
+SKIP_VENV=1
+RUNTIME_VENV_DIR=""
+DISCOVERED_RUNTIME_VENV=""
+KERNEL_SOURCE=""
+write_install_metadata "$full_skip_home/.lingtai-tui" "$full_skip_home/.local" "$full_skip_bin" "$REPO" "legacy" "legacy" "" "v0.1.0" "$full_skip_bin/lingtai-tui" ""
+SKIP_VENV=0
+(
+  export HOME="$full_skip_home"
+  export PATH="$saved_path"
+  BUILD_DIR="$tmp/full-main-skip-build"
+  MODE="install"; UPDATE_MODE=0; DEV_MODE=0; REF=""; VERSION=""; FROM_SOURCE=0
+  SKIP_VENV=0; SKIP_PORTAL=1; NON_INTERACTIVE=0; BIN_DIR=""; BIN_DIR_OVERRIDE=""; INSTALL_PREFIX=""
+  # Keep this full-main regression hermetic: main's generic connectivity probe
+  # is unrelated to the explicit local source stub below.
+  curl() { return 0; }
+  build_from_source() {
+    VERSION="v0.2.0"; RESOLVED_REF="local-ref"; RESOLVED_COMMIT="test-commit"; INSTALL_KIND="source-build"; PORTAL_PATH=""
+    mkdir -p "$BIN_DIR"
+    cat > "$BIN_DIR/lingtai-tui" <<'SH'
+#!/usr/bin/env bash
+exit 0
+SH
+    chmod +x "$BIN_DIR/lingtai-tui"
+  }
+  discover_current_tui_tag() { printf '%s\n' 'v0.1.0'; }
+  verify_tui_binary_version() { return 0; }
+  tui_binary_tag() { printf '%s\n' 'v0.2.0'; }
+  main --ref local-ref --skip-python --skip-portal --non-interactive --bin-dir "$full_skip_bin"
+) >"$tmp/full-main-skip.stdout" 2>"$tmp/full-main-skip.stderr" || fail "full main --skip-python canary flow failed: $(cat "$tmp/full-main-skip.stderr")"
+[[ ! -s "$full_skip_canary" ]] || fail "full main --skip-python executed the opted-out legacy/default runtime"
+grep -q 'not probed (--skip-python)' "$tmp/full-main-skip.stdout" || fail "full main skip report did not state runtime was unprobed"
+"$python3_path" - "$full_skip_home/.lingtai-tui/install.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert "runtime_venv" not in p, p
+PY
+
+# A symlink at .lingtai-tui redirects both metadata and runtime ownership. The
+# shared main gate, canonical path check, and repair preview must all reject it
+# before any runtime execution or mutation, in skip and normal modes alike.
+ancestor_home="$tmp/ancestor-symlink-home"
+ancestor_external="$tmp/ancestor-symlink-external"
+ancestor_bin="$ancestor_home/.local/bin"
+ancestor_canary="$tmp/ancestor-runtime-executions"
+mkdir -p "$ancestor_home" "$ancestor_external/runtime/venv/bin" "$ancestor_bin"
+ln -s "$ancestor_external" "$ancestor_home/.lingtai-tui"
+: > "$ancestor_canary"
+cat > "$ancestor_external/runtime/venv/bin/python" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' executed >> "$ancestor_canary"
+exit 0
+EOF
+cat > "$ancestor_bin/lingtai-tui" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+chmod +x "$ancestor_external/runtime/venv/bin/python" "$ancestor_bin/lingtai-tui"
+export HOME="$ancestor_home"
+if canonical_runtime_venv "$ancestor_home/.lingtai-tui/runtime/venv" "$ancestor_home/.lingtai-tui/runtime" >/dev/null 2>&1; then
+  fail "canonical runtime ownership accepted a .lingtai-tui ancestor symlink"
+fi
+if runtime_repair_path_preview >/dev/null 2>&1; then
+  fail "repair planning accepted a .lingtai-tui ancestor symlink"
+fi
+for ancestor_mode in skip normal; do
+  if (
+    export HOME="$ancestor_home"
+    BUILD_DIR="$tmp/ancestor-main-build-$ancestor_mode"
+    MODE="install"; UPDATE_MODE=0; DEV_MODE=0; REF=""; VERSION=""; FROM_SOURCE=0
+    SKIP_VENV=0; SKIP_PORTAL=1; NON_INTERACTIVE=0; BIN_DIR=""; BIN_DIR_OVERRIDE=""; INSTALL_PREFIX=""
+    if [[ "$ancestor_mode" == skip ]]; then
+      main --ref local-ref --skip-python --skip-portal --non-interactive --bin-dir "$ancestor_bin"
+    else
+      main --ref local-ref --skip-portal --non-interactive --bin-dir "$ancestor_bin"
+    fi
+  ) >"$tmp/ancestor-main-$ancestor_mode.stdout" 2>"$tmp/ancestor-main-$ancestor_mode.stderr"; then
+    fail "main accepted a .lingtai-tui ancestor symlink in $ancestor_mode mode"
+  fi
+  grep -q '.lingtai-tui is a symlink' "$tmp/ancestor-main-$ancestor_mode.stderr" \
+    || fail "ancestor symlink failure was not actionable in $ancestor_mode mode"
+done
+[[ ! -s "$ancestor_canary" ]] || fail ".lingtai-tui ancestor symlink flow executed the redirected runtime"
+export HOME="$saved_home"
 
 # ensure_dev_runtime must set RUNTIME_VENV_DIR to the venv it actually
 # installed into, so a subsequent write_install_metadata records the truth
