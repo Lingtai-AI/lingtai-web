@@ -1,3 +1,23 @@
 /install.sh
   Content-Type: text/x-shellscript; charset=utf-8
   Cache-Control: public, max-age=300
+
+/skill.md
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: public, max-age=300
+
+/help/*.md
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: public, max-age=300
+
+/help/reference/installation/*.md
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: public, max-age=300
+
+/help/reference/migration/*.md
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: public, max-age=300
+
+/help/reference/installation/assets/*.sh
+  Content-Type: text/x-shellscript; charset=utf-8
+  Cache-Control: public, max-age=300
