@@ -162,6 +162,7 @@ DISCOVERED_METADATA_INSTALL_KIND=""
 DISCOVERED_METADATA_PRESENT=0
 DISCOVERED_RUNTIME_VENV=""
 RUNTIME_VENV_DIR=""
+PLANNED_RUNTIME_REPAIR_PATH=""
 INSTALL_PLAN_APPROVED=0
 PLAN_BEFORE_TUI=""
 PLAN_BEFORE_RUNTIME=""
@@ -824,6 +825,19 @@ tui_binary_tag() {
   printf '%s\n' "$tag"
 }
 
+# discover_current_tui_tag executes the discovered lingtai-tui binary at
+# bin_dir to learn its real version. This is the one place discovery
+# executes user-controlled code, so callers must only invoke it AFTER the
+# repair plan has been printed and consent has been obtained — never during
+# discover_existing_install/print_install_plan, which stay filesystem- and
+# metadata-only so a refusal or EOF at the consent prompt leaves no
+# execution/import side effect behind.
+discover_current_tui_tag() {
+  local bin_dir="$1"
+  [[ -n "$bin_dir" && -x "$bin_dir/lingtai-tui" ]] || return 1
+  tui_binary_tag "$bin_dir/lingtai-tui"
+}
+
 # metadata_field reads one installer-owned string field without trusting a
 # malformed JSON document. validate_install_metadata_file is called first by
 # discovery, so this helper intentionally returns empty for missing/non-string
@@ -884,6 +898,63 @@ canonical_existing_dir() {
   printf '%s/%s\n' "$(cd "$parent" && pwd -P)" "$base"
 }
 
+# canonical_runtime_venv resolves a candidate runtime venv path to its
+# physical location and requires that physical location to be canonically
+# contained under $HOME/.lingtai-tui/runtime — not merely lexically prefixed.
+# A symlinked venv directory (or a symlinked ancestor) whose real target
+# escapes the owned runtime root is rejected outright: this installer must
+# never adopt or mutate a venv outside the root it claims to own. Prints the
+# physical path and returns 0 only when containment holds.
+canonical_runtime_venv() {
+  local dir="$1" runtime_root="$2" physical_root physical_dir
+  local parent base physical_parent root_parent root_base root_grandparent root_parent_base
+
+  # Ownership is both lexical and physical: a path outside the declared root
+  # is not adopted merely because a symlink happens to point back inside it.
+  [[ "$dir" == "$runtime_root"/* ]] || return 1
+  [[ ! -L "$runtime_root" ]] || return 1
+
+  if [[ -d "$runtime_root" ]]; then
+    physical_root="$(cd "$runtime_root" 2>/dev/null && pwd -P)" || return 1
+  elif [[ -e "$runtime_root" ]]; then
+    return 1
+  else
+    # Resolve the not-yet-created owned root without mkdir. A completely fresh
+    # install may also lack its .lingtai-tui parent, so append at most those two
+    # fixed missing components to an existing physical HOME ancestor.
+    root_parent="$(dirname "$runtime_root")"
+    root_base="$(basename "$runtime_root")"
+    if [[ -d "$root_parent" ]]; then
+      physical_root="$(cd "$root_parent" 2>/dev/null && pwd -P)/$root_base" || return 1
+    else
+      [[ ! -e "$root_parent" && ! -L "$root_parent" ]] || return 1
+      root_grandparent="$(dirname "$root_parent")"
+      root_parent_base="$(basename "$root_parent")"
+      [[ -d "$root_grandparent" ]] || return 1
+      physical_root="$(cd "$root_grandparent" 2>/dev/null && pwd -P)/$root_parent_base/$root_base" || return 1
+    fi
+  fi
+
+  if [[ -d "$dir" ]]; then
+    physical_dir="$(cd "$dir" 2>/dev/null && pwd -P)" || return 1
+  else
+    # A file or symlink (including dangling) is occupied untrusted state, not a
+    # free final child that venv creation may replace or follow.
+    [[ ! -e "$dir" && ! -L "$dir" ]] || return 1
+    parent="$(dirname "$dir")"
+    base="$(basename "$dir")"
+    [[ "$base" != "." && "$base" != ".." ]] || return 1
+    if [[ "$parent" == "$runtime_root" && ! -e "$runtime_root" ]]; then
+      physical_parent="$physical_root"
+    else
+      physical_parent="$(cd "$parent" 2>/dev/null && pwd -P)" || return 1
+    fi
+    physical_dir="$physical_parent/$base"
+  fi
+  [[ "$physical_dir" == "$physical_root"/* ]] || return 1
+  printf '%s\n' "$physical_dir"
+}
+
 # discover_existing_install adopts exactly one safe existing installation. It
 # checks metadata, every absolute PATH entry, and the conventional user/system
 # bin locations. Two distinct executable TUI installations are an unsafe
@@ -893,7 +964,7 @@ discover_existing_install() {
   local metadata_path="${LINGTAI_INSTALL_METADATA:-$HOME/.lingtai-tui/install.json}"
   local metadata_bin="" metadata_runtime="" metadata_version="" metadata_kind=""
   local metadata_target="" candidate_dir="" candidate_tag="" path_entry
-  local -a path_entries=() candidate_dirs=() candidate_tags=()
+  local -a path_entries=() candidate_dirs=()
   local old_ifs="${IFS:- }"
 
   DISCOVERED_BIN_DIR=""
@@ -927,10 +998,16 @@ discover_existing_install() {
       }
     fi
     if [[ -n "$metadata_runtime" ]]; then
-      local runtime_root="$HOME/.lingtai-tui/runtime"
-      if [[ "$metadata_runtime" != /* || "$metadata_runtime" == *$'\n'* || "$metadata_runtime" == *$'\t'* || "$metadata_runtime" == */../* || "$metadata_runtime" != "$runtime_root"/* ]]; then
+      local runtime_root="$HOME/.lingtai-tui/runtime" physical_runtime=""
+      if [[ "$metadata_runtime" != /* || "$metadata_runtime" == *$'\n'* || "$metadata_runtime" == *$'\t'* || "$metadata_runtime" == */../* ]]; then
         echo "error: existing install metadata names an unsafe runtime venv: $metadata_runtime" >&2
         echo "       Refusing to guess which runtime state is owned; repair metadata or pass --prefix/--bin-dir." >&2
+        return 1
+      fi
+      physical_runtime="$(canonical_runtime_venv "$metadata_runtime" "$runtime_root" || true)"
+      if [[ -z "$physical_runtime" ]]; then
+        echo "error: existing install metadata names a runtime venv outside the owned runtime root (possibly via a symlink): $metadata_runtime" >&2
+        echo "       Refusing to adopt or mutate state outside $runtime_root; repair metadata or pass --prefix/--bin-dir." >&2
         return 1
       fi
       DISCOVERED_RUNTIME_VENV="${metadata_runtime%/}"
@@ -939,17 +1016,20 @@ discover_existing_install() {
     DISCOVERED_METADATA_INSTALL_KIND="$metadata_kind"
   fi
 
+  # add_candidate is deliberately filesystem-metadata-only: it never executes
+  # a discovered binary. Distinct candidate directories are identified purely
+  # by path plus executable-bit presence, so ambiguity detection (below) does
+  # not require running anything. The real version tag is unknown at this
+  # point; it is resolved later by discover_current_tui_tag, called only
+  # after the plan is printed and consent is obtained.
   add_candidate() {
-    local dir="$1" canonical tag existing
+    local dir="$1" canonical existing
     canonical="$(canonical_existing_dir "$dir" || true)"
     [[ -n "$canonical" && -x "$canonical/lingtai-tui" ]] || return 0
-    tag="$(tui_binary_tag "$canonical/lingtai-tui" || true)"
-    [[ -n "$tag" ]] || return 0
     for existing in "${candidate_dirs[@]:-}"; do
       [[ "$existing" == "$canonical" ]] && return 0
     done
     candidate_dirs+=("$canonical")
-    candidate_tags+=("$tag")
   }
 
   if [[ -n "$metadata_target" ]]; then
@@ -969,7 +1049,7 @@ discover_existing_install() {
     echo "error: multiple installed lingtai-tui binaries were discovered; refusing to guess:" >&2
     local index
     for index in "${!candidate_dirs[@]}"; do
-      echo "       ${candidate_dirs[$index]} (${candidate_tags[$index]})" >&2
+      echo "       ${candidate_dirs[$index]}" >&2
     done
     echo "       Retry with an explicit --prefix or --bin-dir." >&2
     return 1
@@ -983,17 +1063,81 @@ discover_existing_install() {
       return 1
     fi
     DISCOVERED_BIN_DIR="${candidate_dirs[0]}"
-    DISCOVERED_CURRENT_TUI_TAG="${candidate_tags[0]}"
   elif [[ -n "$metadata_target" ]]; then
     DISCOVERED_BIN_DIR="$metadata_target"
   fi
 
-  if [[ -n "$DISCOVERED_METADATA_VERSION" && -n "$DISCOVERED_CURRENT_TUI_TAG" && "$DISCOVERED_METADATA_VERSION" != "$DISCOVERED_CURRENT_TUI_TAG" ]]; then
-    note "Existing install metadata is stale ($DISCOVERED_METADATA_VERSION; binary is $DISCOVERED_CURRENT_TUI_TAG); it will be rewritten after repair."
-  fi
+  # The real installed-binary version tag is deliberately NOT probed here:
+  # that requires executing the discovered binary, which must not happen
+  # before the plan is printed and consent is obtained (see
+  # discover_current_tui_tag, called by print_install_plan's caller only
+  # after consent, and used for the final before/after report).
   if [[ -n "$DISCOVERED_METADATA_INSTALL_KIND" ]]; then
     note "Existing install method: $DISCOVERED_METADATA_INSTALL_KIND."
   fi
+  RUNTIME_VENV_DIR="${DISCOVERED_RUNTIME_VENV:-$HOME/.lingtai-tui/runtime/venv}"
+}
+
+# discover_explicit_target_install runs when --prefix/--bin-dir is given. The
+# explicit destination is authoritative for WHERE to install — it is never
+# redirected — but it is not authorization to skip disclosure: if that exact
+# target already contains an executable lingtai-tui (installer-managed or
+# not), the same plan+consent gate as unambiguous PATH/metadata discovery
+# applies before it is overwritten. This is filesystem/metadata-only, same as
+# discover_existing_install: no binary is executed and no runtime is
+# imported here.
+discover_explicit_target_install() {
+  local metadata_path="${LINGTAI_INSTALL_METADATA:-$HOME/.lingtai-tui/install.json}"
+  local target_dir metadata_bin metadata_runtime metadata_target=""
+
+  DISCOVERED_BIN_DIR=""
+  DISCOVERED_CURRENT_TUI_TAG=""
+  DISCOVERED_METADATA_VERSION=""
+  DISCOVERED_METADATA_INSTALL_KIND=""
+  DISCOVERED_METADATA_PRESENT=0
+  DISCOVERED_RUNTIME_VENV=""
+
+  target_dir="$(plan_bin_dir)"
+  target_dir="$(canonical_existing_dir "$target_dir" || true)"
+
+  if [[ -e "$metadata_path" ]]; then
+    [[ -f "$metadata_path" && -r "$metadata_path" ]] || {
+      echo "error: existing install metadata is not a readable regular file: $metadata_path" >&2
+      return 1
+    }
+    if ! validate_install_metadata_file "$metadata_path" >/dev/null 2>&1; then
+      echo "error: existing install metadata is malformed or unsafe: $metadata_path" >&2
+      echo "       Refusing to overwrite it; repair the JSON or pass --prefix/--bin-dir explicitly." >&2
+      return 1
+    fi
+    metadata_bin="$(metadata_field "$metadata_path" bin_dir || true)"
+    metadata_runtime="$(metadata_field "$metadata_path" runtime_venv || true)"
+    if [[ -n "$metadata_bin" ]]; then
+      metadata_target="$(canonical_existing_dir "$metadata_bin" || true)"
+    fi
+    if [[ -n "$target_dir" && -n "$metadata_target" && "$target_dir" == "$metadata_target" ]]; then
+      DISCOVERED_METADATA_PRESENT=1
+      DISCOVERED_METADATA_VERSION="$(metadata_field "$metadata_path" stamped_version || true)"
+      DISCOVERED_METADATA_INSTALL_KIND="$(metadata_field "$metadata_path" install_kind || true)"
+      if [[ -n "$metadata_runtime" ]]; then
+        local runtime_root="$HOME/.lingtai-tui/runtime" physical_runtime=""
+        if [[ "$metadata_runtime" == /* && "$metadata_runtime" != *$'\n'* && "$metadata_runtime" != *$'\t'* && "$metadata_runtime" != */../* ]]; then
+          physical_runtime="$(canonical_runtime_venv "$metadata_runtime" "$runtime_root" || true)"
+        fi
+        if [[ -z "$physical_runtime" ]]; then
+          echo "error: existing install metadata names an unsafe or unowned runtime venv: $metadata_runtime" >&2
+          echo "       Refusing to adopt or mutate state outside $runtime_root; repair metadata explicitly." >&2
+          return 1
+        fi
+        DISCOVERED_RUNTIME_VENV="${metadata_runtime%/}"
+      fi
+    fi
+  fi
+
+  if [[ -n "$target_dir" && -x "$target_dir/lingtai-tui" ]]; then
+    DISCOVERED_BIN_DIR="$target_dir"
+  fi
+
   RUNTIME_VENV_DIR="${DISCOVERED_RUNTIME_VENV:-$HOME/.lingtai-tui/runtime/venv}"
 }
 
@@ -1022,6 +1166,25 @@ PY
   fi
 }
 
+# runtime_static_summary is the pre-consent counterpart to
+# runtime_current_summary: filesystem-metadata-only, it never executes the
+# venv's interpreter or imports anything. It is used to form the printed
+# repair plan so a refusal or EOF at the consent prompt leaves no
+# execution/import/pyc side effect behind (see runtime_health_check /
+# discover_current_tui_tag for the accurate post-consent probes).
+runtime_static_summary() {
+  local venv_dir="$1"
+  if [[ ! -d "$venv_dir" ]]; then
+    printf '%s\n' "missing"
+    return 0
+  fi
+  if [[ -x "$venv_dir/bin/python" || -x "$venv_dir/bin/python3" ]]; then
+    printf '%s\n' "present (unverified — health will be checked after consent)"
+  else
+    printf '%s\n' "present, no interpreter found (unverified — will be checked after consent)"
+  fi
+}
+
 plan_bin_dir() {
   if [[ -n "$BIN_DIR_OVERRIDE" ]]; then
     printf '%s\n' "$BIN_DIR_OVERRIDE"
@@ -1040,24 +1203,33 @@ plan_bin_dir() {
 # but before resolve_bin_dir/build/install. Existing installs get a diagnosis,
 # exact target/pin, ownership boundary, and an explicit consent gate. A fresh
 # install has no repair mutation and keeps the historical non-prompting flow.
+#
+# Everything printed here is either a filesystem/metadata fact or explicitly
+# labeled as declared-but-unverified — no discovered binary is executed and
+# no runtime module is imported to build this plan (see runtime_static_summary
+# and the DISCOVERED_CURRENT_TUI_TAG contract in discover_existing_install /
+# discover_explicit_target_install). The kernel pin is likewise reported as a
+# declared tag, not yet a verified artifact: the manifest/artifact fetch that
+# would verify it only happens after consent, inside ensure_runtime_venv.
 print_install_plan() {
   local target_tui target_kernel_tag target_kernel_version target_source target_bin
   local current_tui current_metadata current_runtime
+  PLANNED_RUNTIME_REPAIR_PATH=""
   [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]] || return 0
 
   target_bin="$(plan_bin_dir)"
   target_tui="${TARGET_TAG:-${VERSION:-${REF:-dev}}}"
-  current_tui="${DISCOVERED_CURRENT_TUI_TAG:-not found}"
+  current_tui="${DISCOVERED_CURRENT_TUI_TAG:-not found (unverified — will be probed after consent)}"
   current_metadata="${DISCOVERED_METADATA_VERSION:-not found}"
-  current_runtime="$(runtime_current_summary "$RUNTIME_VENV_DIR")"
+  current_runtime="$(runtime_static_summary "$RUNTIME_VENV_DIR")"
   target_kernel_tag="$(kernel_tag_for_install || true)"
   target_source="$(kernel_source_for_install || true)"
   if [[ -n "${KERNEL_VERSION_INSTALLED:-}" ]]; then
     target_kernel_version="$KERNEL_VERSION_INSTALLED"
   elif [[ "$target_source" == "bundle" ]]; then
-    target_kernel_version="${BUNDLE_MANIFEST_KERNEL_VERSION:-unknown}"
+    target_kernel_version="${BUNDLE_MANIFEST_KERNEL_VERSION:-unknown} (declared by bundle manifest; artifact not yet verified)"
   elif [[ -n "$target_kernel_tag" ]]; then
-    target_kernel_version="resolved from verified release manifest for $target_kernel_tag"
+    target_kernel_version="declared pin $target_kernel_tag (release manifest/artifact not yet fetched or verified)"
   else
     target_kernel_version="not pinned (explicit source/dev path)"
   fi
@@ -1075,6 +1247,15 @@ print_install_plan() {
   printf '    Preserved:        projects, presets, MCP/addon configs, secrets, recipes, channel state, and all other user-owned state.\n'
   if [[ "$SKIP_VENV" == "1" ]]; then
     printf '    Runtime action:   --skip-python explicitly opts out; runtime state is not claimed repaired.\n'
+  else
+    printf '    Runtime target:   %s (retained and repaired in place if healthy)\n' "$RUNTIME_VENV_DIR"
+    PLANNED_RUNTIME_REPAIR_PATH="$(runtime_repair_path_preview || true)"
+    if [[ -z "$PLANNED_RUNTIME_REPAIR_PATH" ]]; then
+      echo "error: no safe, free stable runtime repair path is available under $HOME/.lingtai-tui/runtime." >&2
+      echo "       No repair consent was requested and no installation state was changed." >&2
+      return 1
+    fi
+    printf '    Runtime if broken: %s (exact path used only if the retained runtime cannot be repaired in place; never deleted)\n' "$PLANNED_RUNTIME_REPAIR_PATH"
   fi
 
   if [[ "$NON_INTERACTIVE" == "1" ]]; then
@@ -1227,6 +1408,12 @@ write_install_metadata() {
   # --skip-python), preserving the old metadata shape for that explicit opt-out.
   local bundle_json="" runtime_json=""
   if [[ -n "${RUNTIME_VENV_DIR:-}" && "$SKIP_VENV" != "1" ]]; then
+    runtime_json="$(printf ',\n  "runtime_venv": "%s"' "$(json_escape "${RUNTIME_VENV_DIR%/}")")"
+  elif [[ "$SKIP_VENV" == "1" && -n "${RUNTIME_VENV_DIR:-}" && -d "$RUNTIME_VENV_DIR" ]]; then
+    # --skip-python explicitly opts out of touching or executing the runtime this
+    # run, but a validated pre-existing runtime pointer must not be silently dropped:
+    # a later automatic repair needs the truthful preserved location, not a
+    # rewrite that makes it look like no runtime was ever provisioned.
     runtime_json="$(printf ',\n  "runtime_venv": "%s"' "$(json_escape "${RUNTIME_VENV_DIR%/}")")"
   fi
   if [[ "$KERNEL_SOURCE" == "bundle" ]]; then
@@ -1448,43 +1635,119 @@ runtime_venv_state() {
   printf '%s\n' healthy
 }
 
-# runtime_repair_path finds a stable unowned path. Existing paths are never
-# removed or reset; a healthy prior repair path is reused so a second installer
-# invocation converges instead of accumulating pid-suffixed environments.
+# validated_runtime_repair_path is the final ownership gate for every repair
+# selection. Repair slots are fixed children of the owned runtime root; symlinks
+# (including dangling ones) are occupied untrusted state even when their target
+# would remain inside that root.
+validated_runtime_repair_path() {
+  local candidate="$1" runtime_root="$HOME/.lingtai-tui/runtime"
+  case "$candidate" in
+    "$runtime_root/venv-repair"|"$runtime_root/venv-repair-"[1-9]) ;;
+    *)
+      echo "error: unsafe runtime repair path was selected: ${candidate:-<empty>}" >&2
+      return 1
+      ;;
+  esac
+  if [[ -L "$candidate" ]] || ! canonical_runtime_venv "$candidate" "$runtime_root" >/dev/null; then
+    echo "error: runtime repair path is not a safe physical child of $runtime_root: $candidate" >&2
+    return 1
+  fi
+  printf '%s\n' "$candidate"
+}
+
+# runtime_repair_path returns the exact path authorized by an existing-install
+# plan. If that free slot becomes occupied after consent, fail loud instead of
+# silently switching to a path the user never approved. Fresh-install flows have
+# no repair plan; they may reuse a healthy, non-symlink repair venv or choose the
+# first safe free slot. Existing paths are never removed or reset.
 runtime_repair_path() {
   local runtime_root="$HOME/.lingtai-tui/runtime" candidate index state
-  mkdir -p "$runtime_root"
+
+  if [[ -n "$PLANNED_RUNTIME_REPAIR_PATH" ]]; then
+    candidate="$PLANNED_RUNTIME_REPAIR_PATH"
+    if [[ -e "$candidate" || -L "$candidate" ]]; then
+      echo "error: planned runtime repair path became occupied after consent: $candidate" >&2
+      echo "       Refusing to select a different unapproved path; inspect the new state and re-run." >&2
+      return 1
+    fi
+    validated_runtime_repair_path "$candidate"
+    return
+  fi
+
+  if [[ -L "$runtime_root" ]]; then
+    echo "error: runtime root is a symlink; refusing to select a repair path through it: $runtime_root" >&2
+    return 1
+  fi
+  mkdir -p "$runtime_root" || {
+    echo "error: could not create the owned runtime root: $runtime_root" >&2
+    return 1
+  }
   for index in "" 1 2 3 4 5 6 7 8 9; do
     candidate="$runtime_root/venv-repair${index:+-$index}"
-    if [[ ! -e "$candidate" ]]; then
-      printf '%s\n' "$candidate"
-      return 0
+    if [[ ! -e "$candidate" && ! -L "$candidate" ]]; then
+      validated_runtime_repair_path "$candidate"
+      return
     fi
+    [[ ! -L "$candidate" ]] || continue
     state="$(runtime_venv_state "$candidate")"
     if [[ "$state" == healthy ]]; then
+      validated_runtime_repair_path "$candidate"
+      return
+    fi
+  done
+  echo "error: all stable runtime repair paths under $runtime_root are occupied or unsafe." >&2
+  return 1
+}
+
+# runtime_repair_path_preview computes, without executing anything or mutating
+# any state, the exact free repair slot that an existing-install plan will bind
+# to. Any existing object or symlink is occupied: pre-consent code never runs a
+# candidate interpreter to decide whether an older repair venv is reusable.
+runtime_repair_path_preview() {
+  local runtime_root="$HOME/.lingtai-tui/runtime" candidate index
+  for index in "" 1 2 3 4 5 6 7 8 9; do
+    candidate="$runtime_root/venv-repair${index:+-$index}"
+    if [[ ! -e "$candidate" && ! -L "$candidate" ]]; then
+      validated_runtime_repair_path "$candidate" >/dev/null || return 1
       printf '%s\n' "$candidate"
       return 0
     fi
   done
-  echo "error: all stable runtime repair paths under $runtime_root are occupied by broken state." >&2
   return 1
 }
 
 # runtime_health_check is the install postcondition: both the public package
-# and its kernel module must import from the selected interpreter, and the
-# package version must equal the exact manifest/pin version.
+# and its kernel module must import from the selected interpreter, the
+# package version must equal the exact manifest/pin version, AND both
+# module __file__ paths must resolve physically underneath the selected
+# venv's own canonical prefix — not merely be importable. This rejects a
+# same-version package injected through an external `.pth` entry, system
+# site-packages, or any other interpreter path configuration that would let
+# runtime_health_check pass while the kernel actually loads from outside the
+# venv this installer claims is healthy. PYTHONPATH= alone does not cover
+# that case, so the check is done in Python against sys.prefix/realpath.
 runtime_health_check() {
-  local py="$1" expected="${2:-}" output
-  output="$(PYTHONPATH= "$py" - "$expected" <<'PY'
+  local py="$1" expected="${2:-}" output selected_prefix
+  selected_prefix="$(cd "$(dirname "$py")/.." 2>/dev/null && pwd -P)" || return 1
+  output="$(PYTHONPATH= "$py" - "$expected" "$selected_prefix" <<'PY'
 import importlib
+import os
 import sys
 
 expected = sys.argv[1]
+selected_prefix = os.path.realpath(sys.argv[2])
+prefix = os.path.realpath(sys.prefix)
+if prefix != selected_prefix:
+    raise SystemExit(1)
 module = importlib.import_module("lingtai")
-importlib.import_module("lingtai.kernel")
+kernel = importlib.import_module("lingtai.kernel")
 version = str(getattr(module, "__version__", ""))
 if not version or (expected and version.lstrip("v") != expected.lstrip("v")):
     raise SystemExit(1)
+for mod in (module, kernel):
+    mod_path = os.path.realpath(getattr(mod, "__file__", "") or "")
+    if not mod_path or not (mod_path == selected_prefix or mod_path.startswith(selected_prefix + os.sep)):
+        raise SystemExit(1)
 print(f"{version}\t{module.__file__}")
 PY
   )" || return 1
@@ -1496,11 +1759,25 @@ ensure_runtime_venv() {
   local bin_dir="$1"
   local venv_dir="${RUNTIME_VENV_DIR:-$HOME/.lingtai-tui/runtime/venv}"
   local uv py repair_attempt install_kernel_tag recreate_reason runtime_state
+  local runtime_root="$HOME/.lingtai-tui/runtime" physical_venv_dir
 
   if [[ "$SKIP_VENV" == "1" ]]; then
     note "Skipping Python runtime venv (--skip-python)."
     return 0
   fi
+
+  physical_venv_dir="$(canonical_runtime_venv "$venv_dir" "$runtime_root" || true)"
+  if [[ -z "$physical_venv_dir" ]]; then
+    echo "error: selected runtime venv path is outside the owned runtime root (possibly via a symlink): $venv_dir" >&2
+    echo "       Refusing to create or repair state outside $runtime_root." >&2
+    return 1
+  fi
+  # Only after the non-mutating lexical+physical ownership gate succeeds may a
+  # fresh install create the owned root.
+  mkdir -p "$runtime_root" || {
+    echo "error: could not create the owned runtime root: $runtime_root" >&2
+    return 1
+  }
 
   install_kernel_tag="$(kernel_tag_for_install || true)"
   if [[ -z "$install_kernel_tag" ]]; then
@@ -1535,13 +1812,14 @@ ensure_runtime_venv() {
   fi
 
   mkdir -p "$(dirname "$venv_dir")"
+  repair_attempt=0
   runtime_state="$(runtime_venv_state "$venv_dir")"
   if [[ "$runtime_state" == broken ]]; then
-    warn "existing runtime venv at $venv_dir is broken; retaining it and provisioning a stable repair path."
+    warn "existing runtime venv at $venv_dir is broken; retaining it and provisioning the planned stable repair path."
     venv_dir="$(runtime_repair_path)" || return 1
+    repair_attempt=1
   fi
   RUNTIME_VENV_DIR="$venv_dir"
-  repair_attempt=0
 
   while true; do
     uv="$(find_uv 2>/dev/null || true)"
@@ -2712,7 +2990,12 @@ ensure_dev_checkout() {
 }
 
 ensure_dev_runtime() {
-  local kernel="$1" venv="${LINGTAI_DEV_RUNTIME_PYTHON:-$HOME/.lingtai-tui/runtime/venv}" py
+  local kernel="$1" venv="${LINGTAI_DEV_RUNTIME_PYTHON:-$HOME/.lingtai-tui/runtime/venv}" py runtime_state
+  runtime_state="$(runtime_venv_state "$venv")"
+  if [[ "$runtime_state" == broken ]]; then
+    warn "existing development runtime at $venv is broken; retaining it and using the planned stable repair path."
+    venv="$(runtime_repair_path)" || return 1
+  fi
   if [[ -x "$venv/bin/python" ]]; then py="$venv/bin/python"
   elif [[ -x "$venv/bin/python3" ]]; then py="$venv/bin/python3"
   else
@@ -2727,6 +3010,10 @@ ensure_dev_runtime() {
   fi
   runtime_probe "$py" >/dev/null || { echo "error: editable kernel import/version check failed in $py." >&2; return 1; }
   DEV_RUNTIME_PYTHON="$py"
+  # write_install_metadata reads RUNTIME_VENV_DIR, not DEV_RUNTIME_PYTHON; if
+  # discovery had adopted a prior venv-repair path, that stale pointer must
+  # not silently outlive the venv actually just installed into.
+  RUNTIME_VENV_DIR="$venv"
 }
 
 build_dev_from_sources() {
@@ -3227,9 +3514,14 @@ fi
 
 # With no explicit destination, adopt one unambiguous existing installation so
 # a one-shot install repairs that environment instead of creating a second copy.
-# Explicit --prefix/--bin-dir remain authoritative and bypass discovery.
+# Explicit --prefix/--bin-dir remain authoritative for WHERE to install — they
+# are never overridden by discovery — but they do not bypass diagnosis: an
+# explicit target that already holds installer-managed/executable state still
+# gets the same plan+consent gate (see discover_explicit_target_install).
 if [[ -z "$BIN_DIR_OVERRIDE" && -z "$INSTALL_PREFIX" ]]; then
   discover_existing_install || return 1
+else
+  discover_explicit_target_install || return 1
 fi
 
 if is_wsl; then
@@ -3240,10 +3532,23 @@ fi
 
 if [[ "$DEV_MODE" == "1" ]]; then
   TARGET_TAG="dev"
+  # The plan must name the same runtime ensure_dev_runtime will actually use,
+  # not a stale metadata pointer adopted during discovery.
+  RUNTIME_VENV_DIR="${LINGTAI_DEV_RUNTIME_PYTHON:-$HOME/.lingtai-tui/runtime/venv}"
   print_install_plan || return 1
   resolve_bin_dir
-  run_dev_install
-  return $?
+  if [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]]; then
+    PLAN_BEFORE_TUI="$(discover_current_tui_tag "$DISCOVERED_BIN_DIR" || true)"
+    PLAN_BEFORE_TUI="${PLAN_BEFORE_TUI:-not found}"
+    PLAN_BEFORE_RUNTIME="$(runtime_current_summary "$RUNTIME_VENV_DIR")"
+  fi
+  run_dev_install || return 1
+  if [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]]; then
+    say "Repair result (before -> after):"
+    printf '    TUI:      %s -> %s (development binary check passed)\n' "$PLAN_BEFORE_TUI" "$(tui_binary_tag "$BIN_DIR/lingtai-tui" || echo dev)"
+    printf '    Runtime:  %s -> %s\n' "$PLAN_BEFORE_RUNTIME" "$(runtime_current_summary "$RUNTIME_VENV_DIR")"
+  fi
+  return 0
 fi
 
 # Auto-detect CN-restricted networks. If proxy.golang.org is unreachable
@@ -3315,6 +3620,18 @@ fi
 
 print_install_plan || return 1
 resolve_bin_dir
+
+# Consent has now been obtained (or --non-interactive supplied it). Only now
+# is it safe to execute the discovered binary / probe the discovered runtime
+# to record the real "before" state for the before -> after report below;
+# doing this earlier would be exactly the pre-consent execution blocker 2
+# forbids. This does not change what will be installed — only what is
+# reported as the starting point.
+if [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]]; then
+  PLAN_BEFORE_TUI="$(discover_current_tui_tag "$DISCOVERED_BIN_DIR" || true)"
+  PLAN_BEFORE_TUI="${PLAN_BEFORE_TUI:-not found}"
+  PLAN_BEFORE_RUNTIME="$(runtime_current_summary "$RUNTIME_VENV_DIR")"
+fi
 
 # Decide what to install (the explicit runtime update returned above).
 if [[ -n "$REF" ]]; then
