@@ -1087,7 +1087,7 @@ print_install_plan() {
     printf '    Proceed with this repair? [y/N] '
     local answer
     IFS= read -r answer || answer=""
-    case "${answer,,}" in
+    case "$(printf '%s' "$answer" | tr '[:upper:]' '[:lower:]')" in
       y|yes) ;;
       *) echo "Repair cancelled; no installation state was changed." >&2; return 1 ;;
     esac
