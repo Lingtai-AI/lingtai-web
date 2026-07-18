@@ -41,6 +41,11 @@ not_contains "$main" 'run_dev_install()'
 not_contains "$main" 'discover_existing_install()'
 not_contains "$main" 'git clone'
 not_contains "$main" 'source <(curl'
+contains "$main" 'validate_fresh_install_state'
+contains "$main" 'ordinary install is first-install-only'
+contains "$main" 'if [[ "$runtime_state" != missing ]]'
+contains "$main" 'ln "$tmp_path" "$metadata_path"'
+not_contains "$main" 'mv "$tmp_path" "$metadata_path"'
 
 for asset in "$update" "$dev" "$fix" "$verify"; do
   [[ -x "$asset" ]] || fail "asset is not executable: $asset"
@@ -168,6 +173,93 @@ write_receipt() {
 }
 sha_file() { shasum -a 256 "$1" | cut -d' ' -f1; }
 run_env() { local home="$1"; shift; PATH="$scratch/shims:/usr/bin:/bin" HOME="$home" TMPDIR="$scratch/tmp" "$@"; }
+
+# Ordinary install is first-install-only across the whole owned state root, not
+# merely the selected bin directory. It must fail before target creation/network
+# and preserve both prior receipt and runtime bytes.
+ordinary_home="$scratch/ordinary existing home"
+ordinary_bin="$scratch/ordinary-new-bin"
+mkdir -p "$ordinary_home/.lingtai-tui/runtime/venv"
+printf '%s\n' 'stable-receipt' > "$ordinary_home/.lingtai-tui/install.json"
+printf '%s\n' 'stable-runtime' > "$ordinary_home/.lingtai-tui/runtime/venv/marker"
+ordinary_receipt_sha="$(sha_file "$ordinary_home/.lingtai-tui/install.json")"
+ordinary_runtime_sha="$(sha_file "$ordinary_home/.lingtai-tui/runtime/venv/marker")"
+set +e
+run_env "$ordinary_home" /bin/bash "$main" --version v1.2.3 --bin-dir "$ordinary_bin" >"$scratch/ordinary-existing.out" 2>&1
+ordinary_rc=$?
+set -e
+[[ "$ordinary_rc" -ne 0 ]] || fail "ordinary install adopted existing receipt/runtime state"
+contains "$scratch/ordinary-existing.out" 'ordinary install is first-install-only'
+[[ "$(sha_file "$ordinary_home/.lingtai-tui/install.json")" == "$ordinary_receipt_sha" ]] || fail "ordinary install changed the prior receipt"
+[[ "$(sha_file "$ordinary_home/.lingtai-tui/runtime/venv/marker")" == "$ordinary_runtime_sha" ]] || fail "ordinary install changed the prior runtime"
+[[ ! -e "$ordinary_bin" && ! -L "$ordinary_bin" ]] || fail "ordinary install created the target before rejecting existing state"
+
+runtime_only_home="$scratch/runtime only home"
+runtime_only_bin="$scratch/runtime-only-bin"
+mkdir -p "$runtime_only_home/.lingtai-tui/runtime/venv"
+set +e
+run_env "$runtime_only_home" /bin/bash "$main" --version v1.2.3 --bin-dir "$runtime_only_bin" >"$scratch/runtime-only.out" 2>&1
+runtime_only_rc=$?
+set -e
+[[ "$runtime_only_rc" -ne 0 ]] || fail "ordinary install adopted existing runtime without a receipt"
+contains "$scratch/runtime-only.out" 'ordinary install will not adopt or repair it'
+[[ ! -e "$runtime_only_bin" && ! -L "$runtime_only_bin" ]] || fail "runtime-only rejection created the target directory"
+
+# Simulate install.json appearing after the writer's first check but before final
+# publication. Exclusive final revalidation must preserve the raced bytes and
+# remove only its own staging file.
+writer_home="$scratch/writer race home"
+writer_state="$writer_home/.lingtai-tui"
+mkdir -p "$writer_state"
+set +e
+(
+  export HOME="$writer_home" LINGTAI_INSTALL_SH_SOURCE_ONLY=1
+  source "$main"
+  SKIP_VENV=1
+  KERNEL_SOURCE=""
+  INSTALL_KIND=release-asset
+  KERNEL_PIN_TAG=v1.2.3
+  KERNEL_VERSION_INSTALLED=1.2.3
+  KERNEL_PROVIDER=github
+  KERNEL_PIN_TUI_TAG=v1.2.3
+  BUNDLE_TAG=v1.2.3
+  mktemp() {
+    local staged
+    staged="$(command mktemp "$1")" || return 1
+    printf '%s\n' 'raced-receipt' > "$HOME/.lingtai-tui/install.json"
+    printf '%s\n' "$staged"
+  }
+  write_install_metadata "$writer_state" "$writer_home/prefix" "$writer_home/bin" "repo" "v1.2.3" "v1.2.3" "commit" "v1.2.3" "$writer_home/bin/lingtai-tui" ""
+) >"$scratch/writer-race.out" 2>&1
+writer_rc=$?
+set -e
+[[ "$writer_rc" -ne 0 ]] || fail "receipt writer replaced a raced install.json"
+[[ "$(cat "$writer_state/install.json")" == 'raced-receipt' ]] || fail "receipt writer changed raced receipt bytes"
+for leftover in "$writer_state"/.install.json.*; do
+  [[ ! -e "$leftover" && ! -L "$leftover" ]] || fail "receipt writer left its staging file: $leftover"
+done
+contains "$scratch/writer-race.out" 'refusing to replace it'
+
+writer_success_home="$scratch/writer success home"
+writer_success_state="$writer_success_home/.lingtai-tui"
+(
+  export HOME="$writer_success_home" LINGTAI_INSTALL_SH_SOURCE_ONLY=1
+  source "$main"
+  SKIP_VENV=1
+  KERNEL_SOURCE=""
+  INSTALL_KIND=release-asset
+  KERNEL_PIN_TAG=v1.2.3
+  KERNEL_VERSION_INSTALLED=1.2.3
+  KERNEL_PROVIDER=github
+  KERNEL_PIN_TUI_TAG=v1.2.3
+  BUNDLE_TAG=v1.2.3
+  write_install_metadata "$writer_success_state" "$writer_success_home/prefix" "$writer_success_home/bin" "repo" "v1.2.3" "v1.2.3" "commit" "v1.2.3" "$writer_success_home/bin/lingtai-tui" ""
+)
+contains "$writer_success_state/install.json" '"schema": "lingtai.tui.install/v1"'
+[[ "$(stat -f '%Lp' "$writer_success_state/install.json")" == 600 ]] || fail "exclusive receipt mode is not 600"
+for leftover in "$writer_success_state"/.install.json.*; do
+  [[ ! -e "$leftover" && ! -L "$leftover" ]] || fail "successful receipt writer left staging state: $leftover"
+done
 
 # Verify release identity, then reject garbage, mixed, duplicate, and substring
 # identities. The fake runtime's probe also enforces the kernel-version check.

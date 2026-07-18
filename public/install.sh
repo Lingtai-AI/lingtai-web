@@ -904,7 +904,7 @@ write_install_metadata() {
   fi
 
   metadata_path="$global_dir/install.json"
-  tmp_path="$metadata_path.tmp.$$"
+  tmp_path=""
   installed_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
   if [[ -L "$global_dir" ]]; then
@@ -912,6 +912,15 @@ write_install_metadata() {
     return 1
   fi
   mkdir -p "$global_dir"
+  if [[ -e "$metadata_path" || -L "$metadata_path" ]]; then
+    echo "error: install receipt appeared before metadata creation; refusing to replace it: $metadata_path" >&2
+    return 1
+  fi
+  tmp_path="$(mktemp "$global_dir/.install.json.XXXXXX")" || {
+    echo "error: could not create an owned metadata staging file under $global_dir" >&2
+    return 1
+  }
+  chmod 600 "$tmp_path" || { rm -f "$tmp_path"; return 1; }
   if [[ -n "$portal_path" ]]; then
     portal_json="$(printf ',\n    "%s"' "$(json_escape "$portal_path")")"
   fi
@@ -935,7 +944,19 @@ write_install_metadata() {
   ]$bundle_json$runtime_json
 }
 EOF
-  mv "$tmp_path" "$metadata_path"
+  if [[ -L "$global_dir" || -e "$metadata_path" || -L "$metadata_path" ]]; then
+    rm -f "$tmp_path"
+    echo "error: install receipt appeared during metadata creation; refusing to replace it: $metadata_path" >&2
+    return 1
+  fi
+  # Same-directory hard-link publication is atomic and no-clobber: if another
+  # writer creates install.json first, ln fails without replacing its bytes.
+  if ! ln "$tmp_path" "$metadata_path"; then
+    rm -f "$tmp_path"
+    echo "error: install receipt could not be published exclusively; existing state was preserved: $metadata_path" >&2
+    return 1
+  fi
+  rm -f "$tmp_path"
 }
 
 # --- OS package installation (Linux/WSL) -------------------------------------
@@ -1216,21 +1237,19 @@ ensure_runtime_venv() {
   fi
   ensure_python || { echo "error: Python 3.11+ with venv support is required for the runtime." >&2; return 1; }
   runtime_state="$(runtime_venv_state "$venv_dir")"
-  if [[ "$runtime_state" == broken ]]; then
-    echo "error: existing runtime at $venv_dir is broken; ordinary install will not silently repair it." >&2
+  if [[ "$runtime_state" != missing ]]; then
+    echo "error: existing runtime at $venv_dir is $runtime_state; ordinary install will not adopt or repair it." >&2
     echo "       Review https://lingtai.ai/help/reference/installation/assets/fix.sh" >&2
     return 1
   fi
-  if [[ "$runtime_state" == missing ]]; then
-    uv="$(find_uv 2>/dev/null || true)"
-    if [[ -n "$uv" ]]; then
-      "$uv" venv --python 3.13 "$venv_dir" || return 1
-    elif python_ok; then
-      python3 -m venv "$venv_dir" || return 1
-    else
-      echo "error: cannot create runtime venv without uv or Python 3.11+ venv support." >&2
-      return 1
-    fi
+  uv="$(find_uv 2>/dev/null || true)"
+  if [[ -n "$uv" ]]; then
+    "$uv" venv --python 3.13 "$venv_dir" || return 1
+  elif python_ok; then
+    python3 -m venv "$venv_dir" || return 1
+  else
+    echo "error: cannot create runtime venv without uv or Python 3.11+ venv support." >&2
+    return 1
   fi
   py="$(runtime_python_for_venv "$venv_dir")"
   [[ -n "$py" ]] || { echo "error: runtime interpreter not found at $venv_dir." >&2; return 1; }
@@ -2067,6 +2086,25 @@ validate_install_target() {
   mkdir -p "$BIN_DIR"
 }
 
+# A different empty --bin-dir must not turn ordinary install into adoption of a
+# pre-existing receipt or runtime. Check this before target creation, release
+# resolution, downloads, or any binary/runtime mutation.
+validate_fresh_install_state() {
+  local state_root="$HOME/.lingtai-tui"
+  local metadata="$state_root/install.json"
+  local runtime_root="$state_root/runtime"
+  if [[ -e "$metadata" || -L "$metadata" ]]; then
+    echo "error: existing install receipt $metadata was found; ordinary install is first-install-only." >&2
+    echo "       Read https://lingtai.ai/help/reference/installation/skill.md for explicit update, repair, or verification." >&2
+    return 1
+  fi
+  if [[ -e "$runtime_root" || -L "$runtime_root" ]]; then
+    echo "error: existing runtime state $runtime_root was found; ordinary install will not adopt or repair it." >&2
+    echo "       Read https://lingtai.ai/help/reference/installation/skill.md for explicit repair or verification." >&2
+    return 1
+  fi
+}
+
 # --- main --------------------------------------------------------------------
 
 main() {
@@ -2078,6 +2116,10 @@ main() {
     echo "error: $HOME/.lingtai-tui is a symlink; refusing redirected install state." >&2
     return 1
   }
+  validate_fresh_install_state || return 1
+  resolve_bin_dir
+  validate_install_target || return 1
+
   if is_wsl; then
     say "Detected Windows Subsystem for Linux (WSL)."
     note "Binaries and the Python runtime install into your Linux home ($HOME)."
@@ -2114,8 +2156,6 @@ main() {
   }
   [[ -n "$VERSION" ]] || say "Latest release is $TARGET_TAG"
 
-  resolve_bin_dir
-  validate_install_target || return 1
   if [[ "$FROM_SOURCE" != "1" ]]; then
     if try_release_asset "$TARGET_TAG"; then :
     else
