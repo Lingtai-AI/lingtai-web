@@ -8,7 +8,6 @@
     "build": "astro build",
     "preview": "npm run build && wrangler dev",
     "generate-types": "wrangler types",
-    "test:architecture": "python3 scripts/test-architecture-documents.py",
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {

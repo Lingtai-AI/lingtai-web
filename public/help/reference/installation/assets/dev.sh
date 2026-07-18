@@ -4,10 +4,12 @@
 #   public/help/reference/installation/CONTRACT.md before changing this file.
 # - Preserve this entrypoint's operation, ownership, consent, and mutation boundary;
 #   do not turn one operation into an implicit install, update, repair, or deploy.
-# - Keep executable behavior, both Contracts, both Anatomies, the installation
-#   skill, and focused tests in lockstep in the same change.
-# - Real-operation changes need a final-head real critical-path acceptance; fake
-#   or static tests alone are insufficient. Ordinary install uses a brand-new HOME.
+# - Keep executable behavior, both Contracts, both Anatomies, and public guidance
+#   in lockstep; do not add static, shim, fake-command, or hermetic acceptance tests.
+# - Every dev.sh change must execute a real source build and editable install in
+#   isolated non-root Linux with exact checkouts, then observe binary/runtime/import/
+#   source-provenance/receipt postconditions or actual partial failure.
+#   Source grep and fake CLI output are not acceptance.
 # - Never publish a success receipt before every declared postcondition passes;
 #   report partial state honestly and do not treat failure as cleanup authority.
 # - These maintenance rules grant no merge, release, deploy, auth, config, or

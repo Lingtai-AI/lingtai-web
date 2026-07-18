@@ -4,10 +4,13 @@
 #   public/help/reference/installation/CONTRACT.md before changing this file.
 # - Preserve this entrypoint's operation, ownership, consent, and mutation boundary;
 #   do not turn one operation into an implicit install, update, repair, or deploy.
-# - Keep executable behavior, both Contracts, both Anatomies, the installation
-#   skill, and focused tests in lockstep in the same change.
-# - Real-operation changes need a final-head real critical-path acceptance; fake
-#   or static tests alone are insufficient. Ordinary install uses a brand-new HOME.
+# - Keep executable behavior, both Contracts, both Anatomies, and public guidance
+#   in lockstep; do not add static, shim, fake-command, or hermetic acceptance tests.
+# - Every install.sh change must run this exact final candidate end-to-end in a
+#   brand-new non-root isolated Linux environment with an empty HOME and real
+#   network/artifact inputs. Accept only observed TUI/runtime/import/provenance/
+#   receipt behavior or honest partial failure; source grep and fake CLI output
+#   are not acceptance.
 # - Never publish a success receipt before every declared postcondition passes;
 #   report partial state honestly and do not treat failure as cleanup authority.
 # - These maintenance rules grant no merge, release, deploy, auth, config, or
@@ -434,13 +437,30 @@ bundle_manifest_url_for_provider() {
   esac
 }
 
+# Manifest validation happens before the owned runtime venv exists. Use any
+# available system python3 for that read-only boundary; on a clean machine with
+# no Python, bootstrap uv and let it provide a managed Python 3.13. Stdout stays
+# reserved for parser output because callers capture it as manifest state.
+run_manifest_python() {
+  local body="$1" uv
+  shift
+  if command -v python3 >/dev/null 2>&1; then
+    BODY="$body" python3 "$@"
+    return
+  fi
+  ensure_uv >/dev/null || return 1
+  uv="$(find_uv 2>/dev/null || true)"
+  [[ -n "$uv" && -x "$uv" ]] || return 1
+  BODY="$body" "$uv" run --no-project --managed-python --python 3.13 -- python "$@"
+}
+
 # parse_kernel_pin_manifest validates the small source-owned pin committed at an
 # exact TUI release tag. The released file has exactly these three keys: keeping
 # the parser strict prevents an accidental "latest" or provider-specific shape
 # from selecting a kernel outside the TUI release's explicit contract.
 parse_kernel_pin_manifest() {
   local body="$1"
-  BODY="$body" python3 - <<'PY'
+  run_manifest_python "$body" - <<'PY'
 import json
 import os
 import re
@@ -586,7 +606,7 @@ fetch_bundle_manifest() {
 # canonical digest for this host's one exact archive.
 parse_bundle_manifest() {
   local body="$1" expected_tag="$2"
-  BODY="$body" python3 - "$expected_tag" "$(detect_os)" "$(detect_arch)" <<'PY'
+  run_manifest_python "$body" - "$expected_tag" "$(detect_os)" "$(detect_arch)" <<'PY'
 import datetime, json, os, re, sys
 expected_tag, os_name, arch = sys.argv[1:]
 def pairs(items):
@@ -1563,7 +1583,7 @@ select_kernel_wheel() {
     # Manifest is passed by FILE PATH (not stdin) so this command can't
     # collide with a heredoc's stdin takeover.
     local hit
-    hit="$(python3 - "$manifest_file" "$combo" <<'PY'
+    hit="$("$py" - "$manifest_file" "$combo" <<'PY'
 import json, sys
 data = json.loads(open(sys.argv[1]).read())
 combo = sys.argv[2]
@@ -1586,10 +1606,10 @@ PY
 # kernel_sdist_fallback echoes "<filename> <sha256>" for the manifest's
 # declared sdist_fallback artifact.
 kernel_sdist_fallback() {
-  local manifest_json="$1" manifest_file
+  local manifest_json="$1" py="$2" manifest_file
   manifest_file="$(mktemp "${TMPDIR:-/tmp}/lingtai-kernel-manifest.XXXXXX")"
   printf '%s' "$manifest_json" > "$manifest_file"
-  python3 - "$manifest_file" <<'PY'
+  "$py" - "$manifest_file" <<'PY'
 import json, sys
 data = json.loads(open(sys.argv[1]).read())
 name = data.get("sdist_fallback", "")
@@ -1650,7 +1670,7 @@ install_kernel_from_bundle() {
   artifact_line="$(select_kernel_wheel "$kernel_manifest" "$py" || true)"
   if [[ -z "$artifact_line" ]]; then
     note "No platform wheel in kernel release $kernel_tag matches this Python; using the sdist fallback (extra build toolchain may be required)."
-    artifact_line="$(kernel_sdist_fallback "$kernel_manifest" || true)"
+    artifact_line="$(kernel_sdist_fallback "$kernel_manifest" "$py" || true)"
   fi
   [[ -n "$artifact_line" ]] || return 1
   fname="${artifact_line%% *}"
