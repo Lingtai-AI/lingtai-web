@@ -60,6 +60,54 @@ if grep -q 'latest' "$url_log"; then
   fail "pin fallback re-resolved latest instead of reusing the exact TUI tag"
 fi
 
+# The kernel manifest fallback must retry after a primary provider advertises a
+# URL whose download fails, then retain the exact requested kernel tag.
+valid_kernel_manifest='{"schema":"lingtai.kernel.release/v1","kernel_version":"0.17.1","kernel_tag":"v0.17.1","commit":"0123456789012345678901234567890123456789","generated_at":"2026-07-17T00:00:00Z","artifacts":[{"filename":"lingtai-0.17.1.tar.gz","sha256":"0000000000000000000000000000000000000000000000000000000000000000","kind":"sdist","python_tag":null,"abi_tag":null,"platform_tag":null}],"sdist_fallback":"lingtai-0.17.1.tar.gz"}'
+invalid_kernel_manifest='{"schema":"not-a-kernel-release"}'
+manifest_provider_log="$tmp/manifest-providers"
+manifest_url_log="$tmp/manifest-urls"
+manifest_case="download-failure"
+kernel_manifest_url_for_provider() {
+  local provider="$1" tag="$2"
+  printf '%s %s\n' "$provider" "$tag" >> "$manifest_provider_log"
+  case "${manifest_case}:${provider}" in
+    download-failure:gitee) printf '%s\n' "https://fixtures.invalid/gitee-kernel-manifest-download-failure" ;;
+    validation-failure:gitee) printf '%s\n' "https://fixtures.invalid/gitee-kernel-manifest-invalid" ;;
+    download-failure:github|validation-failure:github) printf '%s\n' "https://fixtures.invalid/github-kernel-manifest-valid" ;;
+    *) return 1 ;;
+  esac
+}
+curl() {
+  local url="${*: -1}"
+  printf '%s\n' "$url" >> "$manifest_url_log"
+  case "$url" in
+    https://fixtures.invalid/gitee-kernel-manifest-download-failure) return 22 ;;
+    https://fixtures.invalid/gitee-kernel-manifest-invalid) printf '%s' "$invalid_kernel_manifest" ;;
+    https://fixtures.invalid/github-kernel-manifest-valid) printf '%s' "$valid_kernel_manifest" ;;
+    *) fail "unexpected kernel manifest URL: $url" ;;
+  esac
+}
+BUNDLE_PROVIDER="gitee"
+fetch_kernel_manifest "$KERNEL_PIN_TAG" || fail "manifest download failure should retry the other provider"
+assert_eq "github" "$KERNEL_MANIFEST_PROVIDER" "download-failure manifest provider"
+assert_eq "$valid_kernel_manifest" "$KERNEL_MANIFEST_JSON" "download-failure manifest body"
+expected_manifest_attempts="$(printf 'gitee %s\ngithub %s\n' "$KERNEL_PIN_TAG" "$KERNEL_PIN_TAG")"
+assert_eq "$expected_manifest_attempts" "$(cat "$manifest_provider_log")" "download-failure provider attempts"
+expected_manifest_urls="$(printf '%s\n%s\n' "https://fixtures.invalid/gitee-kernel-manifest-download-failure" "https://fixtures.invalid/github-kernel-manifest-valid")"
+assert_eq "$expected_manifest_urls" "$(cat "$manifest_url_log")" "download-failure URL attempts"
+
+# The same loop must also retry when the primary provider returns a body that
+# fails strict validation; the winning provider still serves the same tag.
+manifest_case="validation-failure"
+: > "$manifest_provider_log"
+: > "$manifest_url_log"
+fetch_kernel_manifest "$KERNEL_PIN_TAG" || fail "strict validation failure should retry the other provider"
+assert_eq "github" "$KERNEL_MANIFEST_PROVIDER" "validation-failure manifest provider"
+assert_eq "$valid_kernel_manifest" "$KERNEL_MANIFEST_JSON" "validation-failure manifest body"
+assert_eq "$expected_manifest_attempts" "$(cat "$manifest_provider_log")" "validation-failure provider attempts"
+expected_manifest_urls="$(printf '%s\n%s\n' "https://fixtures.invalid/gitee-kernel-manifest-invalid" "https://fixtures.invalid/github-kernel-manifest-valid")"
+assert_eq "$expected_manifest_urls" "$(cat "$manifest_url_log")" "validation-failure URL attempts"
+
 # The verified bundle remains first priority whenever it exists.
 BUNDLE_MANIFEST_JSON="present"
 BUNDLE_MANIFEST_KERNEL_TAG="v0.16.0"

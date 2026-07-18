@@ -1340,40 +1340,44 @@ kernel_manifest_url_for_provider() {
 # Populates KERNEL_MANIFEST_JSON and KERNEL_MANIFEST_PROVIDER in this shell;
 # returns nonzero if unavailable on either provider.
 fetch_kernel_manifest() {
-  local kernel_tag="$1" provider="$BUNDLE_PROVIDER" url body other
+  local kernel_tag="$1" provider="$BUNDLE_PROVIDER" url body other candidate
   local validator="${2:-$(command -v python3 || true)}" manifest_file
   KERNEL_MANIFEST_PROVIDER=""
   KERNEL_MANIFEST_JSON=""
 
-  url="$(kernel_manifest_url_for_provider "$provider" "$kernel_tag" || true)"
-  if [[ -z "$url" ]]; then
-    other="github"
-    [[ "$provider" == "github" ]] && other="gitee"
-    # Keep fallback diagnostics on stderr; stdout remains reserved for normal
-    # installer output while the manifest is returned through explicit state.
-    echo "    $provider has no kernel manifest for $kernel_tag; trying $other for the SAME kernel tag." >&2
-    url="$(kernel_manifest_url_for_provider "$other" "$kernel_tag" || true)"
-    [[ -n "$url" ]] || return 1
-    provider="$other"
-  fi
+  other="github"
+  [[ "$provider" == "github" ]] && other="gitee"
+  for candidate in "$provider" "$other"; do
+    url="$(kernel_manifest_url_for_provider "$candidate" "$kernel_tag" || true)"
+    if [[ -z "$url" ]]; then
+      if [[ "$candidate" == "$provider" ]]; then
+        # Keep fallback diagnostics on stderr; stdout remains reserved for normal
+        # installer output while the manifest is returned through explicit state.
+        echo "    $provider has no kernel manifest for $kernel_tag; trying $other for the SAME kernel tag." >&2
+      fi
+      continue
+    fi
 
-  body="$(curl -fsSL --max-time 30 "$url" 2>/dev/null || true)"
-  [[ -n "$body" ]] || return 1
-  if [[ -z "$validator" ]]; then
-    echo "error: Python is required to validate the kernel release manifest at $url" >&2
-    return 1
-  fi
-  manifest_file="$(mktemp "${TMPDIR:-/tmp}/lingtai-kernel-manifest-validate.XXXXXX")"
-  printf '%s' "$body" > "$manifest_file"
-  if ! update_validate_manifest "$validator" "$manifest_file" "$kernel_tag" >/dev/null 2>&1; then
+    body="$(curl -fsSL --max-time 30 "$url" 2>/dev/null || true)"
+    [[ -n "$body" ]] || continue
+    if [[ -z "$validator" ]]; then
+      echo "error: Python is required to validate the kernel release manifest at $url" >&2
+      continue
+    fi
+    manifest_file="$(mktemp "${TMPDIR:-/tmp}/lingtai-kernel-manifest-validate.XXXXXX")"
+    printf '%s' "$body" > "$manifest_file"
+    if ! update_validate_manifest "$validator" "$manifest_file" "$kernel_tag" >/dev/null 2>&1; then
+      rm -f "$manifest_file"
+      echo "error: kernel manifest at $url failed strict validation" >&2
+      continue
+    fi
     rm -f "$manifest_file"
-    echo "error: kernel manifest at $url failed strict validation" >&2
-    return 1
-  fi
-  rm -f "$manifest_file"
 
-  KERNEL_MANIFEST_PROVIDER="$provider"
-  KERNEL_MANIFEST_JSON="$body"
+    KERNEL_MANIFEST_PROVIDER="$candidate"
+    KERNEL_MANIFEST_JSON="$body"
+    return 0
+  done
+  return 1
 }
 
 # python_platform_tags asks the venv's own Python for compatible wheel tags,
