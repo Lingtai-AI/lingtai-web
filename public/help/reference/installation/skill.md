@@ -5,6 +5,14 @@ description: Route ordinary installation and explicit installation maintenance a
 
 # LingTai installation
 
+## Normative contract
+
+Read [CONTRACT.md](https://lingtai.ai/help/reference/installation/CONTRACT.md)
+before choosing an entrypoint. It fixes the state classes, ownership,
+provenance, allowed writes, postconditions, and partial-failure meaning for this
+surface. If the contract, this guidance, an executable, or its tests disagree,
+stop and report the drift instead of inferring a more permissive operation.
+
 ## Ordinary install
 
 `https://lingtai.ai/install.sh` is the canonical ordinary official-install happy

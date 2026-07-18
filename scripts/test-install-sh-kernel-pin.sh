@@ -13,6 +13,7 @@ expect_fail() { "$@" >/dev/null 2>&1 && fail "command unexpectedly succeeded: $*
 root="$ROOT_DIR/public"
 main="$root/install.sh"
 installation="$root/help/reference/installation"
+contract="$installation/CONTRACT.md"
 asset_dir="$installation/assets"
 update="$asset_dir/update.sh"
 dev="$asset_dir/dev.sh"
@@ -20,7 +21,7 @@ fix="$asset_dir/fix.sh"
 verify="$asset_dir/verify.sh"
 [[ -f "$main" ]] || fail "missing canonical install.sh"
 [[ "$(wc -l < "$main" | tr -d ' ')" -le 2400 ]] || fail "canonical install.sh exceeds the 2400-line target"
-for file in "$main" "$root/skill.md" "$root/help/skill.md" "$root/help/reference/migration/skill.md" "$installation/skill.md" "$update" "$dev" "$fix" "$verify"; do
+for file in "$main" "$root/skill.md" "$root/help/skill.md" "$root/help/reference/migration/skill.md" "$installation/skill.md" "$contract" "$update" "$dev" "$fix" "$verify"; do
   [[ -f "$file" ]] || fail "missing public surface file: $file"
   [[ "$(head -1 "$file")" == "#!"* || "$(head -1 "$file")" == "---" ]] || fail "file lacks shell/frontmatter entry: $file"
 done
@@ -30,6 +31,16 @@ contains "$root/help/skill.md" 'help/reference/installation/skill.md'
 contains "$root/help/skill.md" 'help/reference/migration/skill.md'
 contains "$installation/skill.md" 'assets/update.sh'
 contains "$installation/skill.md" 'does **not** download, source, or execute'
+contains "$installation/skill.md" 'https://lingtai.ai/help/reference/installation/CONTRACT.md'
+[[ "$(wc -l < "$contract" | tr -d ' ')" -le 320 ]] || fail "installation contract exceeds 320 lines"
+contains "$contract" '## 3. State-to-entry decision table'
+contains "$contract" '### 4.1 `/install.sh` — fresh ordinary install'
+contains "$contract" '### 4.2 `assets/update.sh` — healthy exact ordinary update'
+contains "$contract" '### 4.3 `assets/fix.sh` — bounded ordinary runtime repair'
+contains "$contract" '### 4.4 `assets/verify.sh` — read-only receipt proof'
+contains "$contract" '### 4.5 `assets/dev.sh` — explicit editable development state'
+contains "$contract" 'A nonzero exit is not rollback.'
+contains "$contract" '## 6. Change-control lock'
 contains "$root/_headers" '/skill.md'
 contains "$root/_headers" '/help/reference/installation/assets/*.sh'
 contains "$root/_headers" 'text/markdown'
