@@ -184,4 +184,125 @@ assert p["tui_release_tag"] == sys.argv[2], p
 assert "kernel_bundle_id" not in p, p
 PY
 
+# One-shot repair regression matrix: discovery must adopt one safe existing
+# installation, reject ambiguous PATH state, and expose stale/broken runtime
+# state to the same production health checks used by install.sh.
+saved_home="$HOME"
+saved_path="$PATH"
+python3_path="$(command -v python3)"
+repair_home="$tmp/repair-home"
+repair_bin="$repair_home/.local/bin"
+python_tool_dir="$repair_home/tools"
+mkdir -p "$repair_bin" "$python_tool_dir" "$repair_home/.lingtai-tui/runtime"
+ln -s "$python3_path" "$python_tool_dir/python3"
+cat > "$repair_bin/lingtai-tui" <<'EOF'
+#!/usr/bin/env bash
+if [[ "${1:-}" == version ]]; then
+  printf '%s\n' 'lingtai-tui v0.10.0'
+else
+  exit 1
+fi
+EOF
+chmod +x "$repair_bin/lingtai-tui"
+cat > "$repair_home/.lingtai-tui/install.json" <<EOF
+{
+  "schema": "lingtai.tui.install/v1",
+  "schema_version": 1,
+  "install_method": "source",
+  "install_kind": "source-build",
+  "prefix": "$repair_home",
+  "bin_dir": "$repair_bin",
+  "repo_url": "https://github.com/Lingtai-AI/lingtai.git",
+  "requested_ref": "v0.9.0",
+  "resolved_ref": "v0.9.0",
+  "resolved_commit": "",
+  "stamped_version": "v0.9.0",
+  "installed_at": "2026-07-17T00:00:00Z",
+  "managed_binaries": ["$repair_bin/lingtai-tui"]
+}
+EOF
+export HOME="$repair_home"
+export PATH="$repair_bin:$python_tool_dir:/usr/bin:/bin"
+unset LINGTAI_INSTALL_METADATA || true
+discover_existing_install || fail "stale metadata and older TUI should be discoverable"
+repair_bin_canonical="$(cd "$repair_bin" && pwd -P)"
+assert_eq "$repair_bin_canonical" "$DISCOVERED_BIN_DIR" "existing install bin discovery"
+assert_eq "v0.10.0" "$DISCOVERED_CURRENT_TUI_TAG" "existing older TUI probe"
+assert_eq "v0.9.0" "$DISCOVERED_METADATA_VERSION" "stale metadata version capture"
+assert_eq "$repair_home/.lingtai-tui/runtime/venv" "$RUNTIME_VENV_DIR" "default runtime ownership"
+
+# Existing installs must see the diagnosis and plan before mutation. Explicit
+# non-interactive mode prints the same plan and is the only automation consent;
+# a non-TTY default invocation fails closed instead of silently healing.
+TARGET_TAG="v0.10.0"
+NON_INTERACTIVE=1
+print_install_plan || fail "non-interactive repair plan should be accepted"
+assert_eq "1" "$INSTALL_PLAN_APPROVED" "non-interactive repair-plan consent"
+NON_INTERACTIVE=0
+if print_install_plan >"$tmp/interactive-plan.stdout" 2>"$tmp/interactive-plan.stderr"; then
+  fail "non-TTY repair plan silently proceeded without consent"
+fi
+grep -q "requires interactive confirmation" "$tmp/interactive-plan.stderr" || fail "repair consent failure was not actionable"
+NON_INTERACTIVE=1
+
+# Metadata repair records the selected runtime path instead of claiming only a
+# binary repair. This uses the production writer, not a test-only serializer.
+RUNTIME_VENV_DIR="$repair_home/.lingtai-tui/runtime/venv-repair"
+SKIP_VENV=0
+write_install_metadata "$tmp/repaired-meta" "$repair_home" "$repair_bin" "$REPO" "v0.10.0" "v0.10.0" "" "v0.10.0" "$repair_bin/lingtai-tui" ""
+python3 - "$tmp/repaired-meta/install.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["stamped_version"] == "v0.10.0", p
+assert p["runtime_venv"].endswith("/runtime/venv-repair"), p
+PY
+
+# With no metadata, exactly one absolute PATH candidate is adopted. Adding a
+# second executable TUI makes the state ambiguous and must fail loud.
+safe_home="$tmp/safe-home"
+safe_bin="$safe_home/bin"
+other_bin="$safe_home/other-bin"
+mkdir -p "$safe_bin" "$other_bin"
+cat > "$safe_bin/lingtai-tui" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' 'lingtai-tui v0.11.0'
+EOF
+cat > "$other_bin/lingtai-tui" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' 'lingtai-tui v0.12.0'
+EOF
+chmod +x "$safe_bin/lingtai-tui" "$other_bin/lingtai-tui"
+export HOME="$safe_home"
+export PATH="$safe_bin:$python_tool_dir:/usr/bin:/bin"
+discover_existing_install || fail "one safe PATH installation should be adopted"
+safe_bin_canonical="$(cd "$safe_bin" && pwd -P)"
+assert_eq "$safe_bin_canonical" "$DISCOVERED_BIN_DIR" "single PATH install discovery"
+export PATH="$safe_bin:$other_bin:$(dirname "$python3_path"):/usr/bin:/bin"
+if discover_existing_install >"$tmp/ambiguous.stdout" 2>"$tmp/ambiguous.stderr"; then
+  fail "ambiguous PATH installations were silently selected"
+fi
+grep -q "multiple installed lingtai-tui binaries" "$tmp/ambiguous.stderr" || fail "ambiguous discovery did not explain the hard stop"
+
+# Runtime state and the exact kernel import/version postcondition are exercised
+# in an isolated venv with no package-index or network access.
+assert_eq "missing" "$(runtime_venv_state "$tmp/runtime-missing")" "missing runtime state"
+mkdir "$tmp/runtime-broken"
+assert_eq "broken" "$(runtime_venv_state "$tmp/runtime-broken")" "broken runtime state"
+python3 -m venv "$tmp/runtime-healthy" || fail "test venv creation"
+healthy_py="$tmp/runtime-healthy/bin/python"
+site_packages="$("$healthy_py" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
+mkdir -p "$site_packages/lingtai"
+# Keep the first and repaired source sizes different so Python cannot reuse a
+# same-second timestamp-only pyc while this test intentionally rewrites it.
+printf '%s\n' '__version__ = "0.16"' > "$site_packages/lingtai/__init__.py"
+printf '%s\n' 'value = "kernel"' > "$site_packages/lingtai/kernel.py"
+assert_eq "healthy" "$(runtime_venv_state "$tmp/runtime-healthy")" "healthy runtime state"
+if runtime_health_check "$healthy_py" "0.17.1" >/dev/null 2>&1; then
+  fail "wrong kernel runtime version passed the health check"
+fi
+printf '%s\n' '__version__ = "0.17.1"' > "$site_packages/lingtai/__init__.py"
+runtime_health_check "$healthy_py" "0.17.1" >/dev/null || fail "exact kernel runtime health check failed"
+
+export HOME="$saved_home"
+export PATH="$saved_path"
 printf '%s\n' "test-install-sh-kernel-pin: PASS"

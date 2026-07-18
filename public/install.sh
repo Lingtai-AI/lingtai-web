@@ -151,6 +151,21 @@ BUNDLE_MANIFEST_KERNEL_VERSION=""
 BUNDLE_MANIFEST_KERNEL_FILENAME=""
 BUNDLE_MANIFEST_BUNDLE_ID=""
 
+# Existing-install discovery state. These values are populated before the
+# install path chooses a destination. Discovery is deliberately conservative:
+# explicit --prefix/--bin-dir wins, one unambiguous PATH/metadata installation is
+# adopted, and conflicting installations fail instead of being guessed.
+DISCOVERED_BIN_DIR=""
+DISCOVERED_CURRENT_TUI_TAG=""
+DISCOVERED_METADATA_VERSION=""
+DISCOVERED_METADATA_INSTALL_KIND=""
+DISCOVERED_METADATA_PRESENT=0
+DISCOVERED_RUNTIME_VENV=""
+RUNTIME_VENV_DIR=""
+INSTALL_PLAN_APPROVED=0
+PLAN_BEFORE_TUI=""
+PLAN_BEFORE_RUNTIME=""
+
 usage() {
   cat <<'EOF'
 LingTai single-file installer: install the official paired TUI/Portal release and Python runtime.
@@ -797,6 +812,289 @@ verify_tui_binary_version() {
   esac
 }
 
+# tui_binary_tag performs the real installed-binary probe used by existing
+# install discovery. A metadata version is only a hint: the executable's own
+# version is the source of truth for the current TUI.
+tui_binary_tag() {
+  local binary="$1" output tag
+  [[ -x "$binary" ]] || return 1
+  output="$("$binary" version 2>/dev/null || true)"
+  tag="$(printf '%s' "$output" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+  [[ -n "$tag" ]] || return 1
+  printf '%s\n' "$tag"
+}
+
+# metadata_field reads one installer-owned string field without trusting a
+# malformed JSON document. validate_install_metadata_file is called first by
+# discovery, so this helper intentionally returns empty for missing/non-string
+# fields and never guesses a value.
+metadata_field() {
+  local metadata_path="$1" field="$2"
+  python3 - "$metadata_path" "$field" <<'PY'
+import json
+import sys
+
+path, field = sys.argv[1:]
+try:
+    with open(path, encoding="utf-8") as stream:
+        data = json.load(stream)
+except Exception:
+    raise SystemExit(1)
+value = data.get(field, "") if isinstance(data, dict) else ""
+if isinstance(value, str):
+    print(value)
+PY
+}
+
+validate_install_metadata_file() {
+  local metadata_path="$1"
+  python3 - "$metadata_path" <<'PY'
+import json
+import sys
+
+def pairs(items):
+    result = {}
+    for key, value in items:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    data = json.load(stream, object_pairs_hook=pairs)
+if not isinstance(data, dict):
+    raise ValueError("install metadata must be a JSON object")
+PY
+}
+
+# canonical_existing_dir resolves a directory without following an untrusted
+# binary symlink. It also permits a metadata-declared, not-yet-created final
+# directory when its parent already exists; that is the narrow repair case.
+canonical_existing_dir() {
+  local dir="$1" parent base
+  [[ "$dir" == /* && "$dir" != *$'\n'* && "$dir" != *$'\t'* ]] || return 1
+  [[ "$dir" != */../* && "$dir" != */.. && "$dir" != *'/./'* && "$dir" != */. ]] || return 1
+  if [[ -d "$dir" ]]; then
+    (cd "$dir" && pwd -P)
+    return
+  fi
+  parent="$(dirname "$dir")"
+  base="$(basename "$dir")"
+  [[ "$base" != "." && "$base" != ".." && -d "$parent" ]] || return 1
+  printf '%s/%s\n' "$(cd "$parent" && pwd -P)" "$base"
+}
+
+# discover_existing_install adopts exactly one safe existing installation. It
+# checks metadata, every absolute PATH entry, and the conventional user/system
+# bin locations. Two distinct executable TUI installations are an unsafe
+# ambiguity and stop the install; a stale but structurally valid metadata file
+# is repaired later rather than used as a version oracle.
+discover_existing_install() {
+  local metadata_path="${LINGTAI_INSTALL_METADATA:-$HOME/.lingtai-tui/install.json}"
+  local metadata_bin="" metadata_runtime="" metadata_version="" metadata_kind=""
+  local metadata_target="" candidate_dir="" candidate_tag="" path_entry
+  local -a path_entries=() candidate_dirs=() candidate_tags=()
+  local old_ifs="${IFS:- }"
+
+  DISCOVERED_BIN_DIR=""
+  DISCOVERED_CURRENT_TUI_TAG=""
+  DISCOVERED_METADATA_VERSION=""
+  DISCOVERED_METADATA_INSTALL_KIND=""
+  DISCOVERED_METADATA_PRESENT=0
+  DISCOVERED_RUNTIME_VENV=""
+
+  if [[ -e "$metadata_path" ]]; then
+    DISCOVERED_METADATA_PRESENT=1
+    [[ -f "$metadata_path" && -r "$metadata_path" ]] || {
+      echo "error: existing install metadata is not a readable regular file: $metadata_path" >&2
+      return 1
+    }
+    if ! validate_install_metadata_file "$metadata_path" >/dev/null 2>&1; then
+      echo "error: existing install metadata is malformed or unsafe: $metadata_path" >&2
+      echo "       Refusing to overwrite it; repair the JSON or pass --prefix/--bin-dir explicitly." >&2
+      return 1
+    fi
+    metadata_bin="$(metadata_field "$metadata_path" bin_dir || true)"
+    metadata_runtime="$(metadata_field "$metadata_path" runtime_venv || true)"
+    metadata_version="$(metadata_field "$metadata_path" stamped_version || true)"
+    metadata_kind="$(metadata_field "$metadata_path" install_kind || true)"
+    if [[ -n "$metadata_bin" ]]; then
+      metadata_target="$(canonical_existing_dir "$metadata_bin" || true)"
+      [[ -n "$metadata_target" ]] || {
+        echo "error: existing install metadata names an unsafe binary directory: $metadata_bin" >&2
+        echo "       Retry with an explicit --prefix or --bin-dir." >&2
+        return 1
+      }
+    fi
+    if [[ -n "$metadata_runtime" ]]; then
+      local runtime_root="$HOME/.lingtai-tui/runtime"
+      if [[ "$metadata_runtime" != /* || "$metadata_runtime" == *$'\n'* || "$metadata_runtime" == *$'\t'* || "$metadata_runtime" == */../* || "$metadata_runtime" != "$runtime_root"/* ]]; then
+        echo "error: existing install metadata names an unsafe runtime venv: $metadata_runtime" >&2
+        echo "       Refusing to guess which runtime state is owned; repair metadata or pass --prefix/--bin-dir." >&2
+        return 1
+      fi
+      DISCOVERED_RUNTIME_VENV="${metadata_runtime%/}"
+    fi
+    DISCOVERED_METADATA_VERSION="$metadata_version"
+    DISCOVERED_METADATA_INSTALL_KIND="$metadata_kind"
+  fi
+
+  add_candidate() {
+    local dir="$1" canonical tag existing
+    canonical="$(canonical_existing_dir "$dir" || true)"
+    [[ -n "$canonical" && -x "$canonical/lingtai-tui" ]] || return 0
+    tag="$(tui_binary_tag "$canonical/lingtai-tui" || true)"
+    [[ -n "$tag" ]] || return 0
+    for existing in "${candidate_dirs[@]:-}"; do
+      [[ "$existing" == "$canonical" ]] && return 0
+    done
+    candidate_dirs+=("$canonical")
+    candidate_tags+=("$tag")
+  }
+
+  if [[ -n "$metadata_target" ]]; then
+    add_candidate "$metadata_target"
+  fi
+  IFS=: read -r -a path_entries <<< "${PATH:-}"
+  IFS="$old_ifs"
+  for path_entry in "${path_entries[@]:-}"; do
+    [[ -n "$path_entry" ]] || path_entry="."
+    [[ "$path_entry" == /* ]] || continue
+    add_candidate "$path_entry"
+  done
+  add_candidate "$HOME/.local/bin"
+  add_candidate "/usr/local/bin"
+
+  if [[ "${#candidate_dirs[@]}" -gt 1 ]]; then
+    echo "error: multiple installed lingtai-tui binaries were discovered; refusing to guess:" >&2
+    local index
+    for index in "${!candidate_dirs[@]}"; do
+      echo "       ${candidate_dirs[$index]} (${candidate_tags[$index]})" >&2
+    done
+    echo "       Retry with an explicit --prefix or --bin-dir." >&2
+    return 1
+  fi
+  if [[ "${#candidate_dirs[@]}" == "1" ]]; then
+    if [[ -n "$metadata_target" && "${candidate_dirs[0]}" != "$metadata_target" ]]; then
+      echo "error: install metadata and PATH identify different lingtai-tui directories; refusing to guess." >&2
+      echo "       metadata: $metadata_target" >&2
+      echo "       PATH:     ${candidate_dirs[0]}" >&2
+      echo "       Retry with an explicit --prefix or --bin-dir." >&2
+      return 1
+    fi
+    DISCOVERED_BIN_DIR="${candidate_dirs[0]}"
+    DISCOVERED_CURRENT_TUI_TAG="${candidate_tags[0]}"
+  elif [[ -n "$metadata_target" ]]; then
+    DISCOVERED_BIN_DIR="$metadata_target"
+  fi
+
+  if [[ -n "$DISCOVERED_METADATA_VERSION" && -n "$DISCOVERED_CURRENT_TUI_TAG" && "$DISCOVERED_METADATA_VERSION" != "$DISCOVERED_CURRENT_TUI_TAG" ]]; then
+    note "Existing install metadata is stale ($DISCOVERED_METADATA_VERSION; binary is $DISCOVERED_CURRENT_TUI_TAG); it will be rewritten after repair."
+  fi
+  if [[ -n "$DISCOVERED_METADATA_INSTALL_KIND" ]]; then
+    note "Existing install method: $DISCOVERED_METADATA_INSTALL_KIND."
+  fi
+  RUNTIME_VENV_DIR="${DISCOVERED_RUNTIME_VENV:-$HOME/.lingtai-tui/runtime/venv}"
+}
+
+runtime_current_summary() {
+  local venv_dir="$1" state py probe
+  state="$(runtime_venv_state "$venv_dir")"
+  py="$(runtime_python_for_venv "$venv_dir")"
+  if [[ -z "$py" ]]; then
+    printf '%s\n' "$state (runtime interpreter missing)"
+    return 0
+  fi
+  probe="$(PYTHONPATH= "$py" - <<'PY' 2>/dev/null || true
+import importlib
+try:
+    package = importlib.import_module("lingtai")
+    kernel = importlib.import_module("lingtai.kernel")
+    print(f"lingtai {getattr(package, '__version__', '?')}; kernel module {getattr(kernel, '__file__', '?')}")
+except Exception:
+    pass
+PY
+  )"
+  if [[ -n "$probe" ]]; then
+    printf '%s; %s\n' "$state" "$probe"
+  else
+    printf '%s (lingtai/lingtai.kernel import unavailable)\n' "$state"
+  fi
+}
+
+plan_bin_dir() {
+  if [[ -n "$BIN_DIR_OVERRIDE" ]]; then
+    printf '%s\n' "$BIN_DIR_OVERRIDE"
+  elif [[ -n "$INSTALL_PREFIX" ]]; then
+    bin_dir_for_prefix "$INSTALL_PREFIX"
+  elif [[ -n "${DISCOVERED_BIN_DIR:-}" ]]; then
+    printf '%s\n' "$DISCOVERED_BIN_DIR"
+  elif [[ -w /usr/local/bin ]]; then
+    printf '%s\n' /usr/local/bin
+  else
+    printf '%s\n' "$HOME/.local/bin"
+  fi
+}
+
+# print_install_plan is intentionally called after read-only target resolution
+# but before resolve_bin_dir/build/install. Existing installs get a diagnosis,
+# exact target/pin, ownership boundary, and an explicit consent gate. A fresh
+# install has no repair mutation and keeps the historical non-prompting flow.
+print_install_plan() {
+  local target_tui target_kernel_tag target_kernel_version target_source target_bin
+  local current_tui current_metadata current_runtime
+  [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]] || return 0
+
+  target_bin="$(plan_bin_dir)"
+  target_tui="${TARGET_TAG:-${VERSION:-${REF:-dev}}}"
+  current_tui="${DISCOVERED_CURRENT_TUI_TAG:-not found}"
+  current_metadata="${DISCOVERED_METADATA_VERSION:-not found}"
+  current_runtime="$(runtime_current_summary "$RUNTIME_VENV_DIR")"
+  target_kernel_tag="$(kernel_tag_for_install || true)"
+  target_source="$(kernel_source_for_install || true)"
+  if [[ -n "${KERNEL_VERSION_INSTALLED:-}" ]]; then
+    target_kernel_version="$KERNEL_VERSION_INSTALLED"
+  elif [[ "$target_source" == "bundle" ]]; then
+    target_kernel_version="${BUNDLE_MANIFEST_KERNEL_VERSION:-unknown}"
+  elif [[ -n "$target_kernel_tag" ]]; then
+    target_kernel_version="resolved from verified release manifest for $target_kernel_tag"
+  else
+    target_kernel_version="not pinned (explicit source/dev path)"
+  fi
+
+  PLAN_BEFORE_TUI="$current_tui"
+  PLAN_BEFORE_RUNTIME="$current_runtime"
+  say "Existing LingTai installation diagnosed; proposed one-shot repair plan:"
+  printf '    Current TUI:     %s\n' "$current_tui"
+  printf '    Metadata TUI:    %s (%s)\n' "$current_metadata" "${DISCOVERED_METADATA_INSTALL_KIND:-install kind unknown}"
+  printf '    Current runtime: %s\n' "$current_runtime"
+  printf '    Target TUI:      %s\n' "$target_tui"
+  printf '    Target kernel:   %s (%s)\n' "${target_kernel_tag:-none}" "${target_kernel_version:-unknown}"
+  printf '    Target binary:   %s\n' "$target_bin"
+  printf '    Changes:         replace/repair the selected TUI binary, exact pinned runtime, and install metadata.\n'
+  printf '    Preserved:        projects, presets, MCP/addon configs, secrets, recipes, channel state, and all other user-owned state.\n'
+  if [[ "$SKIP_VENV" == "1" ]]; then
+    printf '    Runtime action:   --skip-python explicitly opts out; runtime state is not claimed repaired.\n'
+  fi
+
+  if [[ "$NON_INTERACTIVE" == "1" ]]; then
+    note "--non-interactive supplies consent for this printed repair plan."
+  else
+    if [[ ! -t 0 ]]; then
+      echo "error: existing installation repair requires interactive confirmation; use --non-interactive only after reviewing the plan." >&2
+      return 1
+    fi
+    printf '    Proceed with this repair? [y/N] '
+    local answer
+    IFS= read -r answer || answer=""
+    case "${answer,,}" in
+      y|yes) ;;
+      *) echo "Repair cancelled; no installation state was changed." >&2; return 1 ;;
+    esac
+  fi
+  INSTALL_PLAN_APPROVED=1
+}
+
 ensure_lingtai_alias() {
   local bin_dir="$1"
   if [[ ! -e "$bin_dir/lingtai" ]] || [[ -L "$bin_dir/lingtai" && "$(readlink "$bin_dir/lingtai")" == "$bin_dir/lingtai-tui" ]]; then
@@ -927,7 +1225,10 @@ write_install_metadata() {
   # rather than added as more positional params — this function already has 10.
   # The block is omitted entirely when KERNEL_SOURCE is empty (for example
   # --skip-python), preserving the old metadata shape for that explicit opt-out.
-  local bundle_json=""
+  local bundle_json="" runtime_json=""
+  if [[ -n "${RUNTIME_VENV_DIR:-}" && "$SKIP_VENV" != "1" ]]; then
+    runtime_json="$(printf ',\n  "runtime_venv": "%s"' "$(json_escape "${RUNTIME_VENV_DIR%/}")")"
+  fi
   if [[ "$KERNEL_SOURCE" == "bundle" ]]; then
     bundle_json="$(printf ',\n  "kernel_source": "bundle",\n  "kernel_bundle_id": "%s",\n  "kernel_version": "%s",\n  "kernel_provider": "%s"' \
       "$(json_escape "$KERNEL_BUNDLE_ID")" "$(json_escape "$KERNEL_VERSION_INSTALLED")" "$(json_escape "$KERNEL_PROVIDER")")"
@@ -968,7 +1269,7 @@ write_install_metadata() {
   "installed_at": "$(json_escape "$installed_at")",
   "managed_binaries": [
     "$(json_escape "$tui_path")"$portal_json
-  ]$bundle_json
+  ]$bundle_json$runtime_json
 }
 EOF
   mv "$tmp_path" "$metadata_path"
@@ -1124,13 +1425,77 @@ ensure_python() {
 # On the default release-asset one-command path (BUNDLE_REQUIRED=1), a
 # resolved bundle or exact release pin plus a successful kernel-artifact
 # install are MANDATORY. --ref/source-ref builds have no exact release pin and
-# fail loud unless --skip-python is explicit. Venv creation/repair problems
-# below remain best-effort because they are transient environment issues, not
-# a LingTai-source violation.
+# fail loud unless --skip-python is explicit. A broken existing venv is never
+# deleted: when it cannot be repaired in place without destructive cleanup, a
+# new stable repair path is selected and recorded in install metadata.
+
+runtime_python_for_venv() {
+  local venv_dir="$1"
+  if [[ -x "$venv_dir/bin/python" ]]; then
+    printf '%s\n' "$venv_dir/bin/python"
+  elif [[ -x "$venv_dir/bin/python3" ]]; then
+    printf '%s\n' "$venv_dir/bin/python3"
+  fi
+}
+
+runtime_venv_state() {
+  local venv_dir="$1" py
+  [[ -d "$venv_dir" ]] || { printf '%s\n' missing; return 0; }
+  py="$(runtime_python_for_venv "$venv_dir")"
+  [[ -n "$py" ]] || { printf '%s\n' broken; return 0; }
+  "$py" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null || { printf '%s\n' broken; return 0; }
+  "$py" -m pip --version >/dev/null 2>&1 || { printf '%s\n' broken; return 0; }
+  printf '%s\n' healthy
+}
+
+# runtime_repair_path finds a stable unowned path. Existing paths are never
+# removed or reset; a healthy prior repair path is reused so a second installer
+# invocation converges instead of accumulating pid-suffixed environments.
+runtime_repair_path() {
+  local runtime_root="$HOME/.lingtai-tui/runtime" candidate index state
+  mkdir -p "$runtime_root"
+  for index in "" 1 2 3 4 5 6 7 8 9; do
+    candidate="$runtime_root/venv-repair${index:+-$index}"
+    if [[ ! -e "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+    state="$(runtime_venv_state "$candidate")"
+    if [[ "$state" == healthy ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  echo "error: all stable runtime repair paths under $runtime_root are occupied by broken state." >&2
+  return 1
+}
+
+# runtime_health_check is the install postcondition: both the public package
+# and its kernel module must import from the selected interpreter, and the
+# package version must equal the exact manifest/pin version.
+runtime_health_check() {
+  local py="$1" expected="${2:-}" output
+  output="$(PYTHONPATH= "$py" - "$expected" <<'PY'
+import importlib
+import sys
+
+expected = sys.argv[1]
+module = importlib.import_module("lingtai")
+importlib.import_module("lingtai.kernel")
+version = str(getattr(module, "__version__", ""))
+if not version or (expected and version.lstrip("v") != expected.lstrip("v")):
+    raise SystemExit(1)
+print(f"{version}\t{module.__file__}")
+PY
+  )" || return 1
+  [[ "$output" == *$'\t'* ]] || return 1
+  printf '%s\n' "$output"
+}
+
 ensure_runtime_venv() {
   local bin_dir="$1"
-  local venv_dir="$HOME/.lingtai-tui/runtime/venv"
-  local uv py repair_attempt install_kernel_tag
+  local venv_dir="${RUNTIME_VENV_DIR:-$HOME/.lingtai-tui/runtime/venv}"
+  local uv py repair_attempt install_kernel_tag recreate_reason runtime_state
 
   if [[ "$SKIP_VENV" == "1" ]]; then
     note "Skipping Python runtime venv (--skip-python)."
@@ -1165,24 +1530,24 @@ ensure_runtime_venv() {
 
   say "Setting up Python runtime venv at $venv_dir ..."
   if ! ensure_python; then
-    warn "Skipping Python runtime venv — Python prerequisites are missing."
-    warn "Re-run install after installing Python, or the TUI will create the venv on first launch."
-    return 0
+    echo "error: Python 3.11+ with venv/pip support is required to repair the runtime." >&2
+    return 1
   fi
 
   mkdir -p "$(dirname "$venv_dir")"
+  runtime_state="$(runtime_venv_state "$venv_dir")"
+  if [[ "$runtime_state" == broken ]]; then
+    warn "existing runtime venv at $venv_dir is broken; retaining it and provisioning a stable repair path."
+    venv_dir="$(runtime_repair_path)" || return 1
+  fi
+  RUNTIME_VENV_DIR="$venv_dir"
   repair_attempt=0
 
   while true; do
     uv="$(find_uv 2>/dev/null || true)"
-    py=""
-    if [[ -x "$venv_dir/bin/python" ]]; then
-      py="$venv_dir/bin/python"
-    elif [[ -x "$venv_dir/bin/python3" ]]; then
-      py="$venv_dir/bin/python3"
-    fi
+    py="$(runtime_python_for_venv "$venv_dir")"
 
-    local recreate_reason=""
+    recreate_reason=""
     if [[ -d "$venv_dir" && -z "$py" ]]; then
       recreate_reason="runtime venv Python is missing"
     elif [[ -n "$py" ]] && ! "$py" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; then
@@ -1191,11 +1556,12 @@ ensure_runtime_venv() {
 
     if [[ -n "$recreate_reason" ]]; then
       if [[ "$repair_attempt" != "0" ]]; then
-        warn "$recreate_reason after recreate; leaving runtime venv repair to the TUI."
-        return 0
+        echo "error: $recreate_reason after runtime repair attempt; refusing to claim a healthy runtime." >&2
+        return 1
       fi
       warn "$recreate_reason; retaining it and provisioning a new runtime venv path."
-      venv_dir="$HOME/.lingtai-tui/runtime/venv-repair-$$-1"
+      venv_dir="$(runtime_repair_path)" || return 1
+      RUNTIME_VENV_DIR="$venv_dir"
       repair_attempt=1
       py=""
     fi
@@ -1207,19 +1573,19 @@ ensure_runtime_venv() {
             warn "uv venv failed; falling back to python3 -m venv"
             uv=""
           else
-            warn "uv venv failed and no Python 3.11+ with venv/ensurepip is available; skipping runtime setup."
-            warn "Install uv or Python with venv/ensurepip support, then re-run the installer."
-            return 0
+            echo "error: uv venv failed and no Python 3.11+ with venv/ensurepip is available." >&2
+            echo "       Install uv or Python with venv/ensurepip support, then re-run the installer." >&2
+            return 1
           fi
         fi
       fi
       if [[ ! -x "$venv_dir/bin/python" && ! -x "$venv_dir/bin/python3" && -z "$uv" ]]; then
         if python_ok; then
-          python3 -m venv "$venv_dir" || { warn "failed to create venv"; return 0; }
+          python3 -m venv "$venv_dir" || { echo "error: failed to create runtime venv at $venv_dir." >&2; return 1; }
         else
-          warn "Cannot create runtime venv: uv is unavailable and no Python 3.11+ with venv/ensurepip is available."
-          warn "Install uv or Python with venv/ensurepip support, then re-run the installer."
-          return 0
+          echo "error: cannot create runtime venv: uv is unavailable and no Python 3.11+ with venv/ensurepip is available." >&2
+          echo "       Install uv or Python with venv/ensurepip support, then re-run the installer." >&2
+          return 1
         fi
       fi
       if [[ -x "$venv_dir/bin/python" ]]; then
@@ -1227,8 +1593,8 @@ ensure_runtime_venv() {
       elif [[ -x "$venv_dir/bin/python3" ]]; then
         py="$venv_dir/bin/python3"
       else
-        warn "venv python not found at $venv_dir; skipping runtime setup."
-        return 0
+        echo "error: runtime venv Python not found at $venv_dir after creation." >&2
+        return 1
       fi
       # Re-check Python version after creating/recreating the venv.
       continue
@@ -1237,12 +1603,13 @@ ensure_runtime_venv() {
     if ! "$py" -m pip --version >/dev/null 2>&1 && [[ -z "$uv" ]]; then
       if [[ "$repair_attempt" == "0" ]]; then
         warn "runtime venv pip is missing; retaining it and provisioning a new runtime venv path."
-        venv_dir="$HOME/.lingtai-tui/runtime/venv-repair-$$-1"
+        venv_dir="$(runtime_repair_path)" || return 1
+        RUNTIME_VENV_DIR="$venv_dir"
         repair_attempt=1
         continue
       fi
-      warn "runtime venv pip is missing after recreate; TUI will repair it on first launch."
-      return 0
+      echo "error: runtime venv pip is missing after repair attempt." >&2
+      return 1
     fi
 
     local install_ok=0
@@ -1259,7 +1626,8 @@ ensure_runtime_venv() {
     if [[ "$install_ok" != "1" ]]; then
       if [[ "$repair_attempt" == "0" ]]; then
         warn "failed to install the pinned kernel bundle artifact; retaining the venv and provisioning a new runtime venv path."
-        venv_dir="$HOME/.lingtai-tui/runtime/venv-repair-$$-1"
+        venv_dir="$(runtime_repair_path)" || return 1
+        RUNTIME_VENV_DIR="$venv_dir"
         repair_attempt=1
         continue
       fi
@@ -1271,19 +1639,21 @@ ensure_runtime_venv() {
       return 1
     fi
 
-    if ! "$py" -c 'import lingtai; print("lingtai", getattr(lingtai, "__version__", "?"))'; then
+    if ! runtime_health_check "$py" "$KERNEL_VERSION_INSTALLED"; then
       if [[ "$repair_attempt" == "0" ]]; then
-        warn "runtime venv failed import check; retaining it and provisioning a new runtime venv path."
-        venv_dir="$HOME/.lingtai-tui/runtime/venv-repair-$$-1"
+        warn "runtime venv failed import/version/kernel health check; retaining it and provisioning a new runtime venv path."
+        venv_dir="$(runtime_repair_path)" || return 1
+        RUNTIME_VENV_DIR="$venv_dir"
         repair_attempt=1
         continue
       fi
-      warn "runtime venv is still unhealthy after reinstall; TUI will repair it on first launch."
-      return 0
+      echo "error: runtime venv is still unhealthy after repair attempt." >&2
+      return 1
     fi
     break
   done
 
+  RUNTIME_VENV_DIR="$venv_dir"
   # Stamp the env marker (best-effort — older kernels may lack the subcommand).
   "$py" -m lingtai.venv_resolve env-marker stamp --venv "$venv_dir" >/dev/null 2>&1 || true
 
@@ -2177,6 +2547,7 @@ download_update_wheel() {
 current_tui_tag() {
   local metadata="${LINGTAI_INSTALL_METADATA:-$HOME/.lingtai-tui/install.json}" binary output tag
   if [[ -n "${LINGTAI_CURRENT_TUI_TAG:-}" ]]; then release_tag_name "$LINGTAI_CURRENT_TUI_TAG"; return; fi
+  if [[ -n "${DISCOVERED_CURRENT_TUI_TAG:-}" ]]; then printf '%s\n' "$DISCOVERED_CURRENT_TUI_TAG"; return; fi
   if [[ -r "$metadata" ]]; then
     tag="$(python3 - "$metadata" <<'PY' 2>/dev/null
 import json,sys
@@ -2408,6 +2779,8 @@ resolve_bin_dir() {
     BIN_DIR="$BIN_DIR_OVERRIDE"
   elif [[ -n "$INSTALL_PREFIX" ]]; then
     BIN_DIR="$(bin_dir_for_prefix "$INSTALL_PREFIX")"
+  elif [[ -n "${DISCOVERED_BIN_DIR:-}" ]]; then
+    BIN_DIR="$DISCOVERED_BIN_DIR"
   elif [[ -w /usr/local/bin ]]; then
     BIN_DIR="/usr/local/bin"
   else
@@ -2852,6 +3225,13 @@ if [[ "$MODE" == "update" || "$UPDATE_MODE" == "1" ]]; then
   return $?
 fi
 
+# With no explicit destination, adopt one unambiguous existing installation so
+# a one-shot install repairs that environment instead of creating a second copy.
+# Explicit --prefix/--bin-dir remain authoritative and bypass discovery.
+if [[ -z "$BIN_DIR_OVERRIDE" && -z "$INSTALL_PREFIX" ]]; then
+  discover_existing_install || return 1
+fi
+
 if is_wsl; then
   say "Detected Windows Subsystem for Linux (WSL)."
   note "Binaries and the Python runtime install into your Linux home ($HOME)."
@@ -2859,6 +3239,8 @@ if is_wsl; then
 fi
 
 if [[ "$DEV_MODE" == "1" ]]; then
+  TARGET_TAG="dev"
+  print_install_plan || return 1
   resolve_bin_dir
   run_dev_install
   return $?
@@ -2879,7 +3261,6 @@ if command -v curl &>/dev/null && \
   export NPM_CONFIG_REGISTRY="https://registry.npmmirror.com"
 fi
 
-resolve_bin_dir
 resolve_source_provider
 if [[ "$BUNDLE_PROVIDER" == "gitee" ]]; then
   say "Source: Gitee (${GITEE_OWNER}/${GITEE_REPO}) — override with --source github or LINGTAI_SOURCE=github."
@@ -2909,12 +3290,13 @@ if [[ -z "$REF" ]]; then
   fi
 fi
 
-# Decide what to install (the explicit runtime update returned above).
+# Resolve the target without mutating the selected installation. This exact
+# target and bundle/pin state are what the repair plan presents before consent.
 #   --ref         : explicit source build of that ref
 #   --version tag : that release (asset, else source tarball)
 #   default       : latest release (asset, else source tarball)
 if [[ -n "$REF" ]]; then
-  build_from_source "$REF"
+  TARGET_TAG="$REF"
 else
   TARGET_TAG="$VERSION"
   if [[ -z "$TARGET_TAG" ]]; then
@@ -2929,6 +3311,15 @@ else
     fi
     say "Latest release is $TARGET_TAG"
   fi
+fi
+
+print_install_plan || return 1
+resolve_bin_dir
+
+# Decide what to install (the explicit runtime update returned above).
+if [[ -n "$REF" ]]; then
+  build_from_source "$REF"
+else
   if [[ -z "$(release_tag_name "$TARGET_TAG")" ]]; then
     warn "'$TARGET_TAG' is not a vX.Y.Z release tag; treating it as a source ref."
     build_from_source "$TARGET_TAG"
@@ -2945,6 +3336,11 @@ else
   fi
 fi
 
+if [[ ! -x "$BIN_DIR/lingtai-tui" ]] || ! verify_tui_binary_version "$BIN_DIR/lingtai-tui" "$VERSION"; then
+  echo "error: installed lingtai-tui failed the final binary/version health check." >&2
+  exit 1
+fi
+
 # Provision the pinned runtime before recording install metadata. This makes
 # kernel_source and its provenance fields a postcondition of verified
 # provisioning, never a claim about a partially completed install.
@@ -2953,6 +3349,28 @@ if ! ensure_runtime_venv "$BIN_DIR"; then
   echo "       Python runtime could not be provisioned from a verified pinned kernel release." >&2
   echo "       See the error above. Re-run, or pass --skip-python if TUI-only is intended." >&2
   exit 1
+fi
+
+# Re-run the real postconditions after repair, before metadata records success.
+# This also gives existing users an explicit before→after result.
+final_tui_tag="$(tui_binary_tag "$BIN_DIR/lingtai-tui" || true)"
+if ! verify_tui_binary_version "$BIN_DIR/lingtai-tui" "$VERSION"; then
+  echo "error: final installed lingtai-tui health check failed." >&2
+  exit 1
+fi
+final_runtime_summary="runtime intentionally skipped"
+if [[ "$SKIP_VENV" != "1" ]]; then
+  final_runtime_python="$(runtime_python_for_venv "$RUNTIME_VENV_DIR")"
+  final_runtime_summary="$(runtime_health_check "$final_runtime_python" "$KERNEL_VERSION_INSTALLED" 2>/dev/null || true)"
+  if [[ -z "$final_runtime_python" || -z "$final_runtime_summary" ]]; then
+    echo "error: final Python runtime import/version health check failed." >&2
+    exit 1
+  fi
+fi
+if [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]]; then
+  say "Repair result (before → after):"
+  printf '    TUI:      %s → %s (binary/version check passed)\n' "$PLAN_BEFORE_TUI" "${final_tui_tag:-$VERSION}"
+  printf '    Runtime:  %s → %s\n' "$PLAN_BEFORE_RUNTIME" "$final_runtime_summary"
 fi
 
 # Record install metadata for the TUI source updater only after the runtime
