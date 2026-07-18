@@ -656,6 +656,9 @@ runtime_health_check "$pth_py" "0.17.1" >/dev/null || fail "runtime_health_check
 foreign_selected_venv="$tmp/foreign-selected-venv"
 mkdir -p "$foreign_selected_venv/bin"
 ln -s "$pth_py" "$foreign_selected_venv/bin/python"
+if runtime_prefix_matches_venv "$foreign_selected_venv/bin/python" "$foreign_selected_venv"; then
+  fail "runtime_prefix_matches_venv accepted an interpreter whose sys.prefix was not the selected venv"
+fi
 if runtime_health_check "$foreign_selected_venv/bin/python" "0.17.1" >"$tmp/foreign-prefix-health.stdout" 2>&1; then
   fail "runtime_health_check accepted an interpreter whose sys.prefix was not the selected venv"
 fi
@@ -797,7 +800,9 @@ fi
 if runtime_repair_path_preview >/dev/null 2>&1; then
   fail "repair planning accepted a .lingtai-tui ancestor symlink"
 fi
-for ancestor_mode in skip normal; do
+ancestor_update_canary="$tmp/ancestor-update-dispatches"
+: > "$ancestor_update_canary"
+for ancestor_mode in skip normal update; do
   if (
     export HOME="$ancestor_home"
     BUILD_DIR="$tmp/ancestor-main-build-$ancestor_mode"
@@ -805,6 +810,10 @@ for ancestor_mode in skip normal; do
     SKIP_VENV=0; SKIP_PORTAL=1; NON_INTERACTIVE=0; BIN_DIR=""; BIN_DIR_OVERRIDE=""; INSTALL_PREFIX=""
     if [[ "$ancestor_mode" == skip ]]; then
       main --ref local-ref --skip-python --skip-portal --non-interactive --bin-dir "$ancestor_bin"
+    elif [[ "$ancestor_mode" == update ]]; then
+      SKIP_PORTAL=0
+      run_update_mode() { printf '%s\n' reached >> "$ancestor_update_canary"; return 0; }
+      main update --bin-dir "$ancestor_bin"
     else
       main --ref local-ref --skip-portal --non-interactive --bin-dir "$ancestor_bin"
     fi
@@ -815,7 +824,166 @@ for ancestor_mode in skip normal; do
     || fail "ancestor symlink failure was not actionable in $ancestor_mode mode"
 done
 [[ ! -s "$ancestor_canary" ]] || fail ".lingtai-tui ancestor symlink flow executed the redirected runtime"
+[[ ! -s "$ancestor_update_canary" ]] || fail ".lingtai-tui ancestor symlink reached update dispatch"
 export HOME="$saved_home"
+
+# A legacy metadata file without runtime_venv must not let a final symlink at
+# the default path survive until after plan/consent or TUI replacement.
+legacy_home="$tmp/legacy-default-symlink-home"
+legacy_bin="$legacy_home/.local/bin"
+legacy_external="$tmp/legacy-default-external"
+legacy_runtime_canary="$tmp/legacy-default-runtime-executions"
+legacy_tui_canary="$tmp/legacy-default-tui-executions"
+legacy_build_canary="$tmp/legacy-default-builds"
+mkdir -p "$legacy_home/.lingtai-tui/runtime" "$legacy_bin" "$legacy_external/bin"
+: > "$legacy_runtime_canary"
+: > "$legacy_tui_canary"
+: > "$legacy_build_canary"
+cat > "$legacy_external/bin/python" <<EOF
+#!/bin/sh
+printf '%s\\n' runtime >> "$legacy_runtime_canary"
+exit 0
+EOF
+chmod +x "$legacy_external/bin/python"
+ln -s "$legacy_external" "$legacy_home/.lingtai-tui/runtime/venv"
+cat > "$legacy_bin/lingtai-tui" <<EOF
+#!/bin/sh
+printf '%s\\n' tui >> "$legacy_tui_canary"
+exit 0
+EOF
+chmod +x "$legacy_bin/lingtai-tui"
+cat > "$legacy_home/.lingtai-tui/install.json" <<EOF
+{"bin_dir":"$legacy_bin","stamped_version":"vlegacy","install_kind":"source","repo":"Lingtai-AI/lingtai"}
+EOF
+if (
+  export HOME="$legacy_home"
+  GLOBAL_DIR="$HOME/.lingtai-tui"
+  RUNTIME_VENV_DIR="$GLOBAL_DIR/runtime/venv"
+  BUILD_DIR="$tmp/legacy-default-main-build"
+  MODE="install"; UPDATE_MODE=0; DEV_MODE=0; REF=""; VERSION=""; FROM_SOURCE=0
+  SKIP_VENV=0; SKIP_PORTAL=1; NON_INTERACTIVE=0; BIN_DIR=""; BIN_DIR_OVERRIDE=""; INSTALL_PREFIX=""
+  build_from_source() { printf '%s\n' build >> "$legacy_build_canary"; return 0; }
+  main --ref local-ref --skip-portal --non-interactive --bin-dir "$legacy_bin"
+) >"$tmp/legacy-default-main.stdout" 2>"$tmp/legacy-default-main.stderr"; then
+  fail "main accepted a legacy default runtime final symlink before plan/consent"
+fi
+grep -q 'selected runtime venv is not a canonical child' "$tmp/legacy-default-main.stderr" \
+  || fail "legacy default runtime final-symlink failure was not actionable"
+[[ ! -s "$legacy_runtime_canary" ]] || fail "legacy default runtime was executed before ownership refusal"
+[[ ! -s "$legacy_tui_canary" ]] || fail "legacy TUI was executed before ownership refusal"
+[[ ! -s "$legacy_build_canary" ]] || fail "source build started before legacy default runtime ownership refusal"
+
+legacy_dev_canary="$tmp/legacy-default-dev-runs"
+: > "$legacy_dev_canary"
+if (
+  export HOME="$legacy_home"
+  GLOBAL_DIR="$HOME/.lingtai-tui"
+  RUNTIME_VENV_DIR="$GLOBAL_DIR/runtime/venv"
+  BUILD_DIR="$tmp/legacy-default-dev-build"
+  MODE="install"; UPDATE_MODE=0; DEV_MODE=0; REF=""; VERSION=""; FROM_SOURCE=0
+  SKIP_VENV=0; SKIP_PORTAL=0; NON_INTERACTIVE=0; BIN_DIR=""; BIN_DIR_OVERRIDE=""; INSTALL_PREFIX=""
+  LINGTAI_DEV_RUNTIME_PYTHON=""
+  run_dev_install() { printf '%s\n' reached >> "$legacy_dev_canary"; return 0; }
+  main --dev --kernel-source "$tmp/dev-prefix-kernel" --tui-source "$tmp/dev-prefix-tui" --non-interactive --bin-dir "$legacy_bin"
+) >"$tmp/legacy-default-dev.stdout" 2>"$tmp/legacy-default-dev.stderr"; then
+  fail "main --dev accepted a default runtime final symlink before plan/consent"
+fi
+grep -q 'default development runtime is not a canonical child' "$tmp/legacy-default-dev.stderr" \
+  || fail "default dev runtime final-symlink failure was not actionable"
+[[ ! -s "$legacy_dev_canary" ]] || fail "dev checkout/runtime/build flow started before default runtime ownership refusal"
+
+# A selected directory that merely links bin/python into another venv must be
+# classified broken before any pip/uv install. Normal and default-dev flows may
+# choose their already-disclosed repair path, but must not mutate the foreign venv.
+prefix_home="$tmp/foreign-prefix-home"
+prefix_selected="$prefix_home/.lingtai-tui/runtime/venv"
+mkdir -p "$prefix_selected/bin"
+ln -s "$pth_py" "$prefix_selected/bin/python"
+normal_prefix_repair="$tmp/normal-prefix-repair-calls"
+normal_prefix_install="$tmp/normal-prefix-install-calls"
+: > "$normal_prefix_repair"
+: > "$normal_prefix_install"
+if (
+  export HOME="$prefix_home"
+  RUNTIME_VENV_DIR="$prefix_selected"
+  TARGET_TAG="v0.17.1"; SKIP_VENV=0; BUNDLE_REQUIRED=0; BUNDLE_PATH=""
+  kernel_tag_for_install() { printf '%s\n' v0.17.1; }
+  ensure_python() { return 0; }
+  runtime_repair_path() { printf '%s\n' repair >> "$normal_prefix_repair"; return 1; }
+  install_kernel_from_bundle() { printf '%s\n' install >> "$normal_prefix_install"; return 0; }
+  ensure_runtime_venv "$prefix_selected"
+); then
+  fail "normal runtime accepted a foreign sys.prefix without a safe repair path"
+fi
+grep -q '^repair$' "$normal_prefix_repair" || fail "normal runtime did not route foreign sys.prefix through repair planning"
+[[ ! -s "$normal_prefix_install" ]] || fail "normal runtime attempted install before selected-prefix validation"
+
+dev_prefix_repair="$tmp/dev-prefix-repair-calls"
+dev_prefix_install="$tmp/dev-prefix-install-calls"
+mkdir -p "$tmp/dev-prefix-kernel"
+: > "$dev_prefix_repair"
+: > "$dev_prefix_install"
+if (
+  export HOME="$prefix_home"
+  LINGTAI_DEV_RUNTIME_PYTHON=""
+  RUNTIME_VENV_DIR="$prefix_selected"
+  runtime_repair_path() { printf '%s\n' repair >> "$dev_prefix_repair"; return 1; }
+  find_uv() { printf '%s\n' install >> "$dev_prefix_install"; return 1; }
+  ensure_dev_runtime "$tmp/dev-prefix-kernel"
+); then
+  fail "default dev runtime accepted a foreign sys.prefix without a safe repair path"
+fi
+grep -q '^repair$' "$dev_prefix_repair" || fail "default dev runtime did not route foreign sys.prefix through repair planning"
+[[ ! -s "$dev_prefix_install" ]] || fail "dev runtime reached package installation before selected-prefix validation"
+
+# Editable installs intentionally import from their source checkout. Verify the
+# dev postcondition accepts that exact checkout and rejects a different one.
+dev_health_venv="$tmp/dev-health-venv"
+"$python3_path" -m venv "$dev_health_venv"
+dev_health_py="$dev_health_venv/bin/python"
+dev_health_site="$("$dev_health_py" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
+dev_health_kernel="$tmp/dev-health-kernel"
+mkdir -p "$dev_health_kernel/lingtai"
+printf '%s\n' '__version__ = "0.17.1"' > "$dev_health_kernel/lingtai/__init__.py"
+printf '%s\n' 'value = "kernel"' > "$dev_health_kernel/lingtai/kernel.py"
+printf '%s\n' "$dev_health_kernel" > "$dev_health_site/zzz-lingtai-dev-source.pth"
+dev_runtime_health_check "$dev_health_py" "$dev_health_venv" "$dev_health_kernel" >/dev/null \
+  || fail "dev_runtime_health_check rejected the declared editable kernel source"
+mkdir -p "$tmp/wrong-dev-health-kernel"
+if dev_runtime_health_check "$dev_health_py" "$dev_health_venv" "$tmp/wrong-dev-health-kernel" >/dev/null 2>&1; then
+  fail "dev_runtime_health_check accepted modules outside the declared kernel source"
+fi
+
+# run_dev_install is itself invoked under `|| return`; Bash suppresses errexit in
+# that context. The metadata writer therefore needs an explicit propagated guard
+# so a failure cannot fall through to the completion message.
+dev_writer_source="$tmp/dev-writer-source"
+dev_writer_bin="$tmp/dev-writer-bin"
+dev_writer_called="$tmp/dev-writer-called"
+mkdir -p "$dev_writer_source" "$dev_writer_bin"
+: > "$dev_writer_called"
+if (
+  DEV_TUI_SOURCE="$dev_writer_source"
+  DEV_KERNEL_SOURCE="$dev_writer_source"
+  BIN_DIR="$dev_writer_bin"
+  GLOBAL_DIR="$tmp/dev-writer-global"
+  PREFIX="$tmp/dev-writer-prefix"
+  REPO="Lingtai-AI/lingtai"
+  RESOLVED_COMMIT="dev-commit"
+  VERSION="dev"
+  PORTAL_PATH=""
+  ensure_dev_checkout() { printf '%s\n' "$1"; return 0; }
+  ensure_dev_runtime() { DEV_RUNTIME_PYTHON="$tmp/dev-writer-python"; RUNTIME_VENV_DIR="$tmp/dev-writer-venv"; return 0; }
+  build_dev_from_sources() { VERSION="dev"; PORTAL_PATH=""; return 0; }
+  write_install_metadata() { printf '%s\n' called >> "$dev_writer_called"; return 1; }
+  run_dev_install
+) >"$tmp/dev-writer.stdout" 2>"$tmp/dev-writer.stderr"; then
+  fail "run_dev_install masked a metadata writer failure"
+fi
+grep -q '^called$' "$dev_writer_called" || fail "dev metadata writer failure canary did not run"
+if grep -q 'Development install complete' "$tmp/dev-writer.stdout"; then
+  fail "run_dev_install printed completion after metadata persistence failed"
+fi
 
 # ensure_dev_runtime must set RUNTIME_VENV_DIR to the venv it actually
 # installed into, so a subsequent write_install_metadata records the truth
@@ -836,11 +1004,11 @@ chmod +x "$dev_runtime_venv/bin/python"
 [[ -f "$dev_runtime_venv/bin/python" && ! -L "$dev_runtime_venv/bin/python" ]] \
   || fail "dev-runtime test launcher must remain a process-owned regular file, never a venv symlink"
 RUNTIME_VENV_DIR="$tmp/stale-pointer-should-be-overwritten"
-runtime_probe() { printf '0.99.0\t%s/lingtai/__init__.py\t%s\n' "$1" "$1"; }
+dev_runtime_health_check() { printf '0.99.0\t%s/lingtai/__init__.py\n' "$1"; }
 find_uv() { return 1; }
 LINGTAI_DEV_RUNTIME_PYTHON="$dev_runtime_venv" ensure_dev_runtime "$dev_kernel_source" >"$tmp/dev-runtime.stdout" 2>&1
 dev_runtime_rc=$?
-unset -f runtime_probe find_uv
+unset -f dev_runtime_health_check find_uv
 [[ "$dev_runtime_rc" == "0" ]] || fail "ensure_dev_runtime (rc=$dev_runtime_rc) failed with the stubbed venv: $(cat "$tmp/dev-runtime.stdout")"
 assert_eq "$dev_runtime_venv" "$RUNTIME_VENV_DIR" "ensure_dev_runtime records the actual selected runtime path"
 [[ "$RUNTIME_VENV_DIR" != "$tmp/stale-pointer-should-be-overwritten" ]] || fail "ensure_dev_runtime left the stale RUNTIME_VENV_DIR pointer in place"

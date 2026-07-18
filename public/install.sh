@@ -1644,12 +1644,28 @@ runtime_python_for_venv() {
   fi
 }
 
+# A launcher located under the selected venv is not enough ownership proof: it
+# may be a symlink to another environment. Check sys.prefix before any pip/uv
+# operation so an external interpreter is never mutated and rejected only later.
+runtime_prefix_matches_venv() {
+  local py="$1" venv_dir="$2" selected_prefix
+  selected_prefix="$(cd "$venv_dir" 2>/dev/null && pwd -P)" || return 1
+  PYTHONPATH= "$py" - "$selected_prefix" <<'PY' >/dev/null 2>&1
+import os
+import sys
+
+selected_prefix = os.path.realpath(sys.argv[1])
+raise SystemExit(0 if os.path.realpath(sys.prefix) == selected_prefix else 1)
+PY
+}
+
 runtime_venv_state() {
   local venv_dir="$1" py
   [[ -d "$venv_dir" ]] || { printf '%s\n' missing; return 0; }
   py="$(runtime_python_for_venv "$venv_dir")"
   [[ -n "$py" ]] || { printf '%s\n' broken; return 0; }
   "$py" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null || { printf '%s\n' broken; return 0; }
+  runtime_prefix_matches_venv "$py" "$venv_dir" || { printf '%s\n' broken; return 0; }
   "$py" -m pip --version >/dev/null 2>&1 || { printf '%s\n' broken; return 0; }
   printf '%s\n' healthy
 }
@@ -1766,6 +1782,39 @@ if not version or (expected and version.lstrip("v") != expected.lstrip("v")):
 for mod in (module, kernel):
     mod_path = os.path.realpath(getattr(mod, "__file__", "") or "")
     if not mod_path or not (mod_path == selected_prefix or mod_path.startswith(selected_prefix + os.sep)):
+        raise SystemExit(1)
+print(f"{version}\t{module.__file__}")
+PY
+  )" || return 1
+  [[ "$output" == *$'\t'* ]] || return 1
+  printf '%s\n' "$output"
+}
+
+# Editable development installs intentionally import from the declared kernel
+# checkout rather than from site-packages. Their postcondition therefore binds
+# sys.prefix to the selected venv and both LingTai modules to that exact physical
+# checkout, instead of weakening the normal provenance check to mere importability.
+dev_runtime_health_check() {
+  local py="$1" venv_dir="$2" kernel_root="$3" selected_prefix selected_kernel output
+  selected_prefix="$(cd "$venv_dir" 2>/dev/null && pwd -P)" || return 1
+  selected_kernel="$(cd "$kernel_root" 2>/dev/null && pwd -P)" || return 1
+  output="$(PYTHONPATH= "$py" - "$selected_prefix" "$selected_kernel" <<'PY'
+import importlib
+import os
+import sys
+
+selected_prefix = os.path.realpath(sys.argv[1])
+selected_kernel = os.path.realpath(sys.argv[2])
+if os.path.realpath(sys.prefix) != selected_prefix:
+    raise SystemExit(1)
+module = importlib.import_module("lingtai")
+kernel = importlib.import_module("lingtai.kernel")
+version = str(getattr(module, "__version__", ""))
+if not version:
+    raise SystemExit(1)
+for mod in (module, kernel):
+    mod_path = os.path.realpath(getattr(mod, "__file__", "") or "")
+    if not mod_path or not (mod_path == selected_kernel or mod_path.startswith(selected_kernel + os.sep)):
         raise SystemExit(1)
 print(f"{version}\t{module.__file__}")
 PY
@@ -1895,6 +1944,18 @@ ensure_runtime_venv() {
       fi
       # Re-check Python version after creating/recreating the venv.
       continue
+    fi
+
+    if ! runtime_prefix_matches_venv "$py" "$venv_dir"; then
+      if [[ "$repair_attempt" == "0" ]]; then
+        warn "runtime venv interpreter prefix does not match $venv_dir; retaining it and provisioning a new runtime venv path."
+        venv_dir="$(runtime_repair_path)" || return 1
+        RUNTIME_VENV_DIR="$venv_dir"
+        repair_attempt=1
+        continue
+      fi
+      echo "error: runtime venv interpreter prefix still mismatches the selected repair path." >&2
+      return 1
     fi
 
     if ! "$py" -m pip --version >/dev/null 2>&1 && [[ -z "$uv" ]]; then
@@ -3026,13 +3087,20 @@ ensure_dev_runtime() {
     command -v python3 >/dev/null || { echo "error: Python 3 is required for install --dev." >&2; return 1; }
     mkdir -p "$(dirname "$venv")"; python3 -m venv "$venv" || return 1; py="$venv/bin/python"
   fi
+  if ! runtime_prefix_matches_venv "$py" "$venv"; then
+    echo "error: development runtime interpreter prefix does not match the selected venv: $venv" >&2
+    return 1
+  fi
   say "Installing editable kernel source from $kernel into $venv ..."
   if [[ -n "$(find_uv 2>/dev/null || true)" ]]; then
     "$(find_uv)" pip install --python "$py" --editable "$kernel" || return 1
   else
     "$py" -m pip install --editable "$kernel" || return 1
   fi
-  runtime_probe "$py" >/dev/null || { echo "error: editable kernel import/version check failed in $py." >&2; return 1; }
+  dev_runtime_health_check "$py" "$venv" "$kernel" >/dev/null || {
+    echo "error: editable kernel prefix/module provenance check failed in $py for source $kernel." >&2
+    return 1
+  }
   DEV_RUNTIME_PYTHON="$py"
   # write_install_metadata reads RUNTIME_VENV_DIR, not DEV_RUNTIME_PYTHON; if
   # discovery had adopted a prior venv-repair path, that stale pointer must
@@ -3077,7 +3145,7 @@ run_dev_install() {
   KERNEL_SOURCE="editable"; KERNEL_VERSION_INSTALLED="${UPDATE_CURRENT_KERNEL_VERSION:-dev}"
   DEV_KERNEL_SOURCE_PATH="$kernel_source"; DEV_TUI_SOURCE_PATH="$tui_source"
   GLOBAL_DIR="$HOME/.lingtai-tui"; PREFIX="$(prefix_for_bin_dir "$BIN_DIR")"
-  write_install_metadata "$GLOBAL_DIR" "$PREFIX" "$BIN_DIR" "$REPO" "dev" "dev" "$RESOLVED_COMMIT" "$VERSION" "$BIN_DIR/lingtai-tui" "$PORTAL_PATH"
+  write_install_metadata "$GLOBAL_DIR" "$PREFIX" "$BIN_DIR" "$REPO" "dev" "dev" "$RESOLVED_COMMIT" "$VERSION" "$BIN_DIR/lingtai-tui" "$PORTAL_PATH" || return 1
   say "Development install complete: kernel source is editable at $kernel_source; TUI/Portal were built from $tui_source."
 }
 
@@ -3528,21 +3596,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# This directory owns both install metadata and the managed runtime subtree.
+# HOME itself may be symlinked, but the ownership root must not redirect through
+# a `.lingtai-tui` symlink to external state in any mode, including update and
+# --skip-python. Keep this gate before every mode-specific runtime discovery.
+if [[ -L "$HOME/.lingtai-tui" ]]; then
+  echo "error: $HOME/.lingtai-tui is a symlink; refusing to adopt or mutate redirected install/runtime state." >&2
+  return 1
+fi
+
 # Keep the explicit runtime update out of every first-install decision below.
 # In particular, it must not resolve a binary provider, bundle latest, source
 # tree, or runtime venv; those are unchanged default-install semantics.
 if [[ "$MODE" == "update" || "$UPDATE_MODE" == "1" ]]; then
   run_update_mode
   return $?
-fi
-
-# This directory owns both install metadata and the managed runtime subtree.
-# HOME itself may be symlinked, but the ownership root must not redirect through
-# a `.lingtai-tui` symlink to external state in any install mode, including
-# --skip-python.
-if [[ -L "$HOME/.lingtai-tui" ]]; then
-  echo "error: $HOME/.lingtai-tui is a symlink; refusing to adopt or mutate redirected install/runtime state." >&2
-  return 1
 fi
 
 # With no explicit destination, adopt one unambiguous existing installation so
@@ -3557,6 +3625,17 @@ else
   discover_explicit_target_install || return 1
 fi
 
+# A non-skip normal install must know before disclosure/consent that its selected
+# logical runtime is a canonical child of the owned root. Missing owned roots and
+# final directories remain valid prospective paths; symlinks/occupied escapes do
+# not. This prevents TUI replacement followed by a late runtime ownership failure.
+if [[ "$DEV_MODE" != "1" && "$SKIP_VENV" != "1" ]] && \
+   ! canonical_runtime_venv "$RUNTIME_VENV_DIR" "$HOME/.lingtai-tui/runtime" >/dev/null; then
+  echo "error: selected runtime venv is not a canonical child of the owned runtime root: $RUNTIME_VENV_DIR" >&2
+  echo "       Refusing to present or approve a repair plan that would fail after TUI mutation." >&2
+  return 1
+fi
+
 if is_wsl; then
   say "Detected Windows Subsystem for Linux (WSL)."
   note "Binaries and the Python runtime install into your Linux home ($HOME)."
@@ -3568,6 +3647,11 @@ if [[ "$DEV_MODE" == "1" ]]; then
   # The plan must name the same runtime ensure_dev_runtime will actually use,
   # not a stale metadata pointer adopted during discovery.
   RUNTIME_VENV_DIR="${LINGTAI_DEV_RUNTIME_PYTHON:-$HOME/.lingtai-tui/runtime/venv}"
+  if [[ -z "${LINGTAI_DEV_RUNTIME_PYTHON:-}" ]] && \
+     ! canonical_runtime_venv "$RUNTIME_VENV_DIR" "$HOME/.lingtai-tui/runtime" >/dev/null; then
+    echo "error: default development runtime is not a canonical child of the owned runtime root: $RUNTIME_VENV_DIR" >&2
+    return 1
+  fi
   print_install_plan || return 1
   resolve_bin_dir
   if [[ "$DISCOVERED_METADATA_PRESENT" == "1" || -n "$DISCOVERED_BIN_DIR" ]]; then
