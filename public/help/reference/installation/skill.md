@@ -7,8 +7,9 @@ description: Route ordinary installation and explicit installation maintenance a
 
 ## Normative contract
 
-Read [CONTRACT.md](https://lingtai.ai/help/reference/installation/CONTRACT.md)
-before choosing an entrypoint. It fixes the state classes, ownership,
+Read the [Contract](https://lingtai.ai/help/reference/installation/CONTRACT.md)
+and paired [Anatomy](https://lingtai.ai/help/reference/installation/ANATOMY.md)
+before choosing or maintaining an entrypoint. The Contract fixes state classes, ownership,
 provenance, allowed writes, postconditions, and partial-failure meaning for this
 surface. If the contract, this guidance, an executable, or its tests disagree,
 stop and report the drift instead of inferring a more permissive operation.

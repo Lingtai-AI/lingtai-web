@@ -10,7 +10,11 @@
   Content-Type: text/markdown; charset=utf-8
   Cache-Control: public, max-age=300
 
-/help/reference/*/*.md
+/help/reference/installation/*.md
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: public, max-age=300
+
+/help/reference/migration/*.md
   Content-Type: text/markdown; charset=utf-8
   Cache-Control: public, max-age=300
 

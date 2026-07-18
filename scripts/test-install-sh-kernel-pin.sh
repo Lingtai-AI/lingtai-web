@@ -10,10 +10,14 @@ not_contains() { ! grep -Fq -- "$2" "$1" || fail "$1 unexpectedly contains: $2";
 assert_eq() { [[ "$1" == "$2" ]] || fail "expected '$2', got '$1'"; }
 expect_fail() { "$@" >/dev/null 2>&1 && fail "command unexpectedly succeeded: $*" || :; }
 
+repo_contract="$ROOT_DIR/CONTRACT.md"
+repo_anatomy="$ROOT_DIR/ANATOMY.md"
+architecture_test="$ROOT_DIR/scripts/test-architecture-documents.py"
 root="$ROOT_DIR/public"
 main="$root/install.sh"
 installation="$root/help/reference/installation"
 contract="$installation/CONTRACT.md"
+installation_anatomy="$installation/ANATOMY.md"
 asset_dir="$installation/assets"
 update="$asset_dir/update.sh"
 dev="$asset_dir/dev.sh"
@@ -21,7 +25,7 @@ fix="$asset_dir/fix.sh"
 verify="$asset_dir/verify.sh"
 [[ -f "$main" ]] || fail "missing canonical install.sh"
 [[ "$(wc -l < "$main" | tr -d ' ')" -le 2400 ]] || fail "canonical install.sh exceeds the 2400-line target"
-for file in "$main" "$root/skill.md" "$root/help/skill.md" "$root/help/reference/migration/skill.md" "$installation/skill.md" "$contract" "$update" "$dev" "$fix" "$verify"; do
+for file in "$repo_contract" "$repo_anatomy" "$architecture_test" "$main" "$root/skill.md" "$root/help/skill.md" "$root/help/reference/migration/skill.md" "$installation/skill.md" "$contract" "$installation_anatomy" "$update" "$dev" "$fix" "$verify"; do
   [[ -f "$file" ]] || fail "missing public surface file: $file"
   [[ "$(head -1 "$file")" == "#!"* || "$(head -1 "$file")" == "---" ]] || fail "file lacks shell/frontmatter entry: $file"
 done
@@ -32,17 +36,32 @@ contains "$root/help/skill.md" 'help/reference/migration/skill.md'
 contains "$installation/skill.md" 'assets/update.sh'
 contains "$installation/skill.md" 'does **not** download, source, or execute'
 contains "$installation/skill.md" 'https://lingtai.ai/help/reference/installation/CONTRACT.md'
+contains "$installation/skill.md" 'https://lingtai.ai/help/reference/installation/ANATOMY.md'
 [[ "$(wc -l < "$contract" | tr -d ' ')" -le 320 ]] || fail "installation contract exceeds 320 lines"
-contains "$contract" '## 3. State-to-entry decision table'
+contains "$repo_contract" 'name: component-contract-convention'
+contains "$repo_contract" 'public/help/reference/installation/CONTRACT.md'
+contains "$repo_anatomy" 'public/help/reference/installation/ANATOMY.md'
+contains "$contract" 'root_contract: CONTRACT.md'
+contains "$contract" 'public/help/reference/installation/ANATOMY.md'
+contains "$installation_anatomy" 'public/help/reference/installation/CONTRACT.md'
+contains "$installation_anatomy" 'ANATOMY.md'
+contains "$contract" '## Purpose'
+contains "$contract" '## Behavior'
+contains "$contract" '## Port'
+contains "$contract" '## Adapters'
 contains "$contract" '### 4.1 `/install.sh` — fresh ordinary install'
 contains "$contract" '### 4.2 `assets/update.sh` — healthy exact ordinary update'
 contains "$contract" '### 4.3 `assets/fix.sh` — bounded ordinary runtime repair'
 contains "$contract" '### 4.4 `assets/verify.sh` — read-only receipt proof'
 contains "$contract" '### 4.5 `assets/dev.sh` — explicit editable development state'
 contains "$contract" 'A nonzero exit is not rollback.'
-contains "$contract" '## 6. Change-control lock'
+contains "$contract" '## Contract tests'
+contains "$contract" '## Maintenance'
 contains "$root/_headers" '/skill.md'
+contains "$root/_headers" '/help/reference/installation/*.md'
+contains "$root/_headers" '/help/reference/migration/*.md'
 contains "$root/_headers" '/help/reference/installation/assets/*.sh'
+not_contains "$root/_headers" '/help/reference/*/*.md'
 contains "$root/_headers" 'text/markdown'
 contains "$root/_headers" 'text/x-shellscript'
 contains "$main" '--ref) compatibility_handoff'
@@ -55,8 +74,21 @@ not_contains "$main" 'source <(curl'
 contains "$main" 'validate_fresh_install_state'
 contains "$main" 'ordinary install is first-install-only'
 contains "$main" 'if [[ "$runtime_state" != missing ]]'
+contains "$main" '"$uv" venv --seed --python 3.13 "$venv_dir"'
+contains "$main" 'ensure_runtime_pip()'
+contains "$main" '"$py" -m ensurepip --upgrade'
+contains "$main" '"$uv" pip install --index-url "$index_url" -p "$venv_dir" pip'
+contains "$main" 'ensure_runtime_pip "$py" "$venv_dir" "$uv"'
+contains "$main" 'partial runtime retained for diagnosis: $venv_dir'
 contains "$main" 'ln "$tmp_path" "$metadata_path"'
 not_contains "$main" 'mv "$tmp_path" "$metadata_path"'
+
+for asset in "$main" "$update" "$dev" "$fix" "$verify"; do
+  contains "$asset" '# For coding-agent maintainers:'
+  contains "$asset" 'repository-root CONTRACT.md'
+  contains "$asset" 'public/help/reference/installation/CONTRACT.md'
+  contains "$asset" 'final-head real critical-path acceptance'
+done
 
 for asset in "$update" "$dev" "$fix" "$verify"; do
   [[ -x "$asset" ]] || fail "asset is not executable: $asset"

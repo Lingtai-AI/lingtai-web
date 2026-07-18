@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+# For coding-agent maintainers:
+# - Read the repository-root CONTRACT.md and
+#   public/help/reference/installation/CONTRACT.md before changing this file.
+# - Preserve this entrypoint's operation, ownership, consent, and mutation boundary;
+#   do not turn one operation into an implicit install, update, repair, or deploy.
+# - Keep executable behavior, both Contracts, both Anatomies, the installation
+#   skill, and focused tests in lockstep in the same change.
+# - Real-operation changes need a final-head real critical-path acceptance; fake
+#   or static tests alone are insufficient. Ordinary install uses a brand-new HOME.
+# - Never publish a success receipt before every declared postcondition passes;
+#   report partial state honestly and do not treat failure as cleanup authority.
+# - These maintenance rules grant no merge, release, deploy, auth, config, or
+#   deletion authority.
+# This file owns only first-install ordinary state; it never adopts, updates,
+# or repairs an existing target/runtime, and only --skip-python permits TUI-only.
 # One-shot installer for lingtai-tui and lingtai-portal, plus the Python
 # `lingtai` runtime venv at ~/.lingtai-tui/runtime/venv.
 #
@@ -1136,6 +1151,30 @@ raise SystemExit(0 if os.path.realpath(sys.prefix) == selected_prefix else 1)
 PY
 }
 
+# ensure_runtime_pip repairs pip only inside the brand-new owned venv created by
+# this invocation. It first asks that exact interpreter to seed itself, then (if
+# available) uses the already selected uv scoped to the same venv. Prefix checks
+# before and after the attempt prevent either fallback from reaching another
+# interpreter. Existing runtimes are rejected before this helper is called.
+ensure_runtime_pip() {
+  local py="$1" venv_dir="$2" uv="${3:-}" index_url
+  runtime_prefix_matches_venv "$py" "$venv_dir" || return 1
+  "$py" -m pip --version >/dev/null 2>&1 && return 0
+
+  warn "pip is missing from the new owned runtime; trying that interpreter's ensurepip."
+  "$py" -m ensurepip --upgrade || warn "ensurepip could not seed pip in the new owned runtime."
+  "$py" -m pip --version >/dev/null 2>&1 && return 0
+
+  if [[ -n "$uv" ]]; then
+    index_url="${LINGTAI_PYPI_INDEX_URL:-https://pypi.org/simple}"
+    warn "pip is still missing; using selected uv only inside the new owned runtime."
+    "$uv" pip install --index-url "$index_url" -p "$venv_dir" pip || warn "uv could not seed pip in the new owned runtime."
+  fi
+
+  runtime_prefix_matches_venv "$py" "$venv_dir" || return 1
+  "$py" -m pip --version >/dev/null 2>&1
+}
+
 runtime_venv_state() {
   local venv_dir="$1" py
   [[ -d "$venv_dir" ]] || { printf '%s\n' missing; return 0; }
@@ -1244,7 +1283,9 @@ ensure_runtime_venv() {
   fi
   uv="$(find_uv 2>/dev/null || true)"
   if [[ -n "$uv" ]]; then
-    "$uv" venv --python 3.13 "$venv_dir" || return 1
+    # uv venvs are unseeded by default, but every supported successor and the
+    # runtime health contract require pip inside the selected owned venv.
+    "$uv" venv --seed --python 3.13 "$venv_dir" || return 1
   elif python_ok; then
     python3 -m venv "$venv_dir" || return 1
   else
@@ -1254,7 +1295,11 @@ ensure_runtime_venv() {
   py="$(runtime_python_for_venv "$venv_dir")"
   [[ -n "$py" ]] || { echo "error: runtime interpreter not found at $venv_dir." >&2; return 1; }
   runtime_prefix_matches_venv "$py" "$venv_dir" || { echo "error: runtime interpreter prefix does not match selected venv." >&2; return 1; }
-  "$py" -m pip --version >/dev/null 2>&1 || { echo "error: selected runtime has no usable pip." >&2; return 1; }
+  ensure_runtime_pip "$py" "$venv_dir" "$uv" || {
+    echo "error: selected new runtime has no usable pip after bounded self-healing." >&2
+    echo "       partial runtime retained for diagnosis: $venv_dir" >&2
+    return 1
+  }
   install_kernel_from_bundle "$py" "$uv" || {
     echo "error: pinned kernel artifact could not be installed; no package-name fallback is allowed." >&2
     return 1

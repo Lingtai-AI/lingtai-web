@@ -1,23 +1,30 @@
 ---
-name: lingtai-installation-contract
-description: Normative state, ownership, mutation, provenance, and failure contract for the public LingTai installation surface.
+name: lingtai-public-installation
+contract_version: 1
+root_contract: CONTRACT.md
 related_files:
-  - ../../../install.sh
-  - skill.md
-  - assets/update.sh
-  - assets/dev.sh
-  - assets/fix.sh
-  - assets/verify.sh
+  - ANATOMY.md
+  - public/help/reference/installation/ANATOMY.md
+  - public/install.sh
+  - public/help/reference/installation/skill.md
+  - public/_headers
+  - public/help/reference/installation/assets/update.sh
+  - public/help/reference/installation/assets/dev.sh
+  - public/help/reference/installation/assets/fix.sh
+  - public/help/reference/installation/assets/verify.sh
+  - scripts/test-install-sh-kernel-pin.sh
+  - scripts/test-architecture-documents.py
 maintenance: |
-  Keep this contract, installation skill, executable assets, focused tests, and
-  public routing in lockstep. A change to operation selection, allowed writes,
-  ownership, provenance, postconditions, or failure semantics must update this
-  file in the same change.
+  This component contract is governed by the root CONTRACT.md. Keep related_files
+  complete and repo-relative, keep this Contract reciprocal with its ANATOMY.md,
+  and keep the public executables, installation skill, postconditions, focused
+  tests, and real acceptance evidence synchronized. Report root/pair mismatches;
+  do not duplicate or auto-fix the root convention here.
 ---
 
 # LingTai public installation contract
 
-## 1. Status and scope
+## Purpose
 
 This file is the normative contract for choosing and maintaining the public
 installation entrypoints served by `lingtai.ai`:
@@ -41,7 +48,7 @@ This is not a release-publication, deployment, refresh, or migration procedure.
 Exact release migrations remain owned by each product repository's tagged
 `migration/migration.md` history.
 
-## 2. Shared invariants
+## Behavior
 
 Every entrypoint MUST preserve these invariants.
 
@@ -111,7 +118,7 @@ Every entrypoint MUST preserve these invariants.
    install, identity, import, and provenance postconditions pass.
 5. A receipt is evidence of completed postconditions, not a progress marker.
 
-## 3. State-to-entry decision table
+## Port
 
 | Observed state | Allowed entrypoint | Why | Forbidden shortcut |
 |---|---|---|---|
@@ -132,7 +139,7 @@ update, repair, and verification assets do not promise to infer or backfill that
 state; stop and choose an explicit supported plan rather than treating it as a
 normal healthy ordinary runtime installation.
 
-## 4. Entrypoint contracts
+## Adapters
 
 ### 4.1 `/install.sh` — fresh ordinary install
 
@@ -259,7 +266,7 @@ A failed build/install/postcondition names possible runtime or binary changes an
 writes no success receipt for the new development state. No cross-component
 rollback is claimed.
 
-## 5. Migration boundary
+## Contract rules
 
 Installation changes bytes and records ownership. Migration applies
 release-specific state/schema instructions. They are separate decisions.
@@ -275,7 +282,7 @@ For TUI/Portal and kernel independently:
 GitHub/Gitee fallback is valid only for the same product, same tag, and same
 path, with matching tag targets/content.
 
-## 6. Change-control lock
+## Contract tests
 
 A change is incomplete unless the same candidate updates every affected layer:
 
@@ -289,3 +296,13 @@ A change is incomplete unless the same candidate updates every affected layer:
 At minimum, validation runs shell syntax for every executable, each asset's
 `--help`, the focused hermetic suite, and `git diff --check`. A passing test does
 not authorize merge, release, deploy, refresh, configuration changes, or cleanup.
+
+
+## Maintenance
+
+Before changing this component, read the repository-root `CONTRACT.md`, the
+paired `ANATOMY.md`, and this contract. Keep all five executable entrypoints,
+the installation skill, both Anatomy/Contract pairs, focused tests, and any
+affected public routing in the same change. Validate the exact final candidate;
+do not use a receipt, mock, static assertion, or intermediate head as evidence
+for a real operation it did not exercise.
