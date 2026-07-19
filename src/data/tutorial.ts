@@ -202,9 +202,9 @@ export const tutorial: Tutorial = {
     },
     prereqs: [
       {
-        en: 'A Unix-like terminal — macOS or Linux (Windows works through WSL). A dark terminal theme looks best.',
-        zh: '一个类 Unix 的终端——macOS 或 Linux（Windows 可通过 WSL）。深色终端主题观感最佳。',
-        wen: '类 Unix 之终端——macOS 或 Linux（Windows 可假 WSL）。终端宜用深色，观之最佳。',
+        en: 'A Unix-like terminal — macOS, Linux, or WSL2 on Windows. Native Windows PowerShell is an experimental preview, not a public install path yet: official Windows TUI and managed-runtime artifacts are not published.',
+        zh: '一个类 Unix 的终端——macOS、Linux，或 Windows 上的 WSL2。原生 Windows PowerShell 仍是实验性预览，尚不是公开安装路径：官方 Windows TUI 与受管运行时产物还未发布。',
+        wen: '类 Unix 之终端——macOS、Linux，或 Windows 之 WSL2。原生 Windows PowerShell 犹为试验之预览，未成公开安装之途：官方 Windows TUI 与受管运行时之物尚未发布。',
       },
       {
         en: 'Python 3.11 or newer. In practice LingTai provisions and manages its own runtime for you, so you rarely touch Python directly.',

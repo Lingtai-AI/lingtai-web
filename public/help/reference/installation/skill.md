@@ -32,6 +32,24 @@ release. `--from-source` only selects the source-build fallback for that exact
 official release; arbitrary `--ref` development work is handed off to
 `assets/dev.sh` with exit status 2.
 
+## Native Windows status
+
+Use **WSL2** with the canonical `/install.sh` path for supported Windows
+installation today. Native Windows PowerShell is an experimental preview
+implemented by the merged [Lingtai-AI/lingtai#690](https://github.com/Lingtai-AI/lingtai/pull/690),
+not a public installation entrypoint: `lingtai.ai` deliberately does not serve an
+`/install.ps1` happy path yet.
+
+The current public release publishes neither an official Windows TUI archive nor
+the pinned managed-runtime bundle needed for an ordinary install. The preview
+therefore fails loud in public mode instead of inventing a download. Its green
+hosted-VM seam is narrower: a tester supplies a local archive, matching SHA-256
+sidecar, and exact version, and explicitly chooses `-SkipVenv` for TUI-only
+installation. That preview has no supported public update, repair, runtime, or
+one-line install promise. Do not present `irm https://lingtai.ai/install.ps1 |
+iex` until those release artifacts and this Contract's ordinary-install
+postconditions are implemented and validated together.
+
 ## Choose an explicit asset
 
 Each asset is a standalone, directly fetchable CLI. Read its `--help`, supply
