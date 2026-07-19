@@ -35,8 +35,8 @@ official release; arbitrary `--ref` development work is handed off to
 ## Native Windows status
 
 Use **WSL2** with the canonical `/install.sh` path for supported Windows
-installation today. Native Windows PowerShell is an experimental preview under
-review in [Lingtai-AI/lingtai#690](https://github.com/Lingtai-AI/lingtai/pull/690),
+installation today. Native Windows PowerShell is an experimental preview
+implemented by the merged [Lingtai-AI/lingtai#690](https://github.com/Lingtai-AI/lingtai/pull/690),
 not a public installation entrypoint: `lingtai.ai` deliberately does not serve an
 `/install.ps1` happy path yet.
 
