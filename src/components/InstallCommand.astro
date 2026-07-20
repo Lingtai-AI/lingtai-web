@@ -5,124 +5,85 @@ interface Props {
 }
 
 const { copyLabel, showWindows = false } = Astro.props;
-const shellCommand = 'curl -fsSL https://lingtai.ai/install.sh | bash';
+const command = 'curl -fsSL https://lingtai.ai/install.sh | bash';
 const powershellCommand = 'irm https://lingtai.ai/install.ps1 -OutFile install.ps1';
 ---
 
-<div class="install-selector" data-install-selector>
-  {showWindows && (
-    <div class="platform-tabs" role="tablist" aria-label="Install platform">
-      <button
-        class="platform-tab active"
-        type="button"
-        role="tab"
-        aria-selected="true"
-        data-prompt="$"
-        data-command={shellCommand}
-      >
-        macOS / Linux
-      </button>
-      <button
-        class="platform-tab"
-        type="button"
-        role="tab"
-        aria-selected="false"
-        data-prompt="PS>"
-        data-command={powershellCommand}
-      >
-        PowerShell <span class="preview-label">experimental</span>
-      </button>
-    </div>
-  )}
-
+<div class="install-wrap" data-install-selector>
   <div class="install-pill">
     <span class="prompt">$</span>
-    <span class="command">{shellCommand}</span>
-    <button class="copy-btn" type="button" data-command={shellCommand}>{copyLabel}</button>
+    <span class="command">{command}</span>
+    <button class="copy-btn" data-command={command}>{copyLabel}</button>
   </div>
-
   {showWindows && (
-    <p class="install-note">
-      PowerShell preview downloads the installer script. The verified path uses a local Windows archive, its SHA-256 sidecar, an exact version, and <code>-SkipVenv</code>.
-    </p>
+    <div class="platform-switch">
+      <button
+        class="platform-link active"
+        type="button"
+        aria-pressed="true"
+        data-prompt="$"
+        data-command={command}
+      >macOS / Linux</button>
+      <span class="platform-sep">·</span>
+      <button
+        class="platform-link"
+        type="button"
+        aria-pressed="false"
+        data-prompt="PS>"
+        data-command={powershellCommand}
+      >PowerShell <span class="preview-label">experimental</span></button>
+    </div>
   )}
 </div>
 
 <script>
-  document.querySelectorAll<HTMLElement>('[data-install-selector]').forEach((root) => {
-    const prompt = root.querySelector<HTMLElement>('.prompt');
-    const command = root.querySelector<HTMLElement>('.command');
-    const copy = root.querySelector<HTMLButtonElement>('.copy-btn');
-
-    root.querySelectorAll<HTMLButtonElement>('.platform-tab').forEach((tab) => {
-      tab.addEventListener('click', () => {
-        root.querySelectorAll<HTMLButtonElement>('.platform-tab').forEach((item) => {
-          const active = item === tab;
-          item.classList.toggle('active', active);
-          item.setAttribute('aria-selected', String(active));
-        });
-        const nextCommand = tab.dataset.command;
-        if (prompt && tab.dataset.prompt) prompt.textContent = tab.dataset.prompt;
-        if (command && nextCommand) command.textContent = nextCommand;
-        if (copy && nextCommand) copy.dataset.command = nextCommand;
-      });
-    });
-
-    copy?.addEventListener('click', () => {
-      const nextCommand = copy.dataset.command;
-      if (nextCommand) {
-        navigator.clipboard.writeText(nextCommand);
-        const original = copy.textContent;
-        copy.textContent = '\u2713';
+  document.querySelectorAll('.copy-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const command = (btn as HTMLElement).dataset.command;
+      if (command) {
+        navigator.clipboard.writeText(command);
+        const original = btn.textContent;
+        btn.textContent = '✓';
         setTimeout(() => {
-          copy.textContent = original;
+          btn.textContent = original;
         }, 1500);
       }
+    });
+  });
+
+  document.querySelectorAll('[data-install-selector]').forEach((root) => {
+    const prompt = root.querySelector('.prompt');
+    const command = root.querySelector('.command');
+    const copy = root.querySelector('.copy-btn');
+
+    root.querySelectorAll('.platform-link').forEach((link) => {
+      link.addEventListener('click', () => {
+        root.querySelectorAll('.platform-link').forEach((item) => {
+          const active = item === link;
+          item.classList.toggle('active', active);
+          item.setAttribute('aria-pressed', String(active));
+        });
+        const next = (link as HTMLElement).dataset;
+        if (prompt && next.prompt) prompt.textContent = next.prompt;
+        if (command && next.command) command.textContent = next.command;
+        if (copy && next.command) (copy as HTMLElement).dataset.command = next.command;
+      });
     });
   });
 </script>
 
 <style>
-  .install-selector {
+  .install-wrap {
     display: inline-flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-    max-width: min(100%, 620px);
+    gap: 6px;
   }
-  .platform-tabs {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding-left: 1px;
-  }
-  .platform-tab {
-    border: 0;
-    border-bottom: 1px solid transparent;
-    background: transparent;
-    color: var(--text-muted);
-    padding: 4px 8px 5px;
-    font: 600 11px/1.2 "SF Mono", "Fira Code", Menlo, Consolas, monospace;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-  }
-  .platform-tab:hover,
-  .platform-tab.active {
-    color: var(--vermilion);
-    border-bottom-color: var(--vermilion);
-  }
-  .preview-label {
-    margin-left: 4px;
-    color: color-mix(in srgb, var(--vermilion) 78%, var(--text-muted));
-    font-size: 9px;
-    text-transform: uppercase;
-  }
-  /* Ink slab - dark block, single sharp corner, vermilion action */
+  /* Ink slab (墨锭) — dark block, single sharp corner, vermilion action */
   .install-pill {
     display: inline-flex;
     align-items: center;
     gap: 12px;
-    max-width: 100%;
     background: var(--code-bg);
     color: var(--code-text);
     padding: 12px 22px;
@@ -136,14 +97,12 @@ const powershellCommand = 'irm https://lingtai.ai/install.ps1 -OutFile install.p
   .command {
     overflow-x: auto;
     white-space: nowrap;
-    max-width: min(420px, 58vw);
+    max-width: 250px;
   }
   .prompt {
-    flex: 0 0 auto;
     color: var(--vermilion);
   }
   .copy-btn {
-    flex: 0 0 auto;
     background: none;
     border: none;
     color: var(--vermilion);
@@ -157,28 +116,33 @@ const powershellCommand = 'irm https://lingtai.ai/install.ps1 -OutFile install.p
     opacity: 1;
     text-shadow: 0 0 8px color-mix(in srgb, var(--vermilion) 50%, transparent);
   }
-  .install-note {
-    max-width: 590px;
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 11px;
-    line-height: 1.5;
-    text-align: left;
-  }
-  .install-note code {
-    color: var(--code-text);
+  /* Footnote-level platform switch — whisper, not a second hero element */
+  .platform-switch {
+    padding-left: 2px;
     font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
   }
-  @media (max-width: 640px) {
-    .platform-tabs {
-      flex-wrap: wrap;
-    }
-    .install-pill {
-      padding: 11px 14px;
-      gap: 8px;
-    }
-    .command {
-      max-width: 58vw;
-    }
+  .platform-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  .platform-link:hover,
+  .platform-link.active {
+    color: var(--vermilion);
+  }
+  .platform-sep {
+    opacity: 0.5;
+  }
+  .preview-label {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.8;
   }
 </style>
