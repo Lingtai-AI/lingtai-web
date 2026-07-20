@@ -1,28 +1,81 @@
 ---
 interface Props {
   copyLabel: string;
+  showWindows?: boolean;
 }
 
-const { copyLabel } = Astro.props;
-const command = 'curl -fsSL https://lingtai.ai/install.sh | bash';
+const { copyLabel, showWindows = false } = Astro.props;
+const shellCommand = 'curl -fsSL https://lingtai.ai/install.sh | bash';
+const powershellCommand = 'irm https://lingtai.ai/install.ps1 -OutFile install.ps1';
 ---
 
-<div class="install-pill">
-  <span class="prompt">$</span>
-  <span class="command">{command}</span>
-  <button class="copy-btn" data-command={command}>{copyLabel}</button>
+<div class="install-selector" data-install-selector>
+  {showWindows && (
+    <div class="platform-tabs" role="tablist" aria-label="Install platform">
+      <button
+        class="platform-tab active"
+        type="button"
+        role="tab"
+        aria-selected="true"
+        data-prompt="$"
+        data-command={shellCommand}
+      >
+        macOS / Linux
+      </button>
+      <button
+        class="platform-tab"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        data-prompt="PS>"
+        data-command={powershellCommand}
+      >
+        PowerShell <span class="preview-label">experimental</span>
+      </button>
+    </div>
+  )}
+
+  <div class="install-pill">
+    <span class="prompt">$</span>
+    <span class="command">{shellCommand}</span>
+    <button class="copy-btn" type="button" data-command={shellCommand}>{copyLabel}</button>
+  </div>
+
+  {showWindows && (
+    <p class="install-note">
+      PowerShell preview downloads the installer script. The verified path uses a local Windows archive, its SHA-256 sidecar, an exact version, and <code>-SkipVenv</code>.
+    </p>
+  )}
 </div>
 
 <script>
-  document.querySelectorAll('.copy-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const command = (btn as HTMLElement).dataset.command;
-      if (command) {
-        navigator.clipboard.writeText(command);
-        const original = btn.textContent;
-        btn.textContent = '✓';
+  document.querySelectorAll<HTMLElement>('[data-install-selector]').forEach((root) => {
+    const prompt = root.querySelector<HTMLElement>('.prompt');
+    const command = root.querySelector<HTMLElement>('.command');
+    const copy = root.querySelector<HTMLButtonElement>('.copy-btn');
+
+    root.querySelectorAll<HTMLButtonElement>('.platform-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        root.querySelectorAll<HTMLButtonElement>('.platform-tab').forEach((item) => {
+          const active = item === tab;
+          item.classList.toggle('active', active);
+          item.setAttribute('aria-selected', String(active));
+        });
+        const nextCommand = tab.dataset.command;
+        if (prompt && tab.dataset.prompt) prompt.textContent = tab.dataset.prompt;
+        if (command && nextCommand) command.textContent = nextCommand;
+        if (copy && nextCommand) copy.dataset.command = nextCommand;
+      });
+    });
+
+    copy?.addEventListener('click', () => {
+      const nextCommand = copy.dataset.command;
+      if (nextCommand) {
+        navigator.clipboard.writeText(nextCommand);
+        const original = copy.textContent;
+        copy.textContent = '\u2713';
         setTimeout(() => {
-          btn.textContent = original;
+          copy.textContent = original;
         }, 1500);
       }
     });
@@ -30,11 +83,46 @@ const command = 'curl -fsSL https://lingtai.ai/install.sh | bash';
 </script>
 
 <style>
-  /* Ink slab (墨锭) — dark block, single sharp corner, vermilion action */
+  .install-selector {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: min(100%, 620px);
+  }
+  .platform-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 1px;
+  }
+  .platform-tab {
+    border: 0;
+    border-bottom: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    padding: 4px 8px 5px;
+    font: 600 11px/1.2 "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+  .platform-tab:hover,
+  .platform-tab.active {
+    color: var(--vermilion);
+    border-bottom-color: var(--vermilion);
+  }
+  .preview-label {
+    margin-left: 4px;
+    color: color-mix(in srgb, var(--vermilion) 78%, var(--text-muted));
+    font-size: 9px;
+    text-transform: uppercase;
+  }
+  /* Ink slab - dark block, single sharp corner, vermilion action */
   .install-pill {
     display: inline-flex;
     align-items: center;
     gap: 12px;
+    max-width: 100%;
     background: var(--code-bg);
     color: var(--code-text);
     padding: 12px 22px;
@@ -48,12 +136,14 @@ const command = 'curl -fsSL https://lingtai.ai/install.sh | bash';
   .command {
     overflow-x: auto;
     white-space: nowrap;
-    max-width: 250px;
+    max-width: min(420px, 58vw);
   }
   .prompt {
+    flex: 0 0 auto;
     color: var(--vermilion);
   }
   .copy-btn {
+    flex: 0 0 auto;
     background: none;
     border: none;
     color: var(--vermilion);
@@ -66,5 +156,29 @@ const command = 'curl -fsSL https://lingtai.ai/install.sh | bash';
   .copy-btn:hover {
     opacity: 1;
     text-shadow: 0 0 8px color-mix(in srgb, var(--vermilion) 50%, transparent);
+  }
+  .install-note {
+    max-width: 590px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: left;
+  }
+  .install-note code {
+    color: var(--code-text);
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+  }
+  @media (max-width: 640px) {
+    .platform-tabs {
+      flex-wrap: wrap;
+    }
+    .install-pill {
+      padding: 11px 14px;
+      gap: 8px;
+    }
+    .command {
+      max-width: 58vw;
+    }
   }
 </style>
