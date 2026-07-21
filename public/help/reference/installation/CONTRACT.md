@@ -50,7 +50,8 @@ Exact release migrations remain owned by each product repository's tagged
 
 ## Behavior
 
-Every entrypoint MUST preserve these invariants.
+Every entrypoint MUST preserve these invariants except where its adapter subsection
+expressly narrows one; the adapter owns that named exception.
 
 ### 2.1 Explicit operation selection
 
@@ -60,8 +61,10 @@ Every entrypoint MUST preserve these invariants.
 2. Update, development, repair, and verification are separate standalone assets.
 3. `/skill.md`, `/help/skill.md`, and the installation skill are guidance only.
    They MUST NOT infer or authorize mutation.
-4. A missing child URL, unclassified state, conflicting receipt, redirected path,
-   or ambiguous provenance is a stop condition.
+4. For `/install.sh` and the maintenance assets, a missing child URL,
+   unclassified state, conflicting receipt, redirected path, or ambiguous
+   provenance is a stop condition. `/install.ps1` follows its explicit
+   fixed-destination trust and failure contract in §4.1a.
 5. No entrypoint downloads, sources, or executes another installation entrypoint.
 
 ### 2.2 Exact ownership
@@ -102,6 +105,8 @@ Every entrypoint MUST preserve these invariants.
 ### 2.4 Consent and side-effect ceiling
 
 1. Invoking `/install.sh` authorizes only a fresh ordinary installation.
+   Invoking `/install.ps1` authorizes convergence to its explicit or
+   once-resolved exact input under §4.1a.
 2. `update.sh` and `dev.sh` require `--yes` before mutation.
 3. `fix.sh` is read-only unless both `--apply` and `--yes` are present.
 4. `verify.sh` is always read-only.
@@ -117,8 +122,10 @@ Every entrypoint MUST preserve these invariants.
 1. A successful operation records schema `lingtai.tui.install/v1`, schema version
    `1`, exact target ownership, provenance, and the state needed by its supported
    successor operations.
-2. Fresh install publishes a mode-`0600` receipt by same-directory, exclusive,
-   no-clobber creation. A raced receipt is preserved byte-for-byte.
+2. Fresh `/install.sh` publishes a mode-`0600` receipt by same-directory,
+   exclusive, no-clobber creation. A raced receipt is preserved byte-for-byte.
+   `/install.ps1` follows §4.1a: it may replace its managed metadata only after
+   its final postconditions pass.
 3. Update and repair re-read and revalidate the prior receipt immediately before
    atomically replacing it. A changed receipt is an explicit partial failure.
 4. Development writes one complete `dev-source` receipt only after build,
@@ -135,14 +142,15 @@ Every entrypoint MUST preserve these invariants.
 | Strict ordinary receipt with a missing or broken old runtime | `fix.sh` diagnosis; then `fix.sh --apply --yes` with one new free runtime child | Repair can bind the prior receipt without executing the old runtime | Do not delete/reuse the old runtime or rerun ordinary install |
 | Valid `dev-source` receipt and explicit Git checkouts | `verify.sh` or `dev.sh` | Editable provenance remains explicit | `update.sh` and `fix.sh` MUST reject it |
 | Exact release interval needs schema/config migration | Tagged product `migration/migration.md` files | Migration history is product- and tag-owned | Do not use `main`, `latest`, another repo, or skip a tag |
-| Receipt, target, runtime, or provenance is missing, conflicting, redirected, or otherwise unclassified | Stop and report the exact state | No executable owns an inferred recovery | Do not adopt, overwrite, auto-heal, or guess |
+| POSIX/maintenance receipt, target, runtime, or provenance is missing, conflicting, redirected, or otherwise unclassified | Stop and report the exact state | No POSIX/maintenance executable owns an inferred recovery | Do not adopt, overwrite, auto-heal, or guess; the explicit Windows adapter remains governed by §4.1a |
 
-The existence of `$HOME/.lingtai-tui` as an ordinary directory alone does not
-make a prior installation. Freshness is lost when an install receipt or runtime
-root exists, or when a managed target already occupies the selected bin path.
+For `/install.sh`, the existence of `$HOME/.lingtai-tui` as an ordinary directory
+alone does not make a prior installation. Its freshness is lost when an install
+receipt or runtime root exists, or when a managed target already occupies the
+selected bin path. `/install.ps1` uses the convergence rules in §4.1a instead.
 
 `--skip-python` / `--skip-venv` (`-SkipVenv` on `install.ps1`) is an explicit
-TUI-only ordinary-install opt-out. Its receipt intentionally omits
+binary-only ordinary-install opt-out. Its receipt intentionally omits
 runtime/kernel fields. The runtime-dependent update, repair, and verification
 assets do not promise to infer or backfill that state; stop and choose an
 explicit supported plan rather than treating it as a normal healthy ordinary
@@ -225,7 +233,10 @@ Windows PowerShell 5.1 and PowerShell 7+.
   after validation. Repeating the same input is supported; selecting a different
   exact release applies that release through this adapter rather than the POSIX
   update/fix assets. Publish success metadata only after final postconditions pass.
-- `-DryRun` performs the same resolution/validation reads but writes nothing.
+- `-DryRun` is a zero-write planning pass, not a full real-run preflight. Public
+  mode resolves the release once and reports its selected URLs; local mode
+  verifies the supplied archive checksum. It does not download, stage, probe,
+  install, or prove that every real-run artifact will pass.
 
 **Failure meaning**
 
