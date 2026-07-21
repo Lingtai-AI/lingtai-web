@@ -6,7 +6,7 @@ interface Props {
 
 const { copyLabel, showWindows = false } = Astro.props;
 const command = 'curl -fsSL https://lingtai.ai/install.sh | bash';
-const powershellCommand = 'irm https://lingtai.ai/install.ps1 -OutFile install.ps1';
+const powershellCommand = 'irm https://lingtai.ai/install.ps1 | iex';
 ---
 
 <div class="install-wrap" data-install-selector>
@@ -31,7 +31,7 @@ const powershellCommand = 'irm https://lingtai.ai/install.ps1 -OutFile install.p
         aria-pressed="false"
         data-prompt="PS>"
         data-command={powershellCommand}
-      >PowerShell <span class="preview-label">experimental</span></button>
+      >PowerShell</button>
     </div>
   )}
 </div>
@@ -138,11 +138,5 @@ const powershellCommand = 'irm https://lingtai.ai/install.ps1 -OutFile install.p
   }
   .platform-sep {
     opacity: 0.5;
-  }
-  .preview-label {
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    opacity: 0.8;
   }
 </style>

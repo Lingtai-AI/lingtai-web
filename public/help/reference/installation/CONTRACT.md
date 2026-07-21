@@ -6,6 +6,7 @@ related_files:
   - ANATOMY.md
   - public/help/reference/installation/ANATOMY.md
   - public/install.sh
+  - public/install.ps1
   - public/help/reference/installation/skill.md
   - public/_headers
   - public/help/reference/installation/assets/update.sh
@@ -28,6 +29,7 @@ This file is the normative contract for choosing and maintaining the public
 installation entrypoints served by `lingtai.ai`:
 
 - `/install.sh`
+- `/install.ps1`
 - `/help/reference/installation/assets/update.sh`
 - `/help/reference/installation/assets/dev.sh`
 - `/help/reference/installation/assets/fix.sh`
@@ -48,28 +50,38 @@ Exact release migrations remain owned by each product repository's tagged
 
 ## Behavior
 
-Every entrypoint MUST preserve these invariants.
+Every entrypoint MUST preserve these invariants except where its adapter subsection
+expressly narrows one; the adapter owns that named exception.
 
 ### 2.1 Explicit operation selection
 
-1. Ordinary install is first-install-only.
+1. `/install.sh` ordinary install is first-install-only. `/install.ps1` is an
+   explicit Windows adapter with the exact-release repeat semantics stated in
+   §4.1a; this does not change `/install.sh` or the update/fix separation.
 2. Update, development, repair, and verification are separate standalone assets.
 3. `/skill.md`, `/help/skill.md`, and the installation skill are guidance only.
    They MUST NOT infer or authorize mutation.
-4. A missing child URL, unclassified state, conflicting receipt, redirected path,
-   or ambiguous provenance is a stop condition.
+4. For `/install.sh` and the maintenance assets, a missing child URL,
+   unclassified state, conflicting receipt, redirected path, or ambiguous
+   provenance is a stop condition. `/install.ps1` follows its explicit
+   fixed-destination trust and failure contract in §4.1a.
 5. No entrypoint downloads, sources, or executes another installation entrypoint.
 
 ### 2.2 Exact ownership
 
 1. Paths supplied to maintenance assets are exact absolute paths.
-2. The selected binary directory and `$HOME/.lingtai-tui` state MUST be ordinary
-   owned paths, not redirected through a disallowed symlink.
+2. For `/install.sh` and the maintenance assets, the selected binary directory
+   and `$HOME/.lingtai-tui` state MUST be ordinary owned paths, not redirected
+   through a disallowed symlink. `/install.ps1` uses its configured fixed paths
+   without claiming this check.
 3. A runtime interpreter MUST resolve to a virtual environment physically under
    `$HOME/.lingtai-tui/runtime`, and its `sys.prefix` MUST equal that selected
    environment.
 4. An existing target is mutable only when a strict
-   `lingtai.tui.install/v1` receipt owns that exact target and runtime.
+   `lingtai.tui.install/v1` receipt owns that exact target and runtime for
+   `/install.sh` and the maintenance assets. `/install.ps1` has its explicit
+   fixed-destination semantics in §4.1a and makes no disallowed-symlink or
+   foreign-ownership claim beyond what its implementation proves.
 5. Ordinary and development provenance are distinct. Ordinary update/repair MUST
    reject `dev-source`; development MUST record editable source provenance.
 6. System and Homebrew Python interpreters are never installation runtimes.
@@ -93,6 +105,8 @@ Every entrypoint MUST preserve these invariants.
 ### 2.4 Consent and side-effect ceiling
 
 1. Invoking `/install.sh` authorizes only a fresh ordinary installation.
+   Invoking `/install.ps1` authorizes convergence to its explicit or
+   once-resolved exact input under §4.1a.
 2. `update.sh` and `dev.sh` require `--yes` before mutation.
 3. `fix.sh` is read-only unless both `--apply` and `--yes` are present.
 4. `verify.sh` is always read-only.
@@ -108,8 +122,10 @@ Every entrypoint MUST preserve these invariants.
 1. A successful operation records schema `lingtai.tui.install/v1`, schema version
    `1`, exact target ownership, provenance, and the state needed by its supported
    successor operations.
-2. Fresh install publishes a mode-`0600` receipt by same-directory, exclusive,
-   no-clobber creation. A raced receipt is preserved byte-for-byte.
+2. Fresh `/install.sh` publishes a mode-`0600` receipt by same-directory,
+   exclusive, no-clobber creation. A raced receipt is preserved byte-for-byte.
+   `/install.ps1` follows §4.1a: it may replace its managed metadata only after
+   its final postconditions pass.
 3. Update and repair re-read and revalidate the prior receipt immediately before
    atomically replacing it. A changed receipt is an explicit partial failure.
 4. Development writes one complete `dev-source` receipt only after build,
@@ -120,22 +136,26 @@ Every entrypoint MUST preserve these invariants.
 
 | Observed state | Allowed entrypoint | Why | Forbidden shortcut |
 |---|---|---|---|
-| Fresh: no `install.json`, no runtime root, and no managed target in the selected bin directory | `/install.sh` | Canonical ordinary first install | Do not use update/fix to manufacture ownership |
+| Fresh: no `install.json`, no runtime root, and no managed target in the selected bin directory (Unix-like) | `/install.sh` | Canonical ordinary first install | Do not use update/fix to manufacture ownership |
+| Native Windows invocation with one explicit or once-resolved exact release/local artifact | `/install.ps1` | Validates that selected input and converges its fixed managed destinations to it | Do not bypass exact selection/trust gates or assume transactional rollback |
 | Healthy ordinary receipt (`release-asset` or `source-build`) with matching target and runtime | `verify.sh`; then `update.sh` for an exact update | Ownership and runtime provenance are available | Do not rerun ordinary install; do not use dev implicitly |
 | Strict ordinary receipt with a missing or broken old runtime | `fix.sh` diagnosis; then `fix.sh --apply --yes` with one new free runtime child | Repair can bind the prior receipt without executing the old runtime | Do not delete/reuse the old runtime or rerun ordinary install |
 | Valid `dev-source` receipt and explicit Git checkouts | `verify.sh` or `dev.sh` | Editable provenance remains explicit | `update.sh` and `fix.sh` MUST reject it |
 | Exact release interval needs schema/config migration | Tagged product `migration/migration.md` files | Migration history is product- and tag-owned | Do not use `main`, `latest`, another repo, or skip a tag |
-| Receipt, target, runtime, or provenance is missing, conflicting, redirected, or otherwise unclassified | Stop and report the exact state | No executable owns an inferred recovery | Do not adopt, overwrite, auto-heal, or guess |
+| POSIX/maintenance receipt, target, runtime, or provenance is missing, conflicting, redirected, or otherwise unclassified | Stop and report the exact state | No POSIX/maintenance executable owns an inferred recovery | Do not adopt, overwrite, auto-heal, or guess; the explicit Windows adapter remains governed by §4.1a |
 
-The existence of `$HOME/.lingtai-tui` as an ordinary directory alone does not
-make a prior installation. Freshness is lost when an install receipt or runtime
-root exists, or when a managed target already occupies the selected bin path.
+For `/install.sh`, the existence of `$HOME/.lingtai-tui` as an ordinary directory
+alone does not make a prior installation. Its freshness is lost when an install
+receipt or runtime root exists, or when a managed target already occupies the
+selected bin path. `/install.ps1` uses the convergence rules in §4.1a instead.
 
-`--skip-python` / `--skip-venv` is an explicit TUI-only ordinary-install opt-out.
-Its receipt intentionally omits runtime/kernel fields. The runtime-dependent
-update, repair, and verification assets do not promise to infer or backfill that
-state; stop and choose an explicit supported plan rather than treating it as a
-normal healthy ordinary runtime installation.
+`--skip-python` / `--skip-venv` (`-SkipVenv` on `install.ps1`) is an explicit
+binary-only ordinary-install opt-out. Its receipt intentionally omits
+runtime/kernel fields. The runtime-dependent update, repair, and verification
+assets do not promise to infer or backfill that state; stop and choose an
+explicit supported plan rather than treating it as a normal healthy ordinary
+runtime installation. On Windows, `-SkipVenv` skips only the kernel venv; both
+the TUI and Portal binaries remain required and are installed.
 
 ## Adapters
 
@@ -177,6 +197,62 @@ normal healthy ordinary runtime installation.
 - A nonzero exit is not rollback. It may leave newly created target/runtime or
   dependency state, but MUST NOT claim success or replace pre-existing state.
   A later ordinary invocation sees that state and fails closed.
+
+### 4.1a `/install.ps1` — exact-release ordinary install/reinstall (native Windows)
+
+The PowerShell counterpart to `/install.sh`; parses and runs identically under
+Windows PowerShell 5.1 and PowerShell 7+.
+
+**Input and validation**
+
+- Select one exact official release (`-Version vX.Y.Z`, or one release resolved
+  by the public mode). `-ArchivePath`/`-ChecksumPath` selects local-artifact
+  mode; the archive and sidecar are still SHA-256 verified and the staged TUI
+  identity must match the requested exact version.
+- Before any destination copy, validate the exact release inputs and staging,
+  require both `lingtai-tui.exe` and `lingtai-portal.exe`, and, unless
+  `-SkipVenv` is present, complete the pinned-runtime trust and import/version
+  postconditions. The installer does not claim disallowed-symlink or
+  foreign-ownership checks.
+
+**Allowed reads/downloads/writes**
+
+- Resolve and validate the official release manifest, or verify the supplied
+  local archive and sidecar; stage the archive and confirm the exact staged TUI
+  identity before touching the fixed bin directory. Both managed binaries are
+  required before destination copy.
+- Unless `-SkipVenv` is explicit, provision the runtime venv under
+  `%USERPROFILE%\.lingtai-tui\runtime\venv` from the release's pinned kernel
+  bundle: select and SHA-256-verify a compatible `cp311`/`cp312`/`cp313`
+  `win_amd64` wheel, install LingTai only from that verified local wheel path,
+  and verify import/version/provenance. Third-party dependencies may resolve
+  through the configured package index; there is no `pip install lingtai` or
+  other package-name fallback.
+- On a real invocation, converge the fixed managed binary names and owned
+  runtime/metadata to the exact selected input: they may be created or replaced
+  after validation. Repeating the same input is supported; selecting a different
+  exact release applies that release through this adapter rather than the POSIX
+  update/fix assets. Publish success metadata only after final postconditions pass.
+- `-DryRun` is a zero-write planning pass, not a full real-run preflight. Public
+  mode resolves the release once and reports its selected URLs; local mode
+  verifies the supplied archive checksum. It does not download, stage, probe,
+  install, or prove that every real-run artifact will pass.
+
+**Failure meaning**
+
+- This is not transactional rollback. Failure may leave staging, runtime, or
+  dependency state; a late write failure may also leave partial changes among
+  the fixed managed destinations. It MUST NOT publish success metadata unless
+  postconditions pass. Staging is retained for inspection/recovery.
+- No skill/helper download, source, or execution.
+
+**Success and failure meaning**
+
+- Success means the verified archive contained both managed binaries, the staged
+  TUI identity matched the exact selection, optional pinned runtime provenance
+  passed, managed destinations were written, and success metadata postconditions passed.
+- `-DryRun` is zero-write. `-SkipVenv` skips only the kernel venv; it does not
+  skip either required binary.
 
 ### 4.2 `assets/update.sh` — healthy exact ordinary update
 
