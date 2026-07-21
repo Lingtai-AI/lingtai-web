@@ -54,7 +54,9 @@ Every entrypoint MUST preserve these invariants.
 
 ### 2.1 Explicit operation selection
 
-1. Ordinary install is first-install-only.
+1. `/install.sh` ordinary install is first-install-only. `/install.ps1` is an
+   explicit Windows adapter with the exact-release repeat semantics stated in
+   §4.1a; this does not change `/install.sh` or the update/fix separation.
 2. Update, development, repair, and verification are separate standalone assets.
 3. `/skill.md`, `/help/skill.md`, and the installation skill are guidance only.
    They MUST NOT infer or authorize mutation.
@@ -65,13 +67,18 @@ Every entrypoint MUST preserve these invariants.
 ### 2.2 Exact ownership
 
 1. Paths supplied to maintenance assets are exact absolute paths.
-2. The selected binary directory and `$HOME/.lingtai-tui` state MUST be ordinary
-   owned paths, not redirected through a disallowed symlink.
+2. For `/install.sh` and the maintenance assets, the selected binary directory
+   and `$HOME/.lingtai-tui` state MUST be ordinary owned paths, not redirected
+   through a disallowed symlink. `/install.ps1` uses its configured fixed paths
+   without claiming this check.
 3. A runtime interpreter MUST resolve to a virtual environment physically under
    `$HOME/.lingtai-tui/runtime`, and its `sys.prefix` MUST equal that selected
    environment.
 4. An existing target is mutable only when a strict
-   `lingtai.tui.install/v1` receipt owns that exact target and runtime.
+   `lingtai.tui.install/v1` receipt owns that exact target and runtime for
+   `/install.sh` and the maintenance assets. `/install.ps1` has its explicit
+   fixed-destination semantics in §4.1a and makes no disallowed-symlink or
+   foreign-ownership claim beyond what its implementation proves.
 5. Ordinary and development provenance are distinct. Ordinary update/repair MUST
    reject `dev-source`; development MUST record editable source provenance.
 6. System and Homebrew Python interpreters are never installation runtimes.
@@ -123,7 +130,7 @@ Every entrypoint MUST preserve these invariants.
 | Observed state | Allowed entrypoint | Why | Forbidden shortcut |
 |---|---|---|---|
 | Fresh: no `install.json`, no runtime root, and no managed target in the selected bin directory (Unix-like) | `/install.sh` | Canonical ordinary first install | Do not use update/fix to manufacture ownership |
-| Fresh: no `install.json`, no runtime root, and no managed target in the selected bin directory (native Windows) | `/install.ps1` | Canonical ordinary first install for PowerShell 5.1/7+ | Do not use update/fix to manufacture ownership |
+| Native Windows invocation with one explicit or once-resolved exact release/local artifact | `/install.ps1` | Validates that selected input and converges its fixed managed destinations to it | Do not bypass exact selection/trust gates or assume transactional rollback |
 | Healthy ordinary receipt (`release-asset` or `source-build`) with matching target and runtime | `verify.sh`; then `update.sh` for an exact update | Ownership and runtime provenance are available | Do not rerun ordinary install; do not use dev implicitly |
 | Strict ordinary receipt with a missing or broken old runtime | `fix.sh` diagnosis; then `fix.sh --apply --yes` with one new free runtime child | Repair can bind the prior receipt without executing the old runtime | Do not delete/reuse the old runtime or rerun ordinary install |
 | Valid `dev-source` receipt and explicit Git checkouts | `verify.sh` or `dev.sh` | Editable provenance remains explicit | `update.sh` and `fix.sh` MUST reject it |
@@ -139,7 +146,8 @@ TUI-only ordinary-install opt-out. Its receipt intentionally omits
 runtime/kernel fields. The runtime-dependent update, repair, and verification
 assets do not promise to infer or backfill that state; stop and choose an
 explicit supported plan rather than treating it as a normal healthy ordinary
-runtime installation.
+runtime installation. On Windows, `-SkipVenv` skips only the kernel venv; both
+the TUI and Portal binaries remain required and are installed.
 
 ## Adapters
 
@@ -182,50 +190,58 @@ runtime installation.
   dependency state, but MUST NOT claim success or replace pre-existing state.
   A later ordinary invocation sees that state and fails closed.
 
-### 4.1a `/install.ps1` — fresh ordinary install (native Windows)
+### 4.1a `/install.ps1` — exact-release ordinary install/reinstall (native Windows)
 
 The PowerShell counterpart to `/install.sh`; parses and runs identically under
 Windows PowerShell 5.1 and PowerShell 7+.
 
-**Preconditions**
+**Input and validation**
 
-- Exact official release selection (`-Version vX.Y.Z`), or current official
-  release resolution; `-ArchivePath`/`-ChecksumPath` selects local-artifact mode
-  (no network for the binary install itself) instead of public release
-  resolution.
-- No existing install receipt, runtime root, or managed target.
-- The selected bin directory (`%LOCALAPPDATA%\Programs\lingtai\bin` by default)
-  and global state directory are not redirected through a disallowed symlink.
+- Select one exact official release (`-Version vX.Y.Z`, or one release resolved
+  by the public mode). `-ArchivePath`/`-ChecksumPath` selects local-artifact
+  mode; the archive and sidecar are still SHA-256 verified and the staged TUI
+  identity must match the requested exact version.
+- Before any destination copy, validate the exact release inputs and staging,
+  require both `lingtai-tui.exe` and `lingtai-portal.exe`, and, unless
+  `-SkipVenv` is present, complete the pinned-runtime trust and import/version
+  postconditions. The installer does not claim disallowed-symlink or
+  foreign-ownership checks.
 
 **Allowed reads/downloads/writes**
 
-- Resolve the official release's `lingtai-bundle-manifest.json`, download and
-  SHA-256-verify the `lingtai-<tag>-windows-amd64.zip` archive and sidecar
-  before extraction, and confirm the staged `lingtai-tui.exe` reports exactly
-  the resolved tag before touching the bin directory.
-- Unless `-SkipVenv` is explicit, provision the owned runtime venv under
-  `%USERPROFILE%\.lingtai-tui\runtime\venv` only from the release's pinned
-  kernel bundle: select and SHA-256-verify a compatible `cp311`/`cp312`/`cp313`
-  `win_amd64` wheel from the pinned kernel release manifest, install it by
-  local path with `--no-deps`, and verify import/version/provenance.
-- Publish the first receipt (`install_method: "powershell"`) only after TUI and
-  runtime postconditions pass.
+- Resolve and validate the official release manifest, or verify the supplied
+  local archive and sidecar; stage the archive and confirm the exact staged TUI
+  identity before touching the fixed bin directory. Both managed binaries are
+  required before destination copy.
+- Unless `-SkipVenv` is explicit, provision the runtime venv under
+  `%USERPROFILE%\.lingtai-tui\runtime\venv` from the release's pinned kernel
+  bundle: select and SHA-256-verify a compatible `cp311`/`cp312`/`cp313`
+  `win_amd64` wheel, install LingTai only from that verified local wheel path,
+  and verify import/version/provenance. Third-party dependencies may resolve
+  through the configured package index; there is no `pip install lingtai` or
+  other package-name fallback.
+- On a real invocation, converge the fixed managed binary names and owned
+  runtime/metadata to the exact selected input: they may be created or replaced
+  after validation. Repeating the same input is supported; selecting a different
+  exact release applies that release through this adapter rather than the POSIX
+  update/fix assets. Publish success metadata only after final postconditions pass.
 - `-DryRun` performs the same resolution/validation reads but writes nothing.
 
-**Forbidden behavior**
+**Failure meaning**
 
-- No adoption, overwrite, update, or repair of existing state.
-- No package-name fallback; the kernel wheel is installed only from the
-  verified local artifact path, never `pip install lingtai`.
+- This is not transactional rollback. Failure may leave staging, runtime, or
+  dependency state; a late write failure may also leave partial changes among
+  the fixed managed destinations. It MUST NOT publish success metadata unless
+  postconditions pass. Staging is retained for inspection/recovery.
 - No skill/helper download, source, or execution.
 
 **Success and failure meaning**
 
-- Success means the exact TUI identity, optional pinned runtime provenance, and
-  exclusive receipt publication passed.
-- A nonzero exit is not rollback. It may leave newly created target/runtime or
-  staging state, but MUST NOT claim success or replace pre-existing state. A
-  later ordinary invocation sees that state and fails closed.
+- Success means the verified archive contained both managed binaries, the staged
+  TUI identity matched the exact selection, optional pinned runtime provenance
+  passed, managed destinations were written, and success metadata postconditions passed.
+- `-DryRun` is zero-write. `-SkipVenv` skips only the kernel venv; it does not
+  skip either required binary.
 
 ### 4.2 `assets/update.sh` — healthy exact ordinary update
 
