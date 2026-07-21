@@ -6,6 +6,7 @@ related_files:
   - ANATOMY.md
   - public/help/reference/installation/ANATOMY.md
   - public/install.sh
+  - public/install.ps1
   - public/help/reference/installation/skill.md
   - public/_headers
   - public/help/reference/installation/assets/update.sh
@@ -28,6 +29,7 @@ This file is the normative contract for choosing and maintaining the public
 installation entrypoints served by `lingtai.ai`:
 
 - `/install.sh`
+- `/install.ps1`
 - `/help/reference/installation/assets/update.sh`
 - `/help/reference/installation/assets/dev.sh`
 - `/help/reference/installation/assets/fix.sh`
@@ -120,7 +122,8 @@ Every entrypoint MUST preserve these invariants.
 
 | Observed state | Allowed entrypoint | Why | Forbidden shortcut |
 |---|---|---|---|
-| Fresh: no `install.json`, no runtime root, and no managed target in the selected bin directory | `/install.sh` | Canonical ordinary first install | Do not use update/fix to manufacture ownership |
+| Fresh: no `install.json`, no runtime root, and no managed target in the selected bin directory (Unix-like) | `/install.sh` | Canonical ordinary first install | Do not use update/fix to manufacture ownership |
+| Fresh: no `install.json`, no runtime root, and no managed target in the selected bin directory (native Windows) | `/install.ps1` | Canonical ordinary first install for PowerShell 5.1/7+ | Do not use update/fix to manufacture ownership |
 | Healthy ordinary receipt (`release-asset` or `source-build`) with matching target and runtime | `verify.sh`; then `update.sh` for an exact update | Ownership and runtime provenance are available | Do not rerun ordinary install; do not use dev implicitly |
 | Strict ordinary receipt with a missing or broken old runtime | `fix.sh` diagnosis; then `fix.sh --apply --yes` with one new free runtime child | Repair can bind the prior receipt without executing the old runtime | Do not delete/reuse the old runtime or rerun ordinary install |
 | Valid `dev-source` receipt and explicit Git checkouts | `verify.sh` or `dev.sh` | Editable provenance remains explicit | `update.sh` and `fix.sh` MUST reject it |
@@ -131,11 +134,12 @@ The existence of `$HOME/.lingtai-tui` as an ordinary directory alone does not
 make a prior installation. Freshness is lost when an install receipt or runtime
 root exists, or when a managed target already occupies the selected bin path.
 
-`--skip-python` / `--skip-venv` is an explicit TUI-only ordinary-install opt-out.
-Its receipt intentionally omits runtime/kernel fields. The runtime-dependent
-update, repair, and verification assets do not promise to infer or backfill that
-state; stop and choose an explicit supported plan rather than treating it as a
-normal healthy ordinary runtime installation.
+`--skip-python` / `--skip-venv` (`-SkipVenv` on `install.ps1`) is an explicit
+TUI-only ordinary-install opt-out. Its receipt intentionally omits
+runtime/kernel fields. The runtime-dependent update, repair, and verification
+assets do not promise to infer or backfill that state; stop and choose an
+explicit supported plan rather than treating it as a normal healthy ordinary
+runtime installation.
 
 ## Adapters
 
@@ -177,6 +181,51 @@ normal healthy ordinary runtime installation.
 - A nonzero exit is not rollback. It may leave newly created target/runtime or
   dependency state, but MUST NOT claim success or replace pre-existing state.
   A later ordinary invocation sees that state and fails closed.
+
+### 4.1a `/install.ps1` — fresh ordinary install (native Windows)
+
+The PowerShell counterpart to `/install.sh`; parses and runs identically under
+Windows PowerShell 5.1 and PowerShell 7+.
+
+**Preconditions**
+
+- Exact official release selection (`-Version vX.Y.Z`), or current official
+  release resolution; `-ArchivePath`/`-ChecksumPath` selects local-artifact mode
+  (no network for the binary install itself) instead of public release
+  resolution.
+- No existing install receipt, runtime root, or managed target.
+- The selected bin directory (`%LOCALAPPDATA%\Programs\lingtai\bin` by default)
+  and global state directory are not redirected through a disallowed symlink.
+
+**Allowed reads/downloads/writes**
+
+- Resolve the official release's `lingtai-bundle-manifest.json`, download and
+  SHA-256-verify the `lingtai-<tag>-windows-amd64.zip` archive and sidecar
+  before extraction, and confirm the staged `lingtai-tui.exe` reports exactly
+  the resolved tag before touching the bin directory.
+- Unless `-SkipVenv` is explicit, provision the owned runtime venv under
+  `%USERPROFILE%\.lingtai-tui\runtime\venv` only from the release's pinned
+  kernel bundle: select and SHA-256-verify a compatible `cp311`/`cp312`/`cp313`
+  `win_amd64` wheel from the pinned kernel release manifest, install it by
+  local path with `--no-deps`, and verify import/version/provenance.
+- Publish the first receipt (`install_method: "powershell"`) only after TUI and
+  runtime postconditions pass.
+- `-DryRun` performs the same resolution/validation reads but writes nothing.
+
+**Forbidden behavior**
+
+- No adoption, overwrite, update, or repair of existing state.
+- No package-name fallback; the kernel wheel is installed only from the
+  verified local artifact path, never `pip install lingtai`.
+- No skill/helper download, source, or execution.
+
+**Success and failure meaning**
+
+- Success means the exact TUI identity, optional pinned runtime provenance, and
+  exclusive receipt publication passed.
+- A nonzero exit is not rollback. It may leave newly created target/runtime or
+  staging state, but MUST NOT claim success or replace pre-existing state. A
+  later ordinary invocation sees that state and fails closed.
 
 ### 4.2 `assets/update.sh` — healthy exact ordinary update
 

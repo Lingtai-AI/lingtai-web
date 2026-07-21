@@ -32,23 +32,26 @@ release. `--from-source` only selects the source-build fallback for that exact
 official release; arbitrary `--ref` development work is handed off to
 `assets/dev.sh` with exit status 2.
 
-## Native Windows status
+## Native Windows install
 
-Use **WSL2** with the canonical `/install.sh` path for supported Windows
-installation today. Native Windows PowerShell is an experimental preview
-implemented by the merged [Lingtai-AI/lingtai#690](https://github.com/Lingtai-AI/lingtai/pull/690),
-not a public installation entrypoint: `lingtai.ai` deliberately does not serve an
-`/install.ps1` happy path yet.
+`https://lingtai.ai/install.ps1` is the canonical ordinary official-install happy
+path for native Windows (PowerShell 5.1 and PowerShell 7+). It parses and runs
+identically under both editions and is the PowerShell counterpart to
+`install.sh`: it resolves one exact TUI release, verifies the release's bundle
+manifest and archive checksum, verifies the staged `lingtai-tui.exe` reports the
+resolved version, and provisions the pinned managed Python runtime before
+writing any success metadata.
 
-The current public release publishes neither an official Windows TUI archive nor
-the pinned managed-runtime bundle needed for an ordinary install. The preview
-therefore fails loud in public mode instead of inventing a download. Its green
-hosted-VM seam is narrower: a tester supplies a local archive, matching SHA-256
-sidecar, and exact version, and explicitly chooses `-SkipVenv` for TUI-only
-installation. That preview has no supported public update, repair, runtime, or
-one-line install promise. Do not present `irm https://lingtai.ai/install.ps1 |
-iex` until those release artifacts and this Contract's ordinary-install
-postconditions are implemented and validated together.
+```powershell
+irm https://lingtai.ai/install.ps1 | iex
+```
+
+Like the POSIX path, ordinary install is first-install-only, never falls back to
+installing LingTai by package name, and only writes its receipt after binary and
+runtime postconditions pass. `-SkipVenv` remains the explicit TUI-only opt-out
+that omits the managed runtime and its receipt fields; it is not the default
+public path. WSL2 with `/install.sh` remains a supported alternative for users
+who prefer a Unix-like terminal on Windows.
 
 ## Choose an explicit asset
 

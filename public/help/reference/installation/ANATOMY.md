@@ -3,6 +3,7 @@ related_files:
   - public/help/reference/installation/CONTRACT.md
   - ANATOMY.md
   - public/install.sh
+  - public/install.ps1
   - public/help/reference/installation/skill.md
   - public/_headers
   - public/help/reference/installation/assets/update.sh
@@ -18,8 +19,9 @@ maintenance: |
 ---
 # Public installation Anatomy
 
-The public installation component is five standalone shell entrypoints plus one
-progressively disclosed skill, one normative Contract, and real behavior evidence.
+The public installation component is five standalone shell entrypoints, one
+native-Windows PowerShell entrypoint, one progressively disclosed skill, one
+normative Contract, and real behavior evidence.
 
 ## Components
 
@@ -39,6 +41,11 @@ progressively disclosed skill, one normative Contract, and real behavior evidenc
   configured index.
 - `public/install.sh:2157-2171` `validate_fresh_install_state` is the fail-closed
   first-install state gate.
+- `public/install.ps1:759-793` `Install-KernelWheel` downloads and SHA-256
+  verifies the pinned kernel wheel, then installs it by explicit local path.
+- `public/install.ps1:880-922` `Install-Venv` provisions the owned runtime venv
+  and orchestrates kernel wheel selection, install, and provenance proof; it is
+  the PowerShell counterpart to `ensure_runtime_venv`.
 - `public/help/reference/installation/assets/update.sh:22-105` is exact-artifact
   ordinary update after `--yes`.
 - `public/help/reference/installation/assets/fix.sh:22-109` is read-only diagnosis
@@ -52,9 +59,11 @@ progressively disclosed skill, one normative Contract, and real behavior evidenc
 
 `public/skill.md` routes to the help router, which routes to the installation
 skill. The skill selects an operation but never authorizes or executes it. Each
-operation's standalone shell file enforces its own CLI and state boundary. All
-five point maintainers to the repository and child Contracts in visible header
-comments.
+operation's standalone shell or PowerShell file enforces its own CLI and state
+boundary. The five `assets/`-owned shell files point maintainers to the
+repository and child Contracts in visible header comments; `install.ps1` is
+owned and versioned by the TUI repository and mirrors `install.sh`'s ordinary
+install boundary for native Windows.
 
 The root Contract governs this child; the child Contract owns operation, consent,
 state, receipt, provenance, and failure promises. This Anatomy maps the real
@@ -86,7 +95,8 @@ is retained and reported on failure rather than treated as rollback authority.
 
 ## Notes
 
-`--skip-python` / `--skip-venv` is the only ordinary TUI-only opt-out. It does not
-promise later implicit runtime backfill. Ordinary install never adopts or repairs
-existing state; `fix.sh` owns explicit repair. A receipt or `PASS` is emitted only
-after the operation's full declared postconditions pass.
+`--skip-python` / `--skip-venv` (`-SkipVenv` on `install.ps1`) is the only
+ordinary TUI-only opt-out. It does not promise later implicit runtime backfill.
+Ordinary install never adopts or repairs existing state; `fix.sh` owns explicit
+repair. A receipt or `PASS` is emitted only after the operation's full declared
+postconditions pass.
