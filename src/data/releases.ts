@@ -65,6 +65,118 @@ export interface Release {
 
 
 
+const v0_18_0_kernel_v0_11_5_tui: Release = {
+  id: '20260721-1',
+  version: 'Kernel v0.18.0 · TUI/Portal v0.11.5',
+  titleEn: 'LingTai 0.18.0 / 0.11.5: a more resilient runtime and a verified Windows install path',
+  titleZh: 'LingTai 0.18.0 / 0.11.5：更稳健的运行时与经过验证的 Windows 安装路径',
+  date: '2026-07-21',
+  pkg: 'LingTai Kernel + TUI/Portal',
+  tag: 'Kernel v0.18.0 · TUI/Portal v0.11.5',
+  runtimeNoteEn:
+    'Source builds and Homebrew remain supported install paths for TUI/Portal v0.11.5. This release additionally adds one bounded, verifiable Windows path: a native `lingtai-<tag>-windows-amd64.zip` with a `.sha256` sidecar and `lingtai-bundle-manifest.json`, installed via `install.ps1` after it validates the exact tag, archive, checksum, bundle pin, and pinned kernel wheel. This exception is scoped to that one verified release asset and is not a claim of general Windows binary support. Kernel v0.18.0 remains the runtime package source used by LingTai-managed environments; existing projects should follow their normal TUI-managed refresh or setup path.',
+  runtimeNoteZh:
+    '源码构建与 Homebrew 仍是 TUI/Portal v0.11.5 受支持的安装路径之一。本次发布额外新增一条有界、可验证的 Windows 路径：原生 `lingtai-<tag>-windows-amd64.zip`，附带 `.sha256` 校验文件与 `lingtai-bundle-manifest.json`；`install.ps1` 在安装前校验精确 tag、归档、checksum、bundle pin 与固定的 kernel wheel。这一例外仅限于该经过验证的 release asset，并不代表通用 Windows 二进制支持。Kernel v0.18.0 仍作为 LingTai-managed environment 使用的 runtime package source；已有项目应继续使用 TUI 管理的 refresh / setup 路径。',
+  summaryEn:
+    'This coordinated release focuses on runtime resilience and a verifiable Windows distribution path: native Windows kernel adapters and process lifecycle support, native multi-account Codex quota/epoch handling, Outlook OAuth2 IMAP, lossless Telegram inbound updates with task-card self-healing, and a PowerShell-validated Windows AMD64 install path that sits alongside the existing source and Homebrew builds.',
+  summaryZh:
+    '这次协同发布聚焦运行时的稳健性与可验证的 Windows 分发路径：原生 Windows kernel 适配器与进程生命周期支持、原生多账户 Codex 额度/epoch 处理、Outlook OAuth2 IMAP、带任务卡自愈的无损 Telegram 入站更新，以及与现有源码、Homebrew 构建并存、经 PowerShell 校验的 Windows AMD64 安装路径。',
+  features: [
+    {
+      titleEn: 'Native Windows kernel adapters and process lifecycle',
+      titleZh: '原生 Windows kernel 适配器与进程生命周期',
+      leadEn: 'The kernel now wires native Windows adapters and lifecycle/process support behind contracts and platform selectors, closing a capability gap without leaking platform mechanisms into core contracts.',
+      leadZh: 'kernel 现在通过契约与平台选择器接入原生 Windows 适配器及生命周期/进程支持，补齐能力缺口，同时不把平台机制泄漏进核心契约。',
+      bulletsEn: [
+        'Windows kernel runtime adapters and process handling land across the reviewed capability DAG (`src/lingtai/adapters/windows/`, `src/lingtai/tools/daemon/windows_process.py`, PR #988).',
+        'A dedicated Windows PR workflow (`.github/workflows/kernel-windows-pr.yml`) checks the platform surface on every change.',
+      ],
+      bulletsZh: [
+        'Windows kernel 运行时适配器与进程处理接入所审查的能力 DAG（`src/lingtai/adapters/windows/`、`src/lingtai/tools/daemon/windows_process.py`，PR #988）。',
+        '专用 Windows PR 工作流（`.github/workflows/kernel-windows-pr.yml`）对每次改动检查平台层面。',
+      ],
+      whyEn: 'Windows support is now testable and enforced per change, not a manual afterthought.',
+      whyZh: 'Windows 支持现在按每次改动可测试、可强制检查，而不是事后手工补救。',
+    },
+    {
+      titleEn: 'Native multi-account Codex pooling and quota handling',
+      titleZh: '原生多账户 Codex 账户池与额度处理',
+      leadEn: 'Codex account pooling moves to native multi-account selection with quota visibility, zero-quota exclusion, context-scoped epochs, and service-tier propagation.',
+      leadZh: 'Codex 账户池改为原生多账户选择，补齐额度可见性、零额度排除、按上下文隔离的 epoch 与 service tier 传递。',
+      bulletsEn: [
+        'Accounts with zero quota are skipped automatically instead of being retried (`src/lingtai/auth/codex_pool.py`, #990).',
+        'Multi-account selection, epoch binding, and epoch scoping are native and context-aware (`src/lingtai/auth/codex_account_source.py`, #1003–#1005).',
+        'Native quota-auth materialization closes out the pooling work (`src/lingtai/llm/openai/codex_quota.py`, #1006).',
+      ],
+      bulletsZh: [
+        '零额度账户被自动跳过而不是反复重试（`src/lingtai/auth/codex_pool.py`，#990）。',
+        '多账户选择、epoch 绑定与 epoch 隔离原生且具备上下文感知（`src/lingtai/auth/codex_account_source.py`，#1003–#1005）。',
+        '原生额度认证封装完成本轮账户池工作（`src/lingtai/llm/openai/codex_quota.py`，#1006）。',
+      ],
+      whyEn: 'Fewer wasted retries and clearer per-context quota boundaries make multi-account Codex usage more predictable.',
+      whyZh: '更少的无效重试与更清晰的按上下文额度边界，让多账户 Codex 使用更可预测。',
+    },
+    {
+      titleEn: 'Outlook OAuth2 IMAP and more resilient Telegram updates',
+      titleZh: 'Outlook OAuth2 IMAP 与更稳健的 Telegram 更新',
+      leadEn: 'Mail and messaging integrations gain a new OAuth2 IMAP provider and preserve inbound Telegram data through lossless updates and task-card self-healing.',
+      leadZh: '邮件与消息集成新增 OAuth2 IMAP provider，并通过无损更新与任务卡自愈保留 Telegram 入站数据。',
+      bulletsEn: [
+        'Personal Outlook accounts can connect over OAuth2 IMAP, kept minimal and scoped (`src/lingtai/mcp_servers/imap/`, #991–#992).',
+        'Telegram inbound Bot API updates are preserved losslessly, and non-deletable task cards recover automatically (`src/lingtai/mcp_servers/telegram/updates.py`, `task_card/`, #984, #1000).',
+        'The daemon completion MCP now survives external-CLI config rehydration (#985), and compact-countdown recovery is enforced (#1007).',
+      ],
+      bulletsZh: [
+        '个人 Outlook 账户可通过 OAuth2 IMAP 连接，实现保持最小且范围受限（`src/lingtai/mcp_servers/imap/`，#991–#992）。',
+        'Telegram 入站 Bot API 更新被无损保留，不可删除的任务卡可自动恢复（`src/lingtai/mcp_servers/telegram/updates.py`、`task_card/`，#984、#1000）。',
+        'daemon completion MCP 在外部 CLI 配置重建后仍然保留（#985），compact-countdown 恢复被强化（#1007）。',
+      ],
+      whyEn: 'Messaging and mail integrations stay correct and recoverable under real-world failure and reconnection.',
+      whyZh: '在真实世界的失败与重连场景下，消息与邮件集成仍保持正确且可恢复。',
+    },
+    {
+      titleEn: 'A supported, verifiable Windows install path for TUI/Portal',
+      titleZh: 'TUI/Portal 支持且可验证的 Windows 安装路径',
+      leadEn: 'TUI/Portal keeps source release and Homebrew source-build support, and adds one bounded native Windows path with an explicit verification contract.',
+      leadZh: 'TUI/Portal 继续提供源码发布与 Homebrew 源码构建支持，并新增一条带明确验证契约的有界原生 Windows 路径。',
+      bulletsEn: [
+        'The tag workflow publishes `lingtai-<tag>-windows-amd64.zip`, its `.sha256` sidecar, and `lingtai-bundle-manifest.json` (`.github/workflows/release.yml`, PR #699).',
+        '`install.ps1` validates the exact tag, AMD64 archive, checksum, bundle pin, and pinned kernel wheel before installing (`install.ps1`, `kernel-release.json`).',
+        'PowerShell 5.1 and 7+ contract coverage is recorded in `scripts/test-install-ps1.ps1` and `windows-installer-smoke.yml`.',
+      ],
+      bulletsZh: [
+        '标签工作流发布 `lingtai-<tag>-windows-amd64.zip`、对应 `.sha256` 校验文件与 `lingtai-bundle-manifest.json`（`.github/workflows/release.yml`，PR #699）。',
+        '`install.ps1` 在安装前校验精确 tag、AMD64 归档、checksum、bundle pin 与固定的 kernel wheel（`install.ps1`、`kernel-release.json`）。',
+        'PowerShell 5.1 与 7+ 的契约覆盖记录在 `scripts/test-install-ps1.ps1` 与 `windows-installer-smoke.yml`。',
+      ],
+      whyEn: 'Windows users get a verifiable path without weakening the guarantees the source and Homebrew paths already provide.',
+      whyZh: 'Windows 用户获得可验证的安装路径，同时不削弱源码与 Homebrew 路径已有的保障。',
+    },
+  ],
+  contributors: ['huangzesen'],
+  validation: {
+    commit: 'Kernel 761d979bc52853d1238c1d86280d107e7244597d · TUI fa14a707155792d51e0d9cab3b984252b02a071d · Web fdfef17d8765a65182357ef160107815f64cf45f',
+    items: [
+      { label: 'Kernel candidate PR', result: '#1008 version-preparation evidence, candidate source 0.18.0' },
+      { label: 'TUI Windows installer contract', result: 'PR #699 run 9, PowerShell 5.1 and 7+ dual-shell PASS' },
+      { label: 'Website build', result: 'PR #64 build/Terra PASS' },
+    ],
+  },
+  links: [
+    { label: 'Kernel v0.18.0', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.18.0' },
+    { label: 'TUI/Portal v0.11.5', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.11.5' },
+    { label: 'Kernel changes v0.17.1...v0.18.0', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.17.1...v0.18.0' },
+    { label: 'TUI/Portal changes v0.11.4...v0.11.5', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.11.4...v0.11.5' },
+    { label: 'Windows PowerShell installer', href: 'https://lingtai.ai/install.ps1' },
+    { label: 'Kernel PR #1008', href: 'https://github.com/Lingtai-AI/lingtai-kernel/pull/1008' },
+    { label: 'TUI PR #699', href: 'https://github.com/Lingtai-AI/lingtai/pull/699' },
+    { label: 'Web PR #64', href: 'https://github.com/huangzesen/lingtai-web/pull/64' },
+    { label: 'Kernel source', href: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/761d979bc52853d1238c1d86280d107e7244597d' },
+    { label: 'TUI/Portal source', href: 'https://github.com/Lingtai-AI/lingtai/tree/fa14a707155792d51e0d9cab3b984252b02a071d' },
+  ],
+};
+
+
 const v0_17_1_kernel_v0_11_0_tui: Release = {
   id: '20260717-1',
   version: 'Kernel v0.17.1 · TUI/Portal v0.11.0',
@@ -3821,7 +3933,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_17_1_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_18_0_kernel_v0_11_5_tui, v0_17_1_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
