@@ -65,6 +65,109 @@ export interface Release {
 
 
 
+const v0_18_1_kernel_v0_11_6_tui: Release = {
+  id: '20260723-1',
+  version: 'Kernel v0.18.1 · TUI/Portal v0.11.6',
+  titleEn: 'LingTai 0.18.1 / 0.11.6: fixes for first-run Codex, vision routing, and doctor safety',
+  titleZh: 'LingTai 0.18.1 / 0.11.6：修复首次运行 Codex、视觉路由与 doctor 安全性',
+  date: '2026-07-23',
+  pkg: 'LingTai Kernel + TUI/Portal',
+  tag: 'Kernel v0.18.1 · TUI/Portal v0.11.6',
+  install: 'curl -fsSL https://lingtai.ai/install.sh | bash',
+  runtimeNoteEn:
+    'Kernel v0.18.1 publishes 18 GitHub release assets: 15 wheels, one sdist, `lingtai-kernel-release-manifest.json`, and `SHA256SUMS`. This release is not published to PyPI; the current release flow excludes that channel. TUI/Portal v0.11.6 publishes a GitHub source release, an updated Homebrew formula, and a Windows `lingtai-v0.11.6-windows-amd64.zip` with its `.sha256` sidecar and `lingtai-bundle-manifest.json`, and pins kernel v0.18.1. The primary install/upgrade path remains `curl -fsSL https://lingtai.ai/install.sh | bash`; Homebrew continues to be supported for existing users.',
+  runtimeNoteZh:
+    'Kernel v0.18.1 在 GitHub 发布 18 个资产：15 个 wheel、1 个 sdist、`lingtai-kernel-release-manifest.json` 与 `SHA256SUMS`。本次未发布至 PyPI，当前发布流程不包含该渠道。TUI/Portal v0.11.6 发布 GitHub 源码 Release、更新的 Homebrew 配方，以及 Windows 平台的 `lingtai-v0.11.6-windows-amd64.zip`（附 `.sha256` 校验文件与 `lingtai-bundle-manifest.json`），并将内核依赖钉在 v0.18.1。主要安装/升级路径仍为 `curl -fsSL https://lingtai.ai/install.sh | bash`；Homebrew 继续为现有用户提供支持。',
+  summaryEn:
+    'This coordinated patch release fixes three first-run and reliability issues: generic vision requests now follow the active Codex/Codex-pool route instead of guessing from provider spelling, a genuinely empty production-shaped account-pool snapshot now correctly takes the intended legacy fallback instead of being misclassified as non-empty, and `lingtai-tui doctor --help`/`-h` is now read-only. It also clarifies Codex OAuth preset behavior and fresh zsh installer PATH guidance, without changing existing installation destinations or non-OAuth preset behavior.',
+  summaryZh:
+    '这是一次协同补丁发布，修复三项首次运行与稳定性问题：通用视觉请求现在跟随当前生效的 Codex / Codex-pool 路由，不再依据 provider 拼写猜测；真正为空的生产形态账号池快照现在能正确走既有的旧路径回退，不再被误判为非空；`lingtai-tui doctor --help` / `-h` 现在完全只读。同时澄清了 Codex OAuth 预设行为与全新 zsh 安装的 PATH 指引，且不改变现有安装目标或非 OAuth 预设行为。',
+  features: [
+    {
+      titleEn: 'Codex vision routing fixed, and empty account-pool snapshots correctly reach fallback',
+      titleZh: 'Codex 视觉路由修复，空账号池快照现在能正确进入回退',
+      leadEn: 'Two new-user-facing kernel bugs are fixed: generic vision requests could mis-route, and a genuinely empty production-shaped account-pool snapshot was misclassified as non-empty, blocking the intended legacy fallback. Separately, a non-empty but exhausted pool still fails terminally rather than being replayed by the AED retry path.',
+      leadZh: '修复两个影响新用户的内核缺陷：通用视觉请求曾路由错误；真正为空的生产形态账号池快照曾被误判为非空，导致既有的旧路径回退被阻塞。另外，池非空但已耗尽时仍会终态报错，而不会被 AED 重试链路重放。',
+      bulletsEn: [
+        'Generic vision requests now follow the active Codex/Codex-pool route rather than inferring routing from provider spelling.',
+        'The legacy fallback path is taken only when the candidate account snapshot is genuinely empty; a non-empty but exhausted pool continues to fail loudly rather than falling back, and its terminal error is no longer replayed by AED.',
+        'The terminal `NoCandidateError` (pool exhausted) is treated as terminal and is no longer replayed by the AED retry path.',
+        'A regression test covers the production-shaped empty-tuple case for `WeightedAccountSource`.',
+      ],
+      bulletsZh: [
+        '通用视觉请求现在跟随当前生效的 Codex / Codex-pool 路由，不再依据 provider 拼写推断路由。',
+        '仅当候选账号快照真正为空时才走既有的旧路径回退；池非空但已耗尽时仍会明确报错而不会回退，并且这个终态错误不再被 AED 重试链路重放。',
+        '终态的 `NoCandidateError`（账号耗尽）按终态处理，不再被 AED 重试链路反复重放。',
+        '为 `WeightedAccountSource` 新增生产形态的空元组回归测试。',
+      ],
+      whyEn: 'New users with a configured pool no longer see misleading failures or silently wrong routing.',
+      whyZh: '已配置账号池的新用户不再遇到误导性失败或静默的错误路由。',
+    },
+    {
+      titleEn: '`doctor --help` is read-only, and fresh zsh installs get correct PATH guidance',
+      titleZh: '`doctor --help` 完全只读，全新 zsh 安装获得正确的 PATH 指引',
+      leadEn: 'Two first-run rough edges are fixed: asking for doctor help could previously enter mutation paths, and a fresh zsh environment could be missing accurate PATH guidance for `~/.local/bin`.',
+      leadZh: '修复两处首次运行体验问题：此前查看 doctor 帮助可能会进入变更类路径；全新 zsh 环境可能缺少针对 `~/.local/bin` 的准确 PATH 指引。',
+      bulletsEn: [
+        '`lingtai-tui doctor --help`/`-h` is now read-only help and no longer enters doctor mutation, update, bootstrap, or export paths.',
+        'Fresh zsh installer PATH guidance now correctly covers `~/.local/bin`, without changing installation destinations or existing Homebrew/uv behavior.',
+      ],
+      bulletsZh: [
+        '`lingtai-tui doctor --help` / `-h` 现在是无副作用的只读帮助，不再进入 doctor 的变更、升级、bootstrap 或导出路径。',
+        '全新 zsh 安装的 PATH 指引现在正确覆盖 `~/.local/bin`，不改变安装目标，也不影响现有 Homebrew / uv 行为。',
+      ],
+      whyEn: 'Asking for help should never carry side effects, and a fresh shell should get accurate setup guidance the first time.',
+      whyZh: '查看帮助不应带来任何副作用，全新 shell 环境也应第一次就获得准确的安装指引。',
+    },
+    {
+      titleEn: 'Self-explanatory Codex OAuth and account pool eligibility',
+      titleZh: '自解释的 Codex OAuth 与账号池资格判定',
+      leadEn: 'Codex OAuth and account-pool behavior is now easier to reason about end to end, while preserving every existing behavior for non-OAuth presets.',
+      leadZh: 'Codex OAuth 与账号池行为现在从内核到 TUI 都更易理解，同时完整保留非 OAuth 预设的既有行为。',
+      bulletsEn: [
+        'The kernel takes the intended legacy fallback only on a genuinely empty account-source tuple; a non-empty but exhausted pool fails loudly and terminally instead of being replayed.',
+        'The TUI pool health check filters disabled, blank, malformed, and non-positive-weight entries, matching kernel eligibility rules.',
+        'The TUI validates selected-model eligibility ahead of time and shows the active preset and whether it needs a refresh.',
+        'Saved OAuth-backed presets are distinguished from unaffected non-OAuth presets; OAuth never silently creates, rewrites, activates, or switches presets.',
+      ],
+      bulletsZh: [
+        '仅当账号来源元组真正为空时，内核才走既有的旧路径回退；池非空但已耗尽时会明确且终态地报错，而不是被重放。',
+        'TUI 账号池健康检查过滤禁用、空白、格式错误与非正权重条目，与内核资格判定规则保持一致。',
+        'TUI 会预先校验所选模型的资格，并显示当前生效的预设以及是否需要刷新。',
+        '已保存的 OAuth 预设与不受影响的非 OAuth 预设被明确区分；OAuth 绝不会静默创建、改写、激活或切换预设。',
+      ],
+      whyEn: 'Codex OAuth behavior stays predictable and auditable without changing how non-OAuth presets already work.',
+      whyZh: 'Codex OAuth 行为保持可预测、可审计，同时不改变非 OAuth 预设的既有工作方式。',
+    },
+  ],
+  contributors: ['BatalloLu', 'huangzesen'],
+  validation: {
+    commit: 'Kernel 81c70e5bac4988ae0ceaf1a1a838a3c80002e6e4 · TUI ee27722f135cd800767c3a53da2ca60ebba54cf3',
+    items: [
+      { label: 'Kernel focused tests', result: '76 passed' },
+      { label: 'Kernel local build/install smoke', result: 'wheel + sdist build, CPython 3.12 no-deps install and import — PASS' },
+      { label: 'TUI focused and full Go tests, build', result: 'PASS' },
+      { label: 'Portal web production build', result: 'PASS' },
+      { label: 'PR reviews', result: 'All four final PR heads received explicit approvals' },
+      { label: 'TUI release workflow', result: 'Run 29992038966 — source-release, update-homebrew, windows-release all SUCCESS' },
+      { label: 'Windows bundle', result: 'SHA256 5d74e0ad4bef3ad22075e46a4231105904dc2f7541e44311f0a26f5f3cfff1d0; bundle manifest v0.11.6 / kernel v0.18.1 / commit ee27722f… — PASS' },
+      { label: 'Homebrew formula', result: 'v0.11.6 source archive SHA256 38271bb50050c61a7eb1d4acb5f5f2eb71d758feb27e4d2a1d7097e51c733970' },
+      { label: 'Local clean-main smoke', result: '/opt/homebrew/bin/lingtai-tui and /opt/homebrew/bin/lingtai both report v0.11.6' },
+    ],
+  },
+  links: [
+    { label: 'Kernel v0.18.1', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.18.1' },
+    { label: 'TUI/Portal v0.11.6', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.11.6' },
+    { label: 'Kernel changes v0.18.0...v0.18.1', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.18.0...v0.18.1' },
+    { label: 'TUI/Portal changes v0.11.5...v0.11.6', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.11.5...v0.11.6' },
+    { label: 'TUI/Portal release workflow run', href: 'https://github.com/Lingtai-AI/lingtai/actions/runs/29992038966' },
+    { label: 'Kernel artifact build run (GitHub matrix + manifest PASS)', href: 'https://github.com/Lingtai-AI/lingtai-kernel/actions/runs/29990984814' },
+    { label: 'Kernel source', href: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/81c70e5bac4988ae0ceaf1a1a838a3c80002e6e4' },
+    { label: 'TUI/Portal source', href: 'https://github.com/Lingtai-AI/lingtai/tree/ee27722f135cd800767c3a53da2ca60ebba54cf3' },
+  ],
+};
+
+
 const v0_18_0_kernel_v0_11_5_tui: Release = {
   id: '20260721-1',
   version: 'Kernel v0.18.0 · TUI/Portal v0.11.5',
@@ -3933,7 +4036,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_18_0_kernel_v0_11_5_tui, v0_17_1_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_18_1_kernel_v0_11_6_tui, v0_18_0_kernel_v0_11_5_tui, v0_17_1_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
