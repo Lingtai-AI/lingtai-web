@@ -90,13 +90,13 @@ const v0_18_1_kernel_v0_11_6_tui: Release = {
       leadZh: '修复两个影响新用户的内核缺陷：通用视觉请求曾路由错误；真正为空的生产形态账号池快照曾被误判为非空，导致既有的旧路径回退被阻塞。另外，池非空但已耗尽时仍会终态报错，而不会被 AED 重试链路重放。',
       bulletsEn: [
         'Generic vision requests now follow the active Codex/Codex-pool route rather than inferring routing from provider spelling.',
-        'The legacy fallback path is only taken when the candidate account snapshot is genuinely empty; a non-empty but exhausted pool now fails explicitly instead of silently falling back.',
+        'The legacy fallback path is taken only when the candidate account snapshot is genuinely empty; a non-empty but exhausted pool continues to fail loudly rather than falling back, and its terminal error is no longer replayed by AED.',
         'The terminal `NoCandidateError` (pool exhausted) is treated as terminal and is no longer replayed by the AED retry path.',
         'A regression test covers the production-shaped empty-tuple case for `WeightedAccountSource`.',
       ],
       bulletsZh: [
         '通用视觉请求现在跟随当前生效的 Codex / Codex-pool 路由，不再依据 provider 拼写推断路由。',
-        '仅当候选账号快照真正为空时才走既有的旧路径回退；池非空但已耗尽时现在会明确报错，不再静默回退。',
+        '仅当候选账号快照真正为空时才走既有的旧路径回退；池非空但已耗尽时仍会明确报错而不会回退，并且这个终态错误不再被 AED 重试链路重放。',
         '终态的 `NoCandidateError`（账号耗尽）按终态处理，不再被 AED 重试链路反复重放。',
         '为 `WeightedAccountSource` 新增生产形态的空元组回归测试。',
       ],
