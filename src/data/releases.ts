@@ -79,15 +79,15 @@ const v0_18_1_kernel_v0_11_6_tui: Release = {
   runtimeNoteZh:
     'Kernel v0.18.1 在 GitHub 发布 18 个资产：15 个 wheel、1 个 sdist、`lingtai-kernel-release-manifest.json` 与 `SHA256SUMS`。本次未发布至 PyPI，当前发布流程不包含该渠道。TUI/Portal v0.11.6 发布 GitHub 源码 Release、更新的 Homebrew 配方，以及 Windows 平台的 `lingtai-v0.11.6-windows-amd64.zip`（附 `.sha256` 校验文件与 `lingtai-bundle-manifest.json`），并将内核依赖钉在 v0.18.1。主要安装/升级路径仍为 `curl -fsSL https://lingtai.ai/install.sh | bash`；Homebrew 继续为现有用户提供支持。',
   summaryEn:
-    'This coordinated patch release fixes three first-run and reliability issues: generic vision requests now follow the active Codex/Codex-pool route instead of guessing from provider spelling, exhausted Codex account pools fail loudly instead of silently falling back, and `lingtai-tui doctor --help`/`-h` is now read-only. It also clarifies Codex OAuth preset behavior and fresh zsh installer PATH guidance, without changing existing installation destinations or non-OAuth preset behavior.',
+    'This coordinated patch release fixes three first-run and reliability issues: generic vision requests now follow the active Codex/Codex-pool route instead of guessing from provider spelling, a genuinely empty production-shaped account-pool snapshot now correctly takes the intended legacy fallback instead of being misclassified as non-empty, and `lingtai-tui doctor --help`/`-h` is now read-only. It also clarifies Codex OAuth preset behavior and fresh zsh installer PATH guidance, without changing existing installation destinations or non-OAuth preset behavior.',
   summaryZh:
-    '这是一次协同补丁发布，修复三项首次运行与稳定性问题：通用视觉请求现在跟随当前生效的 Codex / Codex-pool 路由，不再依据 provider 拼写猜测；账号池耗尽时明确报错，不再静默回退；`lingtai-tui doctor --help` / `-h` 现在完全只读。同时澄清了 Codex OAuth 预设行为与全新 zsh 安装的 PATH 指引，且不改变现有安装目标或非 OAuth 预设行为。',
+    '这是一次协同补丁发布，修复三项首次运行与稳定性问题：通用视觉请求现在跟随当前生效的 Codex / Codex-pool 路由，不再依据 provider 拼写猜测；真正为空的生产形态账号池快照现在能正确走既有的旧路径回退，不再被误判为非空；`lingtai-tui doctor --help` / `-h` 现在完全只读。同时澄清了 Codex OAuth 预设行为与全新 zsh 安装的 PATH 指引，且不改变现有安装目标或非 OAuth 预设行为。',
   features: [
     {
-      titleEn: 'Codex vision routing and account pool now fail correctly',
-      titleZh: 'Codex 视觉路由与账号池现在能正确失败',
-      leadEn: 'A new-user-facing bug let generic vision requests mis-route and let exhausted Codex account pools silently fall back instead of erroring, both fixed at the kernel layer.',
-      leadZh: '一个影响新用户的缺陷曾导致通用视觉请求路由错误、账号池耗尽时静默回退而非报错，两者均已在内核层修复。',
+      titleEn: 'Codex vision routing fixed, and empty account-pool snapshots correctly reach fallback',
+      titleZh: 'Codex 视觉路由修复，空账号池快照现在能正确进入回退',
+      leadEn: 'Two new-user-facing kernel bugs are fixed: generic vision requests could mis-route, and a genuinely empty production-shaped account-pool snapshot was misclassified as non-empty, blocking the intended legacy fallback. Separately, a non-empty but exhausted pool still fails terminally rather than being replayed by the AED retry path.',
+      leadZh: '修复两个影响新用户的内核缺陷：通用视觉请求曾路由错误；真正为空的生产形态账号池快照曾被误判为非空，导致既有的旧路径回退被阻塞。另外，池非空但已耗尽时仍会终态报错，而不会被 AED 重试链路重放。',
       bulletsEn: [
         'Generic vision requests now follow the active Codex/Codex-pool route rather than inferring routing from provider spelling.',
         'The legacy fallback path is only taken when the candidate account snapshot is genuinely empty; a non-empty but exhausted pool now fails explicitly instead of silently falling back.',
@@ -149,6 +149,10 @@ const v0_18_1_kernel_v0_11_6_tui: Release = {
       { label: 'TUI focused and full Go tests, build', result: 'PASS' },
       { label: 'Portal web production build', result: 'PASS' },
       { label: 'PR reviews', result: 'All four final PR heads received explicit approvals' },
+      { label: 'TUI release workflow', result: 'Run 29992038966 — source-release, update-homebrew, windows-release all SUCCESS' },
+      { label: 'Windows bundle', result: 'SHA256 5d74e0ad4bef3ad22075e46a4231105904dc2f7541e44311f0a26f5f3cfff1d0; bundle manifest v0.11.6 / kernel v0.18.1 / commit ee27722f… — PASS' },
+      { label: 'Homebrew formula', result: 'v0.11.6 source archive SHA256 38271bb50050c61a7eb1d4acb5f5f2eb71d758feb27e4d2a1d7097e51c733970' },
+      { label: 'Local clean-main smoke', result: '/opt/homebrew/bin/lingtai-tui and /opt/homebrew/bin/lingtai both report v0.11.6' },
     ],
   },
   links: [
@@ -157,7 +161,7 @@ const v0_18_1_kernel_v0_11_6_tui: Release = {
     { label: 'Kernel changes v0.18.0...v0.18.1', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.18.0...v0.18.1' },
     { label: 'TUI/Portal changes v0.11.5...v0.11.6', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.11.5...v0.11.6' },
     { label: 'TUI/Portal release workflow run', href: 'https://github.com/Lingtai-AI/lingtai/actions/runs/29992038966' },
-    { label: 'Kernel build workflow run', href: 'https://github.com/Lingtai-AI/lingtai-kernel/actions/runs/29990984814' },
+    { label: 'Kernel artifact build run (GitHub matrix + manifest PASS)', href: 'https://github.com/Lingtai-AI/lingtai-kernel/actions/runs/29990984814' },
     { label: 'Kernel source', href: 'https://github.com/Lingtai-AI/lingtai-kernel/tree/81c70e5bac4988ae0ceaf1a1a838a3c80002e6e4' },
     { label: 'TUI/Portal source', href: 'https://github.com/Lingtai-AI/lingtai/tree/ee27722f135cd800767c3a53da2ca60ebba54cf3' },
   ],
