@@ -32,6 +32,20 @@ release. `--from-source` only selects the source-build fallback for that exact
 official release; arbitrary `--ref` development work is handed off to
 `assets/dev.sh` with exit status 2.
 
+## Explicit latest-main install
+
+Use the explicit opt-in when you want both current TUI `main` and current kernel
+`main`, with both full SHAs verified, recorded, and shown:
+
+```sh
+curl -fsSL https://lingtai.ai/install.sh | bash -s -- --latest
+```
+
+The public wrapper first resolves the TUI repository's current `main` to one full
+SHA and delegates to `install.sh` from that exact commit. This is not the ordinary
+stable path and never falls back to it. The delegated installer owns target/runtime
+checks and the final receipt; arbitrary `--ref` work still belongs to `assets/dev.sh`.
+
 ## Native Windows install
 
 `https://lingtai.ai/install.ps1` is the canonical ordinary official-install happy

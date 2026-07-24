@@ -136,8 +136,10 @@ preview/deploy mechanics. Public files bypass Astro component transformation and
 are copied as exact origin bytes.
 
 The public installation component is deliberately standalone: `install.sh` is
-the fresh ordinary entrypoint, while update/development/repair/verification are
-separate executable assets explained by one installation skill and governed by
+the fresh ordinary entrypoint plus one explicit `--latest` delegation to the
+TUI repository's pinned current-main installer, while arbitrary-ref development,
+update, repair, and verification are separate executable assets explained by one
+installation skill and governed by
 one child Contract.
 
 ## State

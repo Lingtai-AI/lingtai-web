@@ -25,21 +25,25 @@ normative Contract, and real behavior evidence.
 
 ## Components
 
-- `public/install.sh:912-995` `write_install_metadata` publishes the first strict
+- `public/install.sh:2177-2232` `latest_main_requested` and
+  `latest_main_handoff` recognize only explicit `--latest`, pin the TUI
+  repository's current `main` entrypoint to one full SHA, delegate all arguments,
+  propagate its result, and remove only the wrapper's private temporary directory.
+- `public/install.sh:914-997` `write_install_metadata` publishes the first strict
   success receipt only after postconditions; exclusive linking preserves a raced
   receipt.
-- `public/install.sh:1179-1196` `ensure_runtime_pip` self-heals pip only inside the
+- `public/install.sh:1181-1198` `ensure_runtime_pip` self-heals pip only inside the
   new owned venv via its interpreter's `ensurepip`, then selected uv scoped to
   that venv, followed by prefix/pip revalidation.
-- `public/install.sh:1219-1279` `runtime_health_check` and its development counterpart
+- `public/install.sh:1221-1281` `runtime_health_check` and its development counterpart
   bind `sys.prefix`, exact version, and physical module provenance.
-- `public/install.sh:1281-1336` `ensure_runtime_venv` rejects existing state, creates
+- `public/install.sh:1283-1338` `ensure_runtime_venv` rejects existing state, creates
   one new owned runtime, proves pip, installs a pinned local kernel artifact, and
   proves final runtime health.
-- `public/install.sh:1651-1721` `install_kernel_from_bundle` selects, verifies, and
+- `public/install.sh:1653-1723` `install_kernel_from_bundle` selects, verifies, and
   installs the exact pinned artifact by local path; only dependencies use the
   configured index.
-- `public/install.sh:2157-2171` `validate_fresh_install_state` is the fail-closed
+- `public/install.sh:2159-2173` `validate_fresh_install_state` is the fail-closed
   first-install state gate.
 - `public/install.ps1:759-793` `Install-KernelWheel` downloads and SHA-256
   verifies the pinned kernel wheel, then installs it by explicit local path.
@@ -73,8 +77,10 @@ files and symbols implementing those promises.
 
 Ordinary install resolves one exact official TUI release and pinned kernel
 artifact, creates one new target/runtime, proves identity/import/provenance, then
-publishes its first receipt. Successor operations are not modes inside
-`install.sh`: update, development, repair, and verification remain standalone
+publishes its first receipt. Explicit `--latest` is the single narrow delegation
+exception: the public wrapper pins and runs the TUI repository's current-main
+installer, which owns both TUI+kernel SHA provenance and the final receipt.
+Update, arbitrary-ref development, repair, and verification remain standalone
 assets with explicit exact inputs and consent.
 
 Every changed entrypoint is exercised as its real declared operation in a
