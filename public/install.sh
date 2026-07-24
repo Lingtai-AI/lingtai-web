@@ -15,8 +15,9 @@
 #   report partial state honestly and do not treat failure as cleanup authority.
 # - These maintenance rules grant no merge, release, deploy, auth, config, or
 #   deletion authority.
-# This file owns only first-install ordinary state; it never adopts, updates,
-# or repairs an existing target/runtime, and only --skip-python permits TUI-only.
+# This file owns first-install ordinary state. Explicit --latest delegates to
+# the pinned current-main TUI installer, which owns that latest-main operation.
+# Other modes never adopt, update, or repair existing state; only --skip-python permits TUI-only.
 # One-shot installer for lingtai-tui and lingtai-portal, plus the Python
 # `lingtai` runtime venv at ~/.lingtai-tui/runtime/venv.
 #
@@ -158,6 +159,7 @@ Usage: install.sh [options]
 
 Install one exact official TUI/Portal release and its pinned Python runtime.
   --version <tag>        Install this official release tag instead of latest.
+  --latest               Explicitly install current TUI main + kernel main (delegated, no stable fallback).
   --ref <ref>            Hand off arbitrary development ref work to assets/dev.sh (exit 2).
   --bin-dir <dir>        Install binaries into <dir>.
   --prefix <dir>         Install binaries into <prefix>/bin.
@@ -2172,7 +2174,68 @@ validate_fresh_install_state() {
 
 # --- main --------------------------------------------------------------------
 
+latest_main_requested() {
+  local arg expect_value=0
+  for arg in "$@"; do
+    if [[ "$expect_value" == "1" ]]; then
+      expect_value=0
+      continue
+    fi
+    case "$arg" in
+      --version|--ref|--prefix|--bin-dir|--source) expect_value=1 ;;
+      --latest) return 0 ;;
+    esac
+  done
+  return 1
+}
+
+latest_main_handoff() {
+  if [[ "${1:-}" == "install" ]]; then
+    shift
+  fi
+
+  command -v git &>/dev/null || {
+    echo "error: git is required for the explicit --latest main install." >&2
+    return 1
+  }
+  command -v curl &>/dev/null || {
+    echo "error: curl is required for the explicit --latest main install." >&2
+    return 1
+  }
+
+  local ref_line resolved_sha handoff_dir handoff_script handoff_url rc
+  if ! ref_line="$(git ls-remote "$REPO" refs/heads/main)"; then
+    echo "error: could not resolve ${REPO_SLUG} refs/heads/main for --latest." >&2
+    return 1
+  fi
+  resolved_sha="${ref_line%%$'\t'*}"
+  [[ "$resolved_sha" =~ ^[0-9a-f]{40}$ ]] || {
+    echo "error: invalid ${REPO_SLUG} main SHA for --latest: ${resolved_sha:-<empty>}" >&2
+    return 1
+  }
+
+  handoff_dir="$(mktemp -d "${TMPDIR:-/tmp}/lingtai-latest.XXXXXX")" || return 1
+  handoff_script="$handoff_dir/install.sh"
+  handoff_url="https://raw.githubusercontent.com/${REPO_SLUG}/${resolved_sha}/install.sh"
+  if curl -fsSL --retry 3 --max-time 120 -o "$handoff_script" "$handoff_url"; then
+    say "Delegating explicit --latest to ${REPO_SLUG} main at $resolved_sha"
+  else
+    rc=$?
+    rm -rf -- "$handoff_dir"
+    echo "error: failed to fetch the pinned --latest installer at $resolved_sha." >&2
+    return "$rc"
+  fi
+
+  if bash "$handoff_script" "$@"; then rc=0; else rc=$?; fi
+  rm -rf -- "$handoff_dir"
+  return "$rc"
+}
+
 main() {
+  if latest_main_requested "$@"; then
+    latest_main_handoff "$@"
+    return $?
+  fi
   parse_args "$@" || return $?
   cleanup() { cd / 2>/dev/null || true; rm -rf "$BUILD_DIR"; }
   trap cleanup EXIT

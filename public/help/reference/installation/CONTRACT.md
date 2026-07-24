@@ -55,17 +55,24 @@ expressly narrows one; the adapter owns that named exception.
 
 ### 2.1 Explicit operation selection
 
-1. `/install.sh` ordinary install is first-install-only. `/install.ps1` is an
+1. `/install.sh` ordinary install is first-install-only. Its explicit `--latest`
+   selection is a separate latest-main operation: the public wrapper resolves the
+   TUI repository's current `main` to one full SHA, downloads `install.sh` from
+   that exact commit, and delegates all arguments to it. `/install.ps1` is an
    explicit Windows adapter with the exact-release repeat semantics stated in
-   §4.1a; this does not change `/install.sh` or the update/fix separation.
-2. Update, development, repair, and verification are separate standalone assets.
+   §4.1a; neither exception changes ordinary install or the update/fix separation.
+2. Update, arbitrary-ref development, repair, and verification remain separate
+   standalone assets.
 3. `/skill.md`, `/help/skill.md`, and the installation skill are guidance only.
    They MUST NOT infer or authorize mutation.
 4. For `/install.sh` and the maintenance assets, a missing child URL,
    unclassified state, conflicting receipt, redirected path, or ambiguous
    provenance is a stop condition. `/install.ps1` follows its explicit
    fixed-destination trust and failure contract in §4.1a.
-5. No entrypoint downloads, sources, or executes another installation entrypoint.
+5. No entrypoint downloads, sources, or executes another installation entrypoint,
+   except the explicit `/install.sh --latest` delegation described above. That
+   exception pins the child entrypoint to one resolved TUI `main` SHA, executes it
+   from a private temporary directory, and never falls back to ordinary stable.
 
 ### 2.2 Exact ownership
 
@@ -188,7 +195,8 @@ the TUI and Portal binaries remain required and are installed.
 - No adoption, overwrite, update, or repair of existing state.
 - No arbitrary development ref. `--ref` and development/update compatibility
   flags hand off with exit status `2`.
-- No skill/helper download, source, or execution.
+- No skill/helper download, source, or execution on the ordinary path. The exact
+  `--latest` delegation is governed separately by §4.1b.
 
 **Success and failure meaning**
 
@@ -197,6 +205,33 @@ the TUI and Portal binaries remain required and are installed.
 - A nonzero exit is not rollback. It may leave newly created target/runtime or
   dependency state, but MUST NOT claim success or replace pre-existing state.
   A later ordinary invocation sees that state and fails closed.
+
+### 4.1b `/install.sh --latest` — explicit latest-main delegation
+
+**Preconditions and authority**
+
+- `--latest` is explicit; it is not inferred from no arguments, `--ref`, receipt
+  state, or any environment default.
+- Invoking it authorizes the delegated current-main install only. The delegated
+  installer owns target/runtime validation, exact TUI+kernel main resolution, and
+  receipt postconditions.
+
+**Allowed behavior**
+
+- Require `git` and `curl`; resolve `Lingtai-AI/lingtai` `refs/heads/main` to one
+  full SHA; download `install.sh` from that exact commit into a private temporary
+  directory; execute it with the original arguments; then remove only that
+  self-created temporary directory.
+- The delegated installer MUST resolve, verify, record, and show the exact TUI and
+  kernel main SHAs. It MUST fail loud rather than falling back to ordinary stable
+  releases or installing LingTai by package name.
+
+**Success and failure meaning**
+
+- Success is only the delegated installer's successful postcondition/receipt.
+  The public wrapper publishes no independent success receipt.
+- Any resolution, download, delegated install, or postcondition failure propagates
+  nonzero and never retries as an ordinary stable install. No rollback is claimed.
 
 ### 4.1a `/install.ps1` — exact-release ordinary install/reinstall (native Windows)
 
