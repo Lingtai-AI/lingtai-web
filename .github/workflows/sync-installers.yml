@@ -1,0 +1,127 @@
+name: Sync install.ps1 from lingtai
+
+# public/install.ps1 is what https://lingtai.ai/install.ps1 serves, and it was a
+# vendored copy with no automation. It had fallen six PRs behind
+# Lingtai-AI/lingtai: its blob hashed to the commit that shipped the verified
+# Windows bundle installer, which predates `-Latest` entirely, so
+#     &([scriptblock]::Create((irm https://lingtai.ai/install.ps1))) -Latest
+# failed on an unknown parameter for anyone following the documented route.
+#
+# Lingtai-AI/lingtai is CANONICAL for install.ps1. This job mirrors it here and
+# never writes in the other direction: a fix applied to public/install.ps1 is
+# silently reverted by the next sync, so PowerShell installer fixes belong
+# upstream in lingtai.
+#
+# ---------------------------------------------------------------------------
+# install.sh is DELIBERATELY NOT SYNCED. Do not "finish the job" by adding it.
+# ---------------------------------------------------------------------------
+# public/install.sh is not a stale mirror -- it is an independent, more capable
+# fork maintained here. It carries ~22 functions lingtai's copy does not,
+# including the runtime health/self-heal and install-state governance
+# subsystems (runtime_health_check, dev_runtime_health_check, runtime_venv_state,
+# canonical_runtime_venv, ensure_runtime_pip, validate_fresh_install_state,
+# validate_install_target, update_validate_manifest, fetch_kernel_pin,
+# parse_kernel_pin_manifest, kernel_pin_url_for_provider, ...) plus the
+# latest-main handoff added by #67. Overwriting it from lingtai@main would
+# DELETE all of that from the installer real users curl.
+#
+# The gap runs both ways. lingtai@main has a handful install.sh here lacks --
+# notably python_dependency_index_url (the TUNA index for Gitee bundle
+# dependencies) and print_path_hint (zsh PATH guidance, which matters because
+# macOS defaults to zsh) -- plus native current-main support rather than a
+# handoff shim. Those are worth BACKPORTING upstream-to-here by hand, or
+# reconciling the two into one canonical script. Either is a deliberate
+# decision, not something an unattended mirror should make.
+#
+# No cross-repo secret is needed: lingtai is public, so the fetch is
+# unauthenticated, and the commit uses this repository's own GITHUB_TOKEN.
+
+on:
+  schedule:
+    # Hourly. A drifted installer is a user-facing break, not a cosmetic one.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  # Lets Lingtai-AI/lingtai trigger an immediate sync on merge, once someone
+  # adds a token there. Until then the schedule covers it.
+  repository_dispatch:
+    types: [installers-updated]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-installers
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch canonical install.ps1 from lingtai@main
+        id: fetch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Resolve main to an exact SHA first, then download AT that SHA, so a
+          # push landing mid-run cannot serve a half-updated revision.
+          SHA="$(gh api repos/Lingtai-AI/lingtai/commits/main --jq .sha)"
+          if [ ${#SHA} -ne 40 ]; then echo "::error::bad SHA: $SHA"; exit 1; fi
+          case "$SHA" in
+            *[!0-9a-f]*) echo "::error::bad SHA: $SHA"; exit 1 ;;
+          esac
+          echo "source_sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Canonical revision: $SHA"
+
+          mkdir -p .sync
+          curl -fsSL --retry 3 --retry-delay 2 \
+            "https://raw.githubusercontent.com/Lingtai-AI/lingtai/$SHA/install.ps1" \
+            -o .sync/install.ps1
+
+          # Validate before letting it near public/. A truncated download or an
+          # HTML error page must never be published as an installer people pipe
+          # into a shell.
+          if [ ! -s .sync/install.ps1 ]; then
+            echo "::error::install.ps1 downloaded empty"; exit 1
+          fi
+          SIZE=$(wc -c < .sync/install.ps1)
+          if [ "$SIZE" -lt 20000 ]; then
+            echo "::error::install.ps1 is only $SIZE bytes -- refusing to publish"; exit 1
+          fi
+          if grep -qi '<!doctype html\|<html' .sync/install.ps1; then
+            echo "::error::install.ps1 looks like an HTML error page"; exit 1
+          fi
+          grep -q '^#requires -Version' .sync/install.ps1 \
+            || { echo "::error::install.ps1 lost its #requires header"; exit 1; }
+          # The documented current-main route depends on this parameter existing;
+          # its absence is exactly the regression this sync exists to prevent.
+          grep -q '\[switch\]\$Latest' .sync/install.ps1 \
+            || { echo "::error::install.ps1 has no -Latest parameter"; exit 1; }
+
+      - name: Publish if changed
+        id: publish
+        env:
+          SOURCE_SHA: ${{ steps.fetch.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          if cmp -s .sync/install.ps1 public/install.ps1; then
+            rm -rf .sync
+            echo "already in sync"
+            exit 0
+          fi
+          cp .sync/install.ps1 public/install.ps1
+          rm -rf .sync
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add public/install.ps1
+          # Separate -m flags become separate paragraphs. A single -m with
+          # embedded newlines would have to dedent inside this block scalar,
+          # which silently ends the YAML block instead.
+          git commit \
+            -m "chore(installers): sync install.ps1 from lingtai@${SOURCE_SHA:0:12}" \
+            -m "Mirrored from Lingtai-AI/lingtai at $SOURCE_SHA. Edit install.ps1 there; this copy is overwritten on every sync. install.sh is intentionally not synced -- see the workflow header."
+          git push
