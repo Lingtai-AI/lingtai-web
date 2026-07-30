@@ -105,6 +105,16 @@ COUNTRY_DETECT_URL_1="${LINGTAI_COUNTRY_DETECT_URL_1:-https://ipapi.co/country/}
 COUNTRY_DETECT_URL_2="${LINGTAI_COUNTRY_DETECT_URL_2:-https://ifconfig.co/country-iso}"
 MIRROR_TIMEOUT="${LINGTAI_MIRROR_TIMEOUT:-3}"
 
+# Package index used to resolve the verified local LingTai artifact's
+# third-party dependencies -- never LingTai itself, which is always installed
+# from an explicit local path. The Gitee default exists because the whole point
+# of the Gitee route is serving mainland-China hosts, and pypi.org is not
+# reliably reachable from them: resolving a Gitee-served bundle's dependencies
+# against pypi.org left exactly the users that route exists for stalling on an
+# unreachable index. Backported from Lingtai-AI/lingtai (#701).
+PYPI_INDEX_URL_DEFAULT="https://pypi.org/simple"
+PYPI_INDEX_URL_GITEE_DEFAULT="https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+
 TMPDIR="${TMPDIR:-/tmp}"
 BUILD_DIR="$TMPDIR/lingtai-install-$$"
 
@@ -188,6 +198,31 @@ show_help_for_mode() { install_usage; }
 say()  { echo "==> $*"; }
 warn() { echo "warning: $*" >&2; }
 note() { echo "    $*"; }
+
+# print_path_hint tells the user how to put BIN_DIR on PATH, using the startup
+# file their ACTUAL shell reads. This previously hardcoded ~/.bashrc for every
+# shell, which is wrong on macOS: the default shell there is zsh, which never
+# reads .bashrc, so the suggested command appeared to succeed and changed
+# nothing. An unrecognized shell gets the bare export rather than a guess at a
+# filename. Nothing is written -- the user runs it. Backported from
+# Lingtai-AI/lingtai (#705).
+print_path_hint() {
+  local bin_dir="$1" shell_name="${SHELL:-}" rc_file
+  case ":${PATH}:" in
+    *":${bin_dir}:"*) return 0 ;;
+  esac
+  case "${shell_name##*/}" in
+    zsh)  rc_file="$HOME/.zshrc" ;;
+    bash) rc_file="$HOME/.bashrc" ;;
+    *)
+      say "Note: $bin_dir is not on your PATH. Add this export to your shell startup file:"
+      note "export PATH=\"$bin_dir:\$PATH\""
+      return 0
+      ;;
+  esac
+  say "Note: $bin_dir is not on your PATH. Add it with:"
+  note "echo 'export PATH=\"$bin_dir:\$PATH\"' >> \"$rc_file\" && source \"$rc_file\""
+}
 
 # is_wsl reports whether we're running under Windows Subsystem for Linux.
 is_wsl() {
@@ -385,6 +420,30 @@ resolve_source_provider() {
     fi
   else
     BUNDLE_PROVIDER="github"
+  fi
+}
+
+# python_dependency_index_url echoes the ONE package index used to resolve the
+# verified local LingTai artifact's third-party dependencies. Precedence:
+#
+#   1. a non-empty LINGTAI_PYPI_INDEX_URL always wins (an explicit choice is
+#      honored even when it disagrees with the provider);
+#   2. otherwise the default of the provider that actually served the bundle --
+#      Gitee implies a mainland-China host, so Tsinghua rather than pypi.org;
+#   3. otherwise pypi.org.
+#
+# Exactly one --index-url pair is ever passed, never --extra-index-url: adding
+# pypi.org as a fallback would reintroduce the stall this avoids, because an
+# unreachable index is slow rather than absent. LingTai's own bytes are still
+# installed only from an explicit local path, so this affects dependency
+# resolution alone. Backported from Lingtai-AI/lingtai (#701).
+python_dependency_index_url() {
+  if [[ -n "${LINGTAI_PYPI_INDEX_URL:-}" ]]; then
+    printf '%s' "$LINGTAI_PYPI_INDEX_URL"
+  elif [[ "${BUNDLE_PROVIDER:-github}" == "gitee" ]]; then
+    printf '%s' "$PYPI_INDEX_URL_GITEE_DEFAULT"
+  else
+    printf '%s' "$PYPI_INDEX_URL_DEFAULT"
   fi
 }
 
@@ -1188,7 +1247,7 @@ ensure_runtime_pip() {
   "$py" -m pip --version >/dev/null 2>&1 && return 0
 
   if [[ -n "$uv" ]]; then
-    index_url="${LINGTAI_PYPI_INDEX_URL:-https://pypi.org/simple}"
+    index_url="$(python_dependency_index_url)"
     warn "pip is still missing; using selected uv only inside the new owned runtime."
     "$uv" pip install --index-url "$index_url" -p "$venv_dir" pip || warn "uv could not seed pip in the new owned runtime."
   fi
@@ -1695,7 +1754,7 @@ install_kernel_from_bundle() {
   fi
   note "Verified SHA256 for $fname."
 
-  index_url="${LINGTAI_PYPI_INDEX_URL:-https://pypi.org/simple}"
+  index_url="$(python_dependency_index_url)"
   say "Installing lingtai from local artifact (dependencies resolved via $index_url) ..."
   # Explicit local path: pip/uv never requests the package name "lingtai"
   # from any index here — only third-party dependency resolution uses
@@ -2316,10 +2375,7 @@ main() {
     "$BIN_DIR/lingtai-tui" "$PORTAL_PATH" || return 1
   say "Wrote install metadata to $GLOBAL_DIR/install.json"
   say "Done. $("$BIN_DIR/lingtai-tui" version 2>&1 || echo "$VERSION")"
-  case ":$PATH:" in
-    *":$BIN_DIR:"*) ;;
-    *) say "Note: $BIN_DIR is not on your PATH. Add it with:"; note "echo 'export PATH=\"$BIN_DIR:\$PATH\"' >> ~/.bashrc && source ~/.bashrc" ;;
-  esac
+  print_path_hint "$BIN_DIR"
 }
 
 if [[ "${LINGTAI_INSTALL_SH_SOURCE_ONLY:-0}" != "1" ]]; then
