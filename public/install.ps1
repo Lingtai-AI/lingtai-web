@@ -8,7 +8,7 @@
     the PowerShell counterpart to install.sh and parses/runs identically under
     Windows PowerShell 5.1 (Desktop) and PowerShell 7+ (Core).
 
-    Two install sources are supported:
+    Three install sources are supported:
 
       * PUBLIC MODE (no -ArchivePath, the default): resolve one exact vX.Y.Z TUI
         release tag from GitHub (an explicit -Version, or the latest release
@@ -29,7 +29,12 @@
         still resolves the pinned bundle for -Version over the network exactly as
         in public mode, since the kernel pin is not shipped inside the archive.
 
-    Both modes provision the Python runtime venv (default, non -SkipVenv) ONLY
+      * CURRENT-MAIN DEV MODE (-Latest): resolve and pin refs/heads/main to full
+        commits in both Lingtai-AI/lingtai and Lingtai-AI/lingtai-kernel before
+        checkout, build both native Windows binaries from the pinned TUI tree,
+        and install the pinned kernel checkout by local path into the runtime venv.
+
+    Both release modes provision the Python runtime venv (default, non -SkipVenv) ONLY
     from the resolved release's pinned kernel bundle: the bundle manifest's
     kernel_tag/kernel_manifest_filename select the lingtai-kernel release
     manifest, a wheel matching the venv's actual CPython 3.11/3.12/3.13 win_amd64
@@ -48,6 +53,12 @@
 .PARAMETER BinDir
     Directory the binaries install into. Defaults to a per-user, non-admin
     location: %LOCALAPPDATA%\Programs\lingtai\bin. Never requires administrator.
+
+.PARAMETER Latest
+    Explicit current-main development mode. Pins and checks out main in both
+    repositories, builds lingtai-tui.exe and the required lingtai-portal.exe,
+    and installs the checked-out kernel source as a non-editable local build
+    into the runtime venv.
 
 .PARAMETER GlobalDir
     Per-user global state directory (the ~/.lingtai-tui analogue). Defaults to
@@ -86,6 +97,9 @@
                   -ChecksumPath .\lingtai-v0.11.4-windows-amd64.zip.sha256 `
                   -Version v0.11.4 -SkipVenv
 
+.EXAMPLE
+    .\install.ps1 -Latest -BinDir "$env:LOCALAPPDATA\Programs\lingtai\bin"
+
 .NOTES
     Requires PowerShell 5.1 or later. Does not require administrator.
     Exit 0 => success. Non-zero => a fail-loud error. Validation and the
@@ -100,6 +114,7 @@ param(
     [string]$GlobalDir    = $env:LINGTAI_GLOBAL_DIR,
     [string]$ArchivePath,
     [string]$ChecksumPath,
+    [switch]$Latest,
     [switch]$SkipVenv,
     [switch]$NoModifyPath,
     [switch]$DryRun
@@ -128,6 +143,95 @@ function Write-Info { param([string]$Message) Write-Host "==> $Message" -Foregro
 function Write-Warn { param([string]$Message) Write-Host "warn: $Message" -ForegroundColor Yellow }
 function Write-Ok   { param([string]$Message) Write-Host "  ok: $Message" -ForegroundColor Green }
 function Write-Step { param([string]$Message) Write-Host "  -> $Message" -ForegroundColor DarkGray }
+
+# --- Progress reporting -------------------------------------------------------
+
+# Long phases (npm ci, two Go builds, a pip install) previously ran with their
+# output sent to Out-Null and no heading, so a -Latest install showed nothing at
+# all for minutes and looked hung. These helpers give every long phase a heading
+# printed BEFORE the work starts, plus an elapsed time when it finishes, so the
+# terminal always says what is currently running and how long it took.
+
+$script:InstallClock = [System.Diagnostics.Stopwatch]::StartNew()
+$script:PhaseNumber  = 0
+$script:PhaseTotal   = 0
+
+function Set-PhaseTotal {
+    param([int]$Total)
+    $script:PhaseTotal  = $Total
+    $script:PhaseNumber = 0
+}
+
+# Human-readable elapsed time: "48s" / "3m 07s". Seconds-resolution on purpose --
+# these phases run for minutes and millisecond noise would only add width.
+function Format-Duration {
+    param([TimeSpan]$Span)
+    if ($Span.TotalMinutes -ge 1) {
+        return ('{0}m {1:00}s' -f [int]$Span.TotalMinutes, $Span.Seconds)
+    }
+    return ('{0}s' -f [int][Math]::Max(1, [Math]::Round($Span.TotalSeconds)))
+}
+
+# Announce a phase BEFORE it runs (that ordering is the whole point) and return
+# the stopwatch the caller closes with Complete-Phase.
+function Start-Phase {
+    param([string]$Message)
+    $script:PhaseNumber++
+    $label = if ($script:PhaseTotal -gt 0) { "[$($script:PhaseNumber)/$($script:PhaseTotal)]" } else { '==>' }
+    Write-Host "$label $Message" -ForegroundColor Cyan
+    return [System.Diagnostics.Stopwatch]::StartNew()
+}
+
+function Complete-Phase {
+    param([System.Diagnostics.Stopwatch]$Clock, [string]$Message)
+    $Clock.Stop()
+    Write-Host ("  ok: {0} ({1})" -f $Message, (Format-Duration $Clock.Elapsed)) -ForegroundColor Green
+}
+
+# Write-Completion closes a successful install with what was installed, where it
+# went, and what to run next. The previous ending was a single green line naming
+# two 40-character SHAs, which said nothing about how to actually start LingTai
+# or where its state lives.
+function Write-Completion {
+    param(
+        [string]$BinDir,
+        [string]$GlobalDir,
+        [string]$Headline,
+        [System.Collections.Specialized.OrderedDictionary]$Facts
+    )
+    $rule = '-' * 60
+    Write-Host ''
+    Write-Host $rule -ForegroundColor Green
+    Write-Host "  LingTai: $Headline" -ForegroundColor Green
+    Write-Host $rule -ForegroundColor Green
+    Write-Host ''
+    # Each line is emitted as ONE Write-Host. A `-NoNewline` label followed by a
+    # second Write-Host renders correctly on a live console but splits across two
+    # lines as soon as the stream is redirected -- piping the install to a log, or
+    # a CI job capturing it, turned every label/value pair into two lines.
+    if ($Facts -and $Facts.Count -gt 0) {
+        $width = 0
+        foreach ($key in $Facts.Keys) { if ($key.Length -gt $width) { $width = $key.Length } }
+        foreach ($key in $Facts.Keys) {
+            Write-Host ("  {0}  {1}" -f $key.PadRight($width), $Facts[$key])
+        }
+        Write-Host ''
+    }
+    Write-Host '  Locations' -ForegroundColor Cyan
+    Write-Host "    binaries   $BinDir"
+    Write-Host "    state      $GlobalDir"
+    Write-Host "    runtime    $(Join-Path $GlobalDir 'runtime\venv')"
+    Write-Host ''
+    Write-Host '  Commands' -ForegroundColor Cyan
+    Write-Host '    lingtai-tui       start the terminal UI' -ForegroundColor Green
+    Write-Host '    lingtai-portal    start the web portal' -ForegroundColor Green
+    Write-Host ''
+    Write-Host ('  Total time: {0}' -f (Format-Duration $script:InstallClock.Elapsed)) -ForegroundColor DarkGray
+    if (-not $NoModifyPath) {
+        Write-Host '  Open a new terminal so the updated PATH is picked up everywhere.' -ForegroundColor Yellow
+    }
+    Write-Host ''
+}
 
 # Fail loud: print an actionable message to the ERROR stream and throw so the
 # outer catch turns it into a non-zero exit. Never swallow, never fake success.
@@ -333,16 +437,25 @@ function Write-InstallMetadata {
         [string]$KernelSource = '',
         [string]$KernelBundleId = '',
         [string]$KernelVersion = '',
-        [string]$KernelProvider = ''
+        [string]$KernelProvider = '',
+        [string]$SourceMode = '',
+        [string]$TuiCommit = '',
+        [string]$KernelCommit = ''
     )
     $stamped = $ResolvedRef -replace '^v', ''
+    $upgradeCommand = 're-run install.ps1 with a newer -ArchivePath/-Version'
+    if ($SourceMode -eq 'latest-main') {
+        if ($TuiCommit -notmatch '^[0-9a-fA-F]{40}$') { Fail "Current-main install metadata requires a full TUI commit SHA." }
+        $stamped = "main-$($TuiCommit.ToLowerInvariant())"
+        $upgradeCommand = 're-run install.ps1 -Latest'
+    }
     $meta = [ordered]@{
         schema           = 'lingtai.tui.install/v1'
         schema_version   = 1
         install_method   = 'powershell'
         install_kind     = $InstallKind
         self_update      = $false
-        upgrade_command  = 're-run install.ps1 with a newer -ArchivePath/-Version'
+        upgrade_command  = $upgradeCommand
         prefix           = $Prefix
         bin_dir          = $BinDir
         repo_url         = $RepoUrl
@@ -355,9 +468,14 @@ function Write-InstallMetadata {
     }
     if ($KernelSource) {
         $meta['kernel_source']       = $KernelSource
-        $meta['kernel_bundle_id']    = $KernelBundleId
         $meta['kernel_version']      = $KernelVersion
         $meta['kernel_provider']     = $KernelProvider
+        if ($KernelBundleId) { $meta['kernel_bundle_id'] = $KernelBundleId }
+    }
+    if ($SourceMode) {
+        $meta['source_mode']  = $SourceMode
+        $meta['tui_commit']   = $TuiCommit
+        $meta['kernel_commit'] = $KernelCommit
     }
     $metaPath = Join-Path $GlobalDir 'install.json'
     New-Item -ItemType Directory -Force -Path $GlobalDir | Out-Null
@@ -686,37 +804,105 @@ function Get-KernelManifest {
 
 # Find-VenvPython locates an already-available CPython 3.11/3.12/3.13 (amd64)
 # via the Windows `py` launcher (preferred, most reliable version selection)
-# or a bare `python`/`python3` on PATH. Never downloads or bootstraps a
-# Python runtime -- fails loud with an actionable message if none is found.
-function Find-VenvPython {
-    $py = Get-Command -Name 'py' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
-    foreach ($minor in @('3.13', '3.12', '3.11')) {
-        if ($py) {
-            $probe = & $py.Source "-$minor" '-c' 'print(1)' 2>$null
-            if ($LASTEXITCODE -eq 0 -and $probe -eq '1') {
-                return @{ Launcher = $py.Source; Args = @("-$minor") }
-            }
+# or a bare `python`/`python3` on PATH. This probe never downloads or
+# bootstraps Python; -Latest owns any separate prerequisite repair step.
+function Get-SupportedVenvPythonDiscovery {
+    $invalidDirectories = New-Object System.Collections.Generic.List[string]
+    $invalidDetails = New-Object System.Collections.Generic.List[string]
+
+    # PowerShell 5.1 turns native stderr into ErrorRecord objects. With this
+    # script's fail-loud ErrorActionPreference=Stop, the Windows `py` launcher
+    # exits the whole installer when it exists but has no installed runtimes
+    # ("No suitable Python runtime found") unless the probe is isolated here.
+    function Invoke-PythonDiscoveryProbe {
+        param([string]$Launcher, [string[]]$Arguments)
+        $savedErrorActionPreference = $ErrorActionPreference
+        $records = @()
+        $exitCode = 1
+        try {
+            $ErrorActionPreference = 'Continue'
+            $records = @(& $Launcher @Arguments 2>&1)
+            $exitCode = $LASTEXITCODE
+        } catch {
+            $records = @($_)
+        } finally {
+            $ErrorActionPreference = $savedErrorActionPreference
         }
+        $output = (@($records | ForEach-Object {
+            if ($_ -is [System.Management.Automation.ErrorRecord]) { $_.Exception.Message }
+            else { [string]$_ }
+        }) -join "`n").Trim()
+        return @{ ExitCode = $exitCode; Output = $output }
     }
+
+    # Include implementation identity: PyPy and other Python-compatible runtimes
+    # cannot satisfy the managed CPython wheel/venv contract merely by matching
+    # the requested language version and pointer width.
+    $probeCode = 'import struct, sys; print(sys.implementation.name + '':'' + str(sys.version_info.major) + ''.'' + str(sys.version_info.minor) + '':'' + str(struct.calcsize(''P'') * 8))'
+
+    $py = Get-Command -Name 'py' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($py) {
+        $pyProbeDetails = @()
+        foreach ($minor in @('3.13', '3.12', '3.11')) {
+            $probeResult = Invoke-PythonDiscoveryProbe -Launcher $py.Source -Arguments @("-$minor", '-c', $probeCode)
+            $probeExit = $probeResult.ExitCode
+            $probe = $probeResult.Output
+            if ($probeExit -eq 0 -and $probe -match '^cpython:3\.(11|12|13):64$') {
+                return @{ Python = @{ Launcher = $py.Source; Args = @("-$minor") }; InvalidDirectories = @(); Detail = "launcher $($py.Source)" }
+            }
+            $pyProbeDetails += if ($probe) { "$minor=$probe" } else { "$minor=exit $probeExit" }
+        }
+        $pyDir = Split-Path -Parent $py.Source
+        if ($pyDir) { $invalidDirectories.Add($pyDir) | Out-Null }
+        $invalidDetails.Add("py ($($py.Source)): $($pyProbeDetails -join ', ')") | Out-Null
+    }
+
     foreach ($name in @('python', 'python3')) {
         $cmd = Get-Command -Name $name -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($cmd) {
             # Single-quoted Python literal only (no embedded ") -- Windows PowerShell
             # 5.1's native argument-array-to-command-line reconstruction mishandles
             # embedded double quotes, corrupting the string the interpreter receives.
-            $verOut = & $cmd.Source '-c' 'import sys; print(str(sys.version_info.major) + ''.'' + str(sys.version_info.minor))' 2>$null
-            if ($LASTEXITCODE -eq 0 -and $verOut -match '^3\.(1[1-3])$') {
-                return @{ Launcher = $cmd.Source; Args = @() }
+            $probeResult = Invoke-PythonDiscoveryProbe -Launcher $cmd.Source -Arguments @('-c', $probeCode)
+            $probeExit = $probeResult.ExitCode
+            $probe = $probeResult.Output
+            if ($probeExit -eq 0 -and $probe -match '^cpython:3\.(11|12|13):64$') {
+                return @{ Python = @{ Launcher = $cmd.Source; Args = @() }; InvalidDirectories = @(); Detail = "launcher $($cmd.Source)" }
             }
+            $cmdDir = Split-Path -Parent $cmd.Source
+            if ($cmdDir) { $invalidDirectories.Add($cmdDir) | Out-Null }
+            $observed = if ($probe) { $probe } else { "exit $probeExit" }
+            $invalidDetails.Add("$name ($($cmd.Source)): $observed") | Out-Null
         }
     }
+
+    $detail = if ($invalidDetails.Count -gt 0) {
+        "requires 64-bit CPython 3.11-3.13; rejected $(@($invalidDetails) -join '; ')"
+    } else {
+        'missing; requires 64-bit CPython 3.11-3.13'
+    }
+    return @{
+        Python = $null
+        InvalidDirectories = @($invalidDirectories | Select-Object -Unique)
+        Detail = $detail
+    }
+}
+
+function Find-SupportedVenvPython {
+    $discovery = Get-SupportedVenvPythonDiscovery
+    return $discovery.Python
+}
+
+function Find-VenvPython {
+    $found = Find-SupportedVenvPython
+    if ($found) { return $found }
     Fail @"
 No supported Python interpreter (CPython 3.11, 3.12, or 3.13, 64-bit) was found
 via the 'py' launcher or 'python'/'python3' on PATH.
 
 LingTai's Windows runtime venv is created from an already-available supported
-Python installation -- this installer never downloads or bootstraps an
-unpinned Python/uv toolchain. Install Python 3.11+ (for example from
+Python installation at this stage; the release/local-artifact path does not
+bootstrap an unpinned Python/uv toolchain. Install Python 3.11+ (for example from
 python.org or the Microsoft Store) and re-run, or pass -SkipVenv to install
 the TUI/portal binaries only (both binaries are still required).
 "@
@@ -731,10 +917,11 @@ function Get-VenvWheelTag {
     # Single-quoted Python literal only (no embedded ") -- Windows PowerShell
     # 5.1's native argument-array-to-command-line reconstruction mishandles
     # embedded double quotes, corrupting the string the interpreter receives.
-    $tag = & $VenvPython '-c' 'import sys; print(''cp'' + str(sys.version_info.major) + str(sys.version_info.minor))' 2>$null
-    if ($LASTEXITCODE -ne 0 -or $tag -notmatch '^cp3(11|12|13)$') {
-        Fail "Could not determine a supported CPython tag from the venv interpreter (got '$tag')."
+    $probe = & $VenvPython '-c' 'import struct, sys; print(''cp'' + str(sys.version_info.major) + str(sys.version_info.minor) + '':'' + str(struct.calcsize(''P'') * 8))' 2>$null
+    if ($LASTEXITCODE -ne 0 -or $probe -notmatch '^cp3(11|12|13):64$') {
+        Fail "The managed venv must use 64-bit CPython 3.11, 3.12, or 3.13 before a win_amd64 wheel can be selected (got '$probe')."
     }
+    $tag = ($probe -split ':')[0]
     return "$tag-$tag-win_amd64"
 }
 
@@ -789,49 +976,194 @@ function Install-KernelWheel {
     if ($LASTEXITCODE -ne 0) { Fail "pip install of the local wheel failed (exit $LASTEXITCODE)." }
 }
 
-# Confirm-KernelImport verifies the freshly installed distribution imports,
-# reports its version, and proves it is not an editable/source install (no
-# direct_url.json, or one that is not editable) -- the same provenance bar
-# install.sh's bundle path holds itself to.
+# Confirm-KernelImport preserves the release-wheel import/version/non-editable
+# verification contract. When VenvDir + KernelSource are supplied by -Latest,
+# it additionally requires the import to stay inside that managed venv and PEP
+# 610 provenance to identify the exact non-editable pinned source checkout.
 function Confirm-KernelImport {
-    param([string]$VenvPython, [string]$ExpectedVersion)
+    param(
+        [string]$VenvPython,
+        [string]$ExpectedVersion,
+        [string]$VenvDir,
+        [string]$KernelSource
+    )
+    $strictSource = -not ([string]::IsNullOrWhiteSpace($VenvDir) -and [string]::IsNullOrWhiteSpace($KernelSource))
+    if ($strictSource -and ([string]::IsNullOrWhiteSpace($VenvDir) -or [string]::IsNullOrWhiteSpace($KernelSource))) {
+        Fail "Strict kernel source verification requires both VenvDir and KernelSource."
+    }
+    $mode = if ($strictSource) { 'source' } else { 'wheel' }
+    $expectedArg = if ([string]::IsNullOrWhiteSpace($ExpectedVersion)) { '-' } else { $ExpectedVersion }
+    $venvArg = if ($strictSource) { $VenvDir } else { '-' }
+    $sourceArg = if ($strictSource) { $KernelSource } else { '-' }
+
     # Single-quoted Python throughout (no embedded ") -- Windows PowerShell 5.1's
     # native argument-array-to-command-line reconstruction mishandles embedded
     # double quotes, corrupting the script text the interpreter actually receives.
-    $probe = & $VenvPython '-c' @'
+    $probeScript = @'
 import importlib.metadata as m
 import json
+from pathlib import Path
 import sys
+from urllib.parse import unquote, urlparse
+from urllib.request import url2pathname
+
+def fail(code, detail):
+    print(code + ':' + detail)
+    sys.exit(1)
+
+def normalize_dist_name(raw):
+    return (raw or '').strip().lower().replace('-', '_')
+
+# Does this distribution's own RECORD claim the file the interpreter actually
+# imported? Metadata alone is not enough: a .dist-info directory is just a
+# directory, so only its declared file list proves it describes THIS code.
+def dist_owns(candidate, target):
+    if target is None:
+        return False
+    try:
+        entries = candidate.files
+    except Exception:
+        return False
+    if not entries:
+        return False
+    for entry in entries:
+        try:
+            if Path(candidate.locate_file(entry)).resolve() == target:
+                return True
+        except Exception:
+            continue
+    return False
+
+# Resolve the distribution that PROVIDES the imported lingtai module, rather
+# than trusting importlib.metadata.distribution('lingtai').
+#
+# distribution()/from_name() matches on the .dist-info DIRECTORY NAME and
+# returns the first filesystem hit. A managed venv can accumulate a leftover
+# lingtai-<old>.dist-info that pip cannot remove -- pip skips a .dist-info
+# whose METADATA is missing or nameless (WARNING: ... due to invalid metadata
+# entry 'name') instead of uninstalling it -- and that orphan sorts ahead of
+# the real one. The probe then read the ORPHAN's stale direct_url.json and
+# reported DIRECT_URL_WRONG_SOURCE naming a path this installer never used,
+# failing a correct install with a misleading provenance error.
+#
+# Requiring BOTH a matching metadata Name and RECORD ownership of the imported
+# file is strictly stronger than the old name lookup: the verified provenance
+# now demonstrably belongs to the code that was imported. Genuine ambiguity
+# (two distributions claiming the same module) still fails loud.
+def resolve_lingtai_dist(target):
+    named = []
+    owners = []
+    for candidate in m.distributions():
+        try:
+            metadata = candidate.metadata
+            dist_name = normalize_dist_name(metadata['Name']) if metadata else ''
+        except Exception:
+            continue
+        if dist_name != 'lingtai':
+            continue
+        named.append(candidate)
+        if dist_owns(candidate, target):
+            owners.append(candidate)
+    if target is not None:
+        if len(owners) == 1:
+            return owners[0]
+        if len(owners) > 1:
+            fail('DIST_AMBIGUOUS', str(len(owners)) + ' installed distributions claim ' + str(target))
+        fail('DIST_NOT_FOUND_FOR_MODULE', str(target))
+    if len(named) == 1:
+        return named[0]
+    if len(named) > 1:
+        fail('DIST_AMBIGUOUS', str(len(named)) + ' lingtai distributions are installed')
+    fail('DIST_NOT_FOUND', 'no installed distribution provides lingtai')
+
 try:
     import lingtai
 except ImportError as exc:
-    print('IMPORT_FAILED:' + str(exc))
-    sys.exit(1)
-dist = m.distribution('lingtai')
+    fail('IMPORT_FAILED', str(exc))
+
+mode = sys.argv[1]
+expected_version = '' if sys.argv[2] == '-' else sys.argv[2]
+if mode not in ('wheel', 'source'):
+    fail('INVALID_VERIFICATION_MODE', mode)
+
+module_value = getattr(lingtai, '__file__', None)
+module_path = Path(module_value).resolve() if module_value else None
+dist = resolve_lingtai_dist(module_path)
 version = dist.version
-editable = False
-try:
-    direct_url_text = dist.read_text('direct_url.json')
-    if direct_url_text:
+if expected_version and version != expected_version:
+    fail('VERSION_MISMATCH', str(version))
+
+direct_source = '<wheel>'
+if mode == 'source':
+    venv_dir = Path(sys.argv[3]).resolve()
+    kernel_source = Path(sys.argv[4]).resolve()
+    if module_path is None:
+        fail('MODULE_PATH_MISSING', 'lingtai.__file__ is empty')
+    try:
+        module_path.relative_to(venv_dir)
+    except ValueError:
+        fail('MODULE_OUTSIDE_VENV', str(module_path))
+
+    try:
+        direct_url_text = dist.read_text('direct_url.json')
+    except Exception as exc:
+        fail('DIRECT_URL_UNREADABLE', str(exc))
+    if not direct_url_text:
+        fail('DIRECT_URL_MISSING', 'direct_url.json is absent or empty')
+    try:
         direct_url = json.loads(direct_url_text)
-        editable = bool(direct_url.get('dir_info', {}).get('editable', False))
-except Exception:
-    pass
-print('OK:' + str(version) + ':' + str(editable))
-'@ 2>$null
-    if ($LASTEXITCODE -ne 0 -or -not $probe -or $probe -notmatch '^OK:') {
-        Fail "Post-install verification failed: could not import lingtai in the venv ($probe)"
+    except Exception as exc:
+        fail('DIRECT_URL_INVALID', str(exc))
+    if not isinstance(direct_url, dict):
+        fail('DIRECT_URL_INVALID', 'top-level value is not an object')
+    dir_info = direct_url.get('dir_info')
+    if not isinstance(dir_info, dict):
+        fail('DIRECT_URL_INVALID', 'dir_info is missing or not an object')
+    if dir_info.get('editable', False) is not False:
+        fail('DIRECT_URL_EDITABLE', 'editable local install is not allowed')
+    url = direct_url.get('url')
+    if not isinstance(url, str) or not url:
+        fail('DIRECT_URL_INVALID', 'url is missing')
+    parsed = urlparse(url)
+    if parsed.scheme.lower() != 'file':
+        fail('DIRECT_URL_NOT_LOCAL', url)
+    path_text = url2pathname(unquote(parsed.path))
+    if parsed.netloc and parsed.netloc.lower() not in ('', 'localhost'):
+        path_text = '//' + parsed.netloc + path_text
+    direct_source = Path(path_text).resolve()
+    if direct_source != kernel_source:
+        fail('DIRECT_URL_WRONG_SOURCE', str(direct_source))
+else:
+    editable = False
+    try:
+        direct_url_text = dist.read_text('direct_url.json')
+        if direct_url_text:
+            direct_url = json.loads(direct_url_text)
+            editable = bool(direct_url.get('dir_info', {}).get('editable', False))
+    except Exception:
+        pass
+    if editable:
+        fail('DIRECT_URL_EDITABLE', 'release wheel install is editable')
+
+print('OK')
+print(str(version))
+print(str(module_path) if module_path is not None else '<unknown>')
+print(str(direct_source))
+'@
+    $probe = @(& $VenvPython '-c' $probeScript $mode $expectedArg $venvArg $sourceArg 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $probe.Count -lt 4 -or $probe[0].Trim() -ne 'OK') {
+        $kind = if ($strictSource) { 'pinned main kernel source' } else { 'release kernel wheel' }
+        Fail "Post-install verification failed for the $kind ($($probe -join '; '))"
     }
-    $parts = $probe -split ':'
-    $installedVersion = $parts[1]
-    $isEditable = $parts[2] -eq 'True'
-    if ($isEditable) {
-        Fail "Installed lingtai distribution is editable/source-provenance; the Windows bundle install must be a real wheel install."
-    }
+    $installedVersion = $probe[1].Trim()
     if ($ExpectedVersion -and $installedVersion -ne $ExpectedVersion) {
         Fail "Installed lingtai version '$installedVersion' does not match the pinned kernel manifest version '$ExpectedVersion'."
     }
-    Write-Ok "Verified lingtai $installedVersion imports and is a non-editable wheel install."
+    if ($strictSource) {
+        Write-Ok "Verified lingtai $installedVersion imports from the managed venv and matches the non-editable pinned kernel source."
+    } else {
+        Write-Ok "Verified lingtai $installedVersion imports and is a non-editable wheel install."
+    }
     return $installedVersion
 }
 
@@ -868,6 +1200,109 @@ function Write-KernelProvenance {
     Write-Ok "Wrote kernel provenance -> $path"
 }
 
+# Copy-ManagedBinary installs one built/staged binary over its destination, even
+# when that destination is currently RUNNING.
+#
+# Windows refuses to overwrite or delete a mapped executable image, so a plain
+# `Copy-Item -Force` onto a running lingtai-tui.exe fails with "The process
+# cannot access the file ... because it is being used by another process."
+# Because the destination copy is the very last step, an ordinary `-Latest`
+# re-install with the TUI or portal open discarded a completed build -- several
+# minutes of checkout and compilation -- at the final instruction.
+#
+# Windows does, however, allow a running image to be RENAMED: the live process
+# keeps executing from the renamed file while the original name is freed
+# immediately. So park the old binary beside itself and retry the copy. The
+# running instance keeps the old code until it is restarted, which is inherent
+# to replacing a running program and is stated rather than papered over.
+#
+# This is the rename-then-replace half of what a from-scratch installer does
+# here; deliberately NOT the other half -- no process is killed. Terminating a
+# user's running agent supervisor to update a binary is a far worse outcome than
+# telling them to restart it.
+function Copy-ManagedBinary {
+    param([string]$Source, [string]$Destination)
+
+    try {
+        Copy-Item -LiteralPath $Source -Destination $Destination -Force
+        return
+    } catch {
+        if (-not (Test-Path -LiteralPath $Destination)) {
+            Fail "Could not install $(Split-Path -Leaf $Destination) into $(Split-Path -Parent $Destination) ($($_.Exception.Message))."
+        }
+    }
+
+    $parked = "$Destination.old-$(Get-Date -Format 'yyyyMMddHHmmss')"
+    try {
+        Rename-Item -LiteralPath $Destination -NewName (Split-Path -Leaf $parked) -ErrorAction Stop
+    } catch {
+        Fail @"
+Could not replace $Destination because it is in use, and it could not be moved aside either ($($_.Exception.Message)).
+Close LingTai (lingtai-tui / lingtai-portal) and re-run; the completed build is kept and the next run reuses it.
+"@
+    }
+    Write-Warn "$(Split-Path -Leaf $Destination) was running; moved the old binary to $(Split-Path -Leaf $parked) and installed the new one. Restart it to pick up this build."
+    try {
+        Copy-Item -LiteralPath $Source -Destination $Destination -Force
+    } catch {
+        # Put the original back so a failed replace never leaves BinDir without
+        # a working binary at the expected name.
+        try { Rename-Item -LiteralPath $parked -NewName (Split-Path -Leaf $Destination) -ErrorAction Stop } catch { }
+        Fail "Could not install $(Split-Path -Leaf $Destination) after moving the running binary aside ($($_.Exception.Message))."
+    }
+}
+
+# Remove-ParkedManagedBinaries deletes `*.old-<stamp>` binaries parked by an
+# earlier run whose process has since exited. Best-effort: one still held open
+# simply stays for the next install to collect.
+function Remove-ParkedManagedBinaries {
+    param([string]$BinDir)
+    if (-not (Test-Path -LiteralPath $BinDir)) { return }
+    foreach ($stale in @(Get-ChildItem -LiteralPath $BinDir -Filter 'lingtai-*.exe.old-*' -File -ErrorAction SilentlyContinue)) {
+        try { Remove-Item -LiteralPath $stale.FullName -Force -ErrorAction Stop } catch { }
+    }
+}
+
+# Remove-OrphanedKernelDistInfo deletes LingTai's OWN unusable .dist-info
+# directories from the installer-managed venv before an install writes a new
+# one.
+#
+# pip refuses to uninstall a .dist-info whose METADATA is absent or carries no
+# Name (it logs "Skipping <dir> due to invalid metadata entry 'name'" and moves
+# on), so such a directory survives every subsequent install. It still shadows
+# the real distribution for importlib.metadata's directory-name lookup, which
+# is how a stale provenance record broke otherwise-correct -Latest installs.
+# Confirm-KernelImport no longer trusts that lookup, but leaving the orphan in
+# place keeps re-emitting pip warnings and re-arms the same trap for any other
+# reader, so the installer removes what it can prove is unusable.
+#
+# Deliberately narrow -- NOT a venv rebuild. Only LingTai's own metadata
+# directory is touched: the sibling <name>-<version>.dist-info convention
+# normalizes the name part, so lingtai-kernel appears as lingtai_kernel-*
+# and never matches, and the venv's resolved dependency tree is preserved. A
+# directory with parseable METADATA is left alone even when stale, because pip
+# can and does replace that one itself.
+function Remove-OrphanedKernelDistInfo {
+    param([string]$VenvDir)
+    $sitePackages = Join-Path $VenvDir 'Lib\site-packages'
+    if (-not (Test-Path -LiteralPath $sitePackages)) { return }
+    $candidates = @(Get-ChildItem -LiteralPath $sitePackages -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^lingtai-[^-]+\.dist-info$' })
+    foreach ($candidate in $candidates) {
+        $metadataPath = Join-Path $candidate.FullName 'METADATA'
+        if (Test-Path -LiteralPath $metadataPath) {
+            $nameLine = @(Select-String -LiteralPath $metadataPath -Pattern '^Name:\s*\S' -ErrorAction SilentlyContinue)
+            if ($nameLine.Count -gt 0) { continue }
+        }
+        Write-Warn "Removing unusable LingTai metadata pip cannot uninstall: $($candidate.FullName)"
+        try {
+            Remove-Item -LiteralPath $candidate.FullName -Recurse -Force
+        } catch {
+            Fail "Could not remove the unusable metadata directory $($candidate.FullName) ($($_.Exception.Message)). Close anything using the runtime venv, delete that directory manually, then re-run."
+        }
+    }
+}
+
 # Install-Venv provisions %USERPROFILE%\.lingtai-tui\runtime\venv from the
 # bundle's pinned kernel release, exactly like install.sh's
 # ensure_runtime_venv/install_kernel_from_bundle: create the venv from an
@@ -902,6 +1337,8 @@ function Install-Venv {
         Fail "Venv created at $venvDir but Scripts\python.exe is missing."
     }
 
+    Remove-OrphanedKernelDistInfo -VenvDir $venvDir
+
     $wheelTag = Get-VenvWheelTag -VenvPython $venvPython
     $kernelManifest = Get-KernelManifest -KernelTag $Bundle.KernelTag -ManifestFilename $Bundle.KernelManifestFilename
     $wheel = Select-KernelWheel -KernelManifest $kernelManifest -WheelTag $wheelTag
@@ -920,6 +1357,487 @@ function Install-Venv {
         KernelVersion  = $installedVersion
         KernelProvider = 'github'
     }
+}
+
+# --- Mainland-China build mirrors --------------------------------------------
+
+# Initialize-BuildMirrors is the native-Windows counterpart to install.sh's
+# CN-restricted-network fallback, which install.ps1 previously had no equivalent
+# of at all -- so a mainland-China -Latest install fetched Go modules from
+# proxy.golang.org and npm packages from registry.npmjs.org and simply hung
+# until they timed out. The POSIX script has covered this since it gained
+# --latest; this closes the gap for the Windows path.
+#
+# Same policy as install.sh, deliberately, so the two installers behave alike:
+#
+#   * Probe once, bounded (LINGTAI_MIRROR_TIMEOUT, default 3s). Only if
+#     proxy.golang.org is unreachable do we switch anything.
+#   * FAIL OPEN. A probe that errors, times out, or is ambiguous means "not
+#     CN-restricted" -- never switch mirrors on a bad guess.
+#   * NEVER override an explicit pre-set value. A user (or CI) who exported
+#     GOPROXY/GOSUMDB/NPM_CONFIG_REGISTRY/LINGTAI_PYPI_INDEX_URL already stated
+#     their intent; install.sh keys that decision off GOPROXY and so does this.
+#   * LINGTAI_ASSUME_CN=1 forces the mirror set with no probe, for hosts with no
+#     outbound access to the probe URL at all.
+#
+# Returns the PyPI index URL the pip steps should use, or $null for pip's
+# default. This is the only mirror decision the caller has to thread through;
+# Go and npm read theirs from the process environment the builds inherit.
+function Initialize-BuildMirrors {
+    $explicitIndex = $env:LINGTAI_PYPI_INDEX_URL
+    if (-not [string]::IsNullOrWhiteSpace($explicitIndex)) {
+        Write-Step "Using LINGTAI_PYPI_INDEX_URL for Python dependencies: $explicitIndex"
+        return $explicitIndex
+    }
+
+    $timeout = 3
+    if ($env:LINGTAI_MIRROR_TIMEOUT -match '^\d+$') { $timeout = [int]$env:LINGTAI_MIRROR_TIMEOUT }
+
+    $assumeCn = ($env:LINGTAI_ASSUME_CN -eq '1')
+    $goproxyPreset = -not [string]::IsNullOrWhiteSpace($env:GOPROXY)
+
+    if (-not $assumeCn) {
+        if ($goproxyPreset) {
+            Write-Step "GOPROXY is already set; leaving build mirrors as configured."
+            return $null
+        }
+        $reachable = $false
+        try {
+            $probe = Invoke-WebRequest -Uri 'https://proxy.golang.org/github.com/golang/go/@latest' `
+                -UseBasicParsing -TimeoutSec $timeout -Method Head -ErrorAction Stop
+            $reachable = ($null -ne $probe)
+        } catch {
+            $reachable = $false
+        }
+        if ($reachable) { return $null }
+        Write-Info "proxy.golang.org unreachable within ${timeout}s; using China-friendly build mirrors."
+    } else {
+        Write-Info 'LINGTAI_ASSUME_CN=1; using China-friendly build mirrors without probing.'
+    }
+
+    if (-not $goproxyPreset) {
+        $env:GOPROXY = 'https://goproxy.cn,direct'
+        Write-Step "GOPROXY=$env:GOPROXY"
+    }
+    if ([string]::IsNullOrWhiteSpace($env:GOSUMDB)) {
+        $env:GOSUMDB = 'sum.golang.google.cn'
+        Write-Step "GOSUMDB=$env:GOSUMDB"
+    }
+    if ([string]::IsNullOrWhiteSpace($env:NPM_CONFIG_REGISTRY)) {
+        $env:NPM_CONFIG_REGISTRY = 'https://registry.npmmirror.com'
+        Write-Step "NPM_CONFIG_REGISTRY=$env:NPM_CONFIG_REGISTRY"
+    }
+    # Same mirror install.sh's PYPI_INDEX_URL_GITEE_DEFAULT uses, so a CN host
+    # resolves Python dependencies from a reachable index too. LingTai's own
+    # bytes are still never fetched from an index by name -- only the local
+    # wheel/checkout path is installed, and this affects its dependencies only.
+    $index = 'https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple'
+    Write-Step "Python dependency index: $index"
+    return $index
+}
+
+# --- Current-main development install ---------------------------------------
+
+function Resolve-MainSha {
+    param([string]$RemoteUrl, [string]$Label)
+    $lines = & git ls-remote $RemoteUrl 'refs/heads/main' 2>$null
+    if ($LASTEXITCODE -ne 0) { Fail "Could not resolve $Label refs/heads/main. Install Git and verify network access to $RemoteUrl." }
+    $sha = ($lines | Select-Object -First 1) -split '\s+' | Select-Object -First 1
+    if ($sha -notmatch '^[0-9a-fA-F]{40}$') { Fail "Could not resolve a full $Label main commit from $RemoteUrl." }
+    return $sha.ToLowerInvariant()
+}
+
+# Invoke-NativeBuild runs one build/checkout command, captures its combined
+# output to a log, and reports elapsed time.
+#
+# Previously this was `& $Tool @Arguments | Out-Null`, which had two costs. The
+# terminal went silent for minutes across `npm ci` and two Go builds with no
+# indication of what was running, and a failure surfaced ONLY as "(exit N)" --
+# the compiler/npm diagnostic that actually said why had been discarded, so the
+# error named the step but never the cause. Output now lands in $LogPath, the
+# tail is printed on failure, and the full log is kept for inspection.
+#
+# stderr is merged with `2>&1` so a failure's real diagnostic is captured, and
+# that REQUIRES relaxing $ErrorActionPreference around the call: on Windows
+# PowerShell 5.1 any text a native command writes to stderr becomes a
+# NativeCommandError under the script's fail-loud 'Stop' policy, which would
+# abort on npm/go progress chatter that is not an error at all. The real exit
+# code is captured immediately and remains the only success signal.
+function Invoke-NativeBuild {
+    param(
+        [string]$Tool,
+        [string[]]$Arguments,
+        [string]$Failure,
+        [string]$LogPath
+    )
+    $rendered = "$Tool $($Arguments -join ' ')"
+    Write-Step $rendered
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+
+    $saved = $ErrorActionPreference
+    $exitCode = 1
+    try {
+        $ErrorActionPreference = 'Continue'
+        $lines = @(& $Tool @Arguments 2>&1 | ForEach-Object {
+            if ($_ -is [System.Management.Automation.ErrorRecord]) { $_.Exception.Message } else { [string]$_ }
+        })
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $saved
+    }
+    $clock.Stop()
+
+    if ($LogPath) {
+        try {
+            $header = @("", "### $rendered (exit $exitCode, $(Format-Duration $clock.Elapsed))")
+            [System.IO.File]::AppendAllLines($LogPath, [string[]](@($header) + $lines))
+        } catch {
+            # A log-write failure must never mask the build result itself.
+            Write-Warn "Could not append to the build log $LogPath ($($_.Exception.Message))."
+        }
+    }
+
+    if ($exitCode -ne 0) {
+        $tail = @($lines | Select-Object -Last 30)
+        if ($tail.Count -gt 0) {
+            Write-Host "  --- last $($tail.Count) line(s) of output ---" -ForegroundColor DarkGray
+            foreach ($line in $tail) { Write-Host "  | $line" -ForegroundColor DarkGray }
+        }
+        $where = if ($LogPath) { " Full output: $LogPath." } else { '' }
+        Fail "$Failure (exit $exitCode).$where"
+    }
+    Write-Host ("      done in {0}" -f (Format-Duration $clock.Elapsed)) -ForegroundColor DarkGray
+}
+
+function Confirm-DevPrerequisites {
+    param([switch]$SkipBootstrap)
+    $packages = [ordered]@{
+        git    = 'Git.Git'
+        go     = 'GoLang.Go'
+        node   = 'OpenJS.NodeJS.LTS'
+        npm    = 'OpenJS.NodeJS.LTS'
+        python = 'Python.Python.3.13'
+    }
+    # Existing invalid command directories are preserved but moved behind the
+    # refreshed Machine/User PATH so freshly installed valid tools can win.
+    $deprioritizedPathDirs = @()
+
+    function Get-UniquePrerequisitePackages {
+        param([array]$Items)
+        $seen = @{}
+        $unique = @()
+        foreach ($item in $Items) {
+            $package = $item.Value.Package
+            if (-not $seen.ContainsKey($package)) {
+                $seen[$package] = $true
+                $unique += $package
+            }
+        }
+        return $unique
+    }
+
+    function Get-WingetInstallArgs {
+        param([string]$Package)
+        return @('install','--id',$Package,'--exact','--source','winget','--accept-source-agreements','--accept-package-agreements','--disable-interactivity','--silent')
+    }
+
+    function Format-WingetInstallCommand {
+        param([string]$Package)
+        return "winget $((Get-WingetInstallArgs -Package $Package) -join ' ')"
+    }
+
+    $status = [ordered]@{}
+    $git = Get-Command -Name 'git' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    $gitVersion = ''
+    if ($git) { $gitVersion = (& $git.Source '--version' 2>$null | Out-String).Trim() }
+    $gitValid = [bool]($git -and $LASTEXITCODE -eq 0 -and $gitVersion)
+    $status.git = [ordered]@{ Command = 'git'; Package = $packages.git; Valid = $gitValid; Detail = if ($gitVersion) { $gitVersion } else { 'missing or git --version failed' } }
+    if ($git -and -not $gitValid) { $deprioritizedPathDirs += (Split-Path -Parent $git.Source) }
+
+    $go = Get-Command -Name 'go' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    $goVersion = ''
+    if ($go) { $goVersion = (& $go.Source version 2>$null | Out-String).Trim() }
+    $goValid = [bool]($go -and $LASTEXITCODE -eq 0 -and $goVersion)
+    $status.go = [ordered]@{ Command = 'go'; Package = $packages.go; Valid = $goValid; Detail = if ($goVersion) { $goVersion } else { 'missing or go version failed' } }
+    if ($go -and -not $goValid) { $deprioritizedPathDirs += (Split-Path -Parent $go.Source) }
+
+    $node = Get-Command -Name 'node' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    $nodeVersion = ''
+    $nodeSupported = $false
+    if ($node) {
+        $nodeVersion = (& $node.Source '--version' 2>$null | Out-String).Trim()
+        if ($LASTEXITCODE -eq 0 -and $nodeVersion -match '^v(\d+)\.(\d+)\.(\d+)$') {
+            $nodeMajor = [int]$Matches[1]; $nodeMinor = [int]$Matches[2]
+            $nodeSupported = (($nodeMajor -eq 20 -and $nodeMinor -ge 19) -or ($nodeMajor -eq 22 -and $nodeMinor -ge 12) -or $nodeMajor -gt 22)
+        }
+    }
+    # Supported Node policy: 20.19+, 22.12+, or a newer major; Node 21 and
+    # Node 22 below 22.12 are unsupported.
+    $nodeDetail = if ($nodeSupported) { $nodeVersion } elseif ($nodeVersion) { "unsupported version $nodeVersion (Node 21 and Node 22 below 22.12 are unsupported)" } else { 'missing or node --version failed' }
+    $status.node = [ordered]@{ Command = 'node'; Package = $packages.node; Valid = $nodeSupported; Detail = $nodeDetail }
+    if ($node -and -not $nodeSupported) { $deprioritizedPathDirs += (Split-Path -Parent $node.Source) }
+
+    $npm = Get-Command -Name 'npm' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    $npmVersion = ''
+    if ($npm) { $npmVersion = (& $npm.Source '--version' 2>$null | Out-String).Trim() }
+    $npmValid = [bool]($npm -and $LASTEXITCODE -eq 0 -and $npmVersion)
+    $status.npm = [ordered]@{ Command = 'npm'; Package = $packages.npm; Valid = $npmValid; Detail = if ($npmVersion) { $npmVersion } else { 'missing or npm --version failed' } }
+    if ($npm -and -not $npmValid) { $deprioritizedPathDirs += (Split-Path -Parent $npm.Source) }
+
+    $pythonDiscovery = Get-SupportedVenvPythonDiscovery
+    $python = $pythonDiscovery.Python
+    $status.python = [ordered]@{ Command = 'py/python'; Package = $packages.python; Valid = [bool]$python; Detail = if ($python) { "launcher $($python.Launcher)" } else { $pythonDiscovery.Detail } }
+    if (-not $python) { $deprioritizedPathDirs += @($pythonDiscovery.InvalidDirectories) }
+
+    $missing = @($status.GetEnumerator() | Where-Object { -not $_.Value.Valid })
+    if ($missing.Count -eq 0) {
+        Write-Ok "Using build prerequisites: $goVersion; Node.js $nodeVersion; Python launcher $($python.Launcher)"
+        return @{ Ready = $true; Deferred = $false; Status = $status }
+    }
+
+    Write-Warn "-Latest found unsatisfied prerequisites: $($missing.Name -join ', ')"
+    foreach ($item in $missing) { Write-Step "$($item.Name): $($item.Value.Detail); normal -Latest would install $($item.Value.Package)" }
+    $uniquePackages = @(Get-UniquePrerequisitePackages -Items $missing)
+    Write-Step "winget repair commands:"
+    foreach ($package in $uniquePackages) { Write-Step "  $(Format-WingetInstallCommand -Package $package)" }
+    if ($DryRun) {
+        Write-Step '[dry-run] no winget invocation or prerequisite installation; stopping before main checkout/build'
+        return @{ Ready = $false; Deferred = $true; Status = $status }
+    }
+
+    if ($SkipBootstrap) { return @{ Ready = $false; Deferred = $false; Status = $status } }
+
+    $winget = Get-Command -Name 'winget' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $winget) {
+        Fail "-Latest cannot install missing prerequisites because winget was not found. Install Microsoft App Installer/winget, ensure 'winget' is on PATH, then re-run. Required repair commands:`n$((@($uniquePackages | ForEach-Object { Format-WingetInstallCommand -Package $_ }) -join "`n"))"
+    }
+    foreach ($package in $uniquePackages) {
+        $wingetArgs = Get-WingetInstallArgs -Package $package
+        $wingetCommand = Format-WingetInstallCommand -Package $package
+        Write-Info "Installing prerequisite package $package ..."
+        $savedErrorActionPreference = $ErrorActionPreference
+        $wingetExit = $null
+        $wingetOutput = ''
+        $wingetInvokeError = $null
+        try {
+            # Native stderr becomes ErrorRecord objects under PS5.1 even with the
+            # local Continue policy. Preserve the real exit code while rendering
+            # only each record's message, not PowerShell's NativeCommandError
+            # wrapper/type metadata.
+            $ErrorActionPreference = 'Continue'
+            $wingetRecords = @(& $winget.Source @wingetArgs 2>&1)
+            $wingetExit = $LASTEXITCODE
+            $wingetOutput = (@($wingetRecords | ForEach-Object {
+                if ($_ -is [System.Management.Automation.ErrorRecord]) { $_.Exception.Message }
+                else { [string]$_ }
+            }) -join "`n")
+        } catch {
+            $wingetInvokeError = $_.Exception.Message
+        } finally {
+            $ErrorActionPreference = $savedErrorActionPreference
+        }
+        if ($wingetInvokeError) {
+            Fail "winget could not start prerequisite package ${package}: $wingetCommand. Check package policy, elevation, and App Installer, then re-run. Error: $wingetInvokeError"
+        }
+        if ($null -eq $wingetExit) { $wingetExit = 1 }
+        if ($wingetExit -ne 0) {
+            Fail "winget command failed for prerequisite package $package (exit $wingetExit): $wingetCommand. Check package policy, elevation, and App Installer, then re-run. Output: $wingetOutput"
+        }
+    }
+    Refresh-ProcessPath -DeprioritizeDirectories $deprioritizedPathDirs
+    $rechecked = Confirm-DevPrerequisitesAfterBootstrap
+    if (-not $rechecked.Ready) {
+        $failed = @($rechecked.Status.GetEnumerator() | Where-Object { -not $_.Value.Valid })
+        Fail "-Latest prerequisite bootstrap completed but validation still fails for $($failed.Name -join ', '). Packages attempted: $($uniquePackages -join ', ')."
+    }
+    return $rechecked
+}
+
+function Refresh-ProcessPath {
+    param([string[]]$DeprioritizeDirectories = @())
+    function Get-PathKey {
+        param([string]$PathEntry)
+        if ([string]::IsNullOrWhiteSpace($PathEntry)) { return '' }
+        return $PathEntry.Trim().TrimEnd([char[]]'\/')
+    }
+
+    $original = @($env:PATH -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $deprioritizedKeys = @($DeprioritizeDirectories | ForEach-Object { Get-PathKey -PathEntry $_ } | Where-Object { $_ })
+    $preferredOriginal = @()
+    $deprioritizedOriginal = @()
+    foreach ($entry in $original) {
+        if ($deprioritizedKeys -contains (Get-PathKey -PathEntry $entry)) {
+            $deprioritizedOriginal += $entry
+        } else {
+            $preferredOriginal += $entry
+        }
+    }
+
+    # The process-scoped overrides are a hermetic contract-test seam only;
+    # normal installs still read the real Machine/User values.
+    $machineOverride = [Environment]::GetEnvironmentVariable('LINGTAI_TEST_MACHINE_PATH', 'Process')
+    $userOverride = [Environment]::GetEnvironmentVariable('LINGTAI_TEST_USER_PATH', 'Process')
+    $machine = if ($null -ne $machineOverride) { $machineOverride } else { [Environment]::GetEnvironmentVariable('PATH', 'Machine') }
+    $user = if ($null -ne $userOverride) { $userOverride } else { [Environment]::GetEnvironmentVariable('PATH', 'User') }
+    $refreshed = @($machine, $user) | Where-Object { $_ } |
+        ForEach-Object { $_ -split ';' } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    $preferredRefreshed = @()
+    $deprioritizedRefreshed = @()
+    foreach ($entry in $refreshed) {
+        if ($deprioritizedKeys -contains (Get-PathKey -PathEntry $entry)) {
+            $deprioritizedRefreshed += $entry
+        } else {
+            $preferredRefreshed += $entry
+        }
+    }
+    $merged = @($preferredOriginal, $preferredRefreshed, $deprioritizedOriginal, $deprioritizedRefreshed) |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    $unique = @()
+    $seen = @{}
+    foreach ($entry in $merged) {
+        $cleanEntry = $entry.Trim()
+        $key = Get-PathKey -PathEntry $cleanEntry
+        if ($key -and -not $seen.ContainsKey($key)) {
+            $seen[$key] = $true
+            $unique += $cleanEntry
+        }
+    }
+    $env:PATH = ($unique -join ';')
+    Write-Step 'Refreshed process PATH from Machine + User environment, preserved process-only entries, and moved previously invalid command directories behind refreshed package paths.'
+}
+
+function Confirm-DevPrerequisitesAfterBootstrap {
+    return (Confirm-DevPrerequisites -SkipBootstrap)
+}
+
+# Resolve both pins before either checkout. Build output remains under an
+# installer-owned staging directory until both binaries and their versions are
+# validated, so destination writes happen only after the complete pair exists.
+function Build-LatestMain {
+    $phase = Start-Phase 'Checking build prerequisites (git, Go, Node.js/npm, CPython 3.11-3.13) ...'
+    $prerequisites = Confirm-DevPrerequisites
+    if ($prerequisites.Deferred) { return @{ DryRun = $true; PrerequisitesDeferred = $true } }
+    Complete-Phase -Clock $phase -Message 'prerequisites satisfied'
+    $tuiSha = Resolve-MainSha -RemoteUrl $RepoUrl -Label 'TUI'
+    $kernelSha = Resolve-MainSha -RemoteUrl 'https://github.com/Lingtai-AI/lingtai-kernel.git' -Label 'kernel'
+    Write-Info "Resolved TUI main commit: $tuiSha"
+    Write-Info "Resolved kernel main commit: $kernelSha"
+    if ($DryRun) {
+        Write-Step "[dry-run] would shallow-checkout both pinned main commits and build lingtai-tui.exe plus required lingtai-portal.exe"
+        return @{ TuiSha = $tuiSha; KernelSha = $kernelSha; DryRun = $true }
+    }
+
+    $stage = New-StagingDir
+    $tuiSource = Join-Path $stage 'lingtai'
+    $kernelSource = Join-Path $stage 'lingtai-kernel'
+    # One log for the whole build, beside the staging tree the installer already
+    # keeps for evidence, so a failure tail always has a full transcript behind it.
+    $buildLog = Join-Path $stage 'build.log'
+    Write-Step "Build log: $buildLog"
+
+    $phase = Start-Phase 'Checking out the pinned TUI commit ...'
+    Invoke-NativeBuild -Tool 'git' -Arguments @('clone','--depth','1','--branch','main',$RepoUrl,$tuiSource) -Failure 'TUI main checkout failed' -LogPath $buildLog
+    Invoke-NativeBuild -Tool 'git' -Arguments @('-C',$tuiSource,'fetch','--depth','1','origin',$tuiSha) -Failure 'TUI pinned commit fetch failed' -LogPath $buildLog
+    Invoke-NativeBuild -Tool 'git' -Arguments @('-C',$tuiSource,'checkout','--detach',$tuiSha) -Failure 'TUI pinned checkout failed' -LogPath $buildLog
+    $actualTui = (& git -C $tuiSource rev-parse HEAD).Trim().ToLowerInvariant()
+    if ($actualTui -ne $tuiSha) { Fail "TUI checkout mismatch: resolved $tuiSha but checked out $actualTui. Staging kept at $stage." }
+    Complete-Phase -Clock $phase -Message "TUI at $($tuiSha.Substring(0,12))"
+
+    $phase = Start-Phase 'Checking out the pinned kernel commit ...'
+    Invoke-NativeBuild -Tool 'git' -Arguments @('clone','--depth','1','--branch','main','https://github.com/Lingtai-AI/lingtai-kernel.git',$kernelSource) -Failure 'kernel main checkout failed' -LogPath $buildLog
+    Invoke-NativeBuild -Tool 'git' -Arguments @('-C',$kernelSource,'fetch','--depth','1','origin',$kernelSha) -Failure 'kernel pinned commit fetch failed' -LogPath $buildLog
+    Invoke-NativeBuild -Tool 'git' -Arguments @('-C',$kernelSource,'checkout','--detach',$kernelSha) -Failure 'kernel pinned checkout failed' -LogPath $buildLog
+    $actualKernel = (& git -C $kernelSource rev-parse HEAD).Trim().ToLowerInvariant()
+    if ($actualKernel -ne $kernelSha) { Fail "kernel checkout mismatch: resolved $kernelSha but checked out $actualKernel. Staging kept at $stage." }
+    Complete-Phase -Clock $phase -Message "kernel at $($kernelSha.Substring(0,12))"
+
+    $version = "main-$tuiSha"
+    $tuiOut = Join-Path $stage 'lingtai-tui.exe'
+    $portalOut = Join-Path $stage 'lingtai-portal.exe'
+
+    $phase = Start-Phase 'Building the portal web frontend (npm ci + npm run build; the longest step) ...'
+    Push-Location (Join-Path $tuiSource 'portal/web')
+    try {
+        Invoke-NativeBuild -Tool 'npm' -Arguments @('ci') -Failure 'portal frontend dependency install failed' -LogPath $buildLog
+        Invoke-NativeBuild -Tool 'npm' -Arguments @('run','build') -Failure 'portal frontend build failed' -LogPath $buildLog
+    } finally { Pop-Location }
+    Complete-Phase -Clock $phase -Message 'portal web assets built'
+
+    $phase = Start-Phase 'Compiling lingtai-tui.exe ...'
+    Push-Location (Join-Path $tuiSource 'tui')
+    try { Invoke-NativeBuild -Tool 'go' -Arguments @('build','-trimpath','-ldflags',"-X main.version=$version",'-o',$tuiOut,'.') -Failure 'lingtai-tui.exe build failed' -LogPath $buildLog }
+    finally { Pop-Location }
+    Complete-Phase -Clock $phase -Message 'lingtai-tui.exe compiled'
+
+    $phase = Start-Phase 'Compiling lingtai-portal.exe ...'
+    Push-Location (Join-Path $tuiSource 'portal')
+    try { Invoke-NativeBuild -Tool 'go' -Arguments @('build','-trimpath','-ldflags',"-X main.version=$version",'-o',$portalOut,'.') -Failure 'lingtai-portal.exe build failed' -LogPath $buildLog }
+    finally { Pop-Location }
+    Complete-Phase -Clock $phase -Message 'lingtai-portal.exe compiled'
+
+    Confirm-StagedVersion -StagedTui $tuiOut -Requested $version
+    $portalProbe = & $portalOut 'version' 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0 -or $portalProbe.Trim() -ne "lingtai-portal $version") {
+        Fail "Built lingtai-portal.exe failed provenance verification (expected 'lingtai-portal $version', got '$($portalProbe.Trim())'). Staging kept at $stage."
+    }
+    return @{ Stage = $stage; TuiSource = $tuiSource; KernelSource = $kernelSource; TuiSha = $tuiSha; KernelSha = $kernelSha; Version = $version; Tui = $tuiOut; Portal = $portalOut; DryRun = $false }
+}
+
+function Install-MainVenv {
+    param([string]$KernelSource, [string]$KernelSha, [string]$GlobalDir, [string]$PythonIndexUrl)
+    $phase = Start-Phase 'Provisioning the Python runtime venv and installing the pinned kernel ...'
+    $bootstrap = Find-VenvPython
+    $venvDir = Join-Path $GlobalDir 'runtime\venv'
+    if (-not (Test-Path -LiteralPath $venvDir)) {
+        Write-Step "Creating the venv at $venvDir"
+        New-Item -ItemType Directory -Force -Path (Split-Path $venvDir -Parent) | Out-Null
+        $venvArgs = @($bootstrap.Args) + @('-m','venv',$venvDir)
+        & $bootstrap.Launcher @venvArgs | Out-Null
+        if ($LASTEXITCODE -ne 0) { Fail "-Latest could not create the runtime venv at $venvDir." }
+    } else {
+        Write-Step "Reusing the existing venv at $venvDir"
+    }
+    $python = Join-Path $venvDir 'Scripts\python.exe'
+    if (-not (Test-Path -LiteralPath $python)) { Fail "-Latest runtime venv has no Scripts\python.exe at $venvDir." }
+    Get-VenvWheelTag -VenvPython $python | Out-Null
+    Remove-OrphanedKernelDistInfo -VenvDir $venvDir
+    $head = (& git -C $KernelSource rev-parse HEAD).Trim().ToLowerInvariant()
+    if ($head -ne $KernelSha) { Fail "Kernel source changed before install: expected $KernelSha, got $head." }
+    # Only third-party DEPENDENCY resolution goes through an index; LingTai's own
+    # bytes still come exclusively from the verified local checkout path below.
+    $indexArgs = @()
+    if (-not [string]::IsNullOrWhiteSpace($PythonIndexUrl)) {
+        $indexArgs = @('--index-url', $PythonIndexUrl)
+        Write-Step "Resolving dependencies from $PythonIndexUrl"
+    }
+    Write-Info "Installing lingtai from the verified checked-out kernel source path (non-editable local build) ..."
+    Write-Step 'pip install (this resolves the dependency tree and can take a few minutes)'
+    $pipArgs = @('-m','pip','install') + $indexArgs + @($KernelSource)
+    & $python @pipArgs | Out-Null
+    if ($LASTEXITCODE -ne 0) { Fail "-Latest kernel source install failed (exit $LASTEXITCODE)." }
+    # A reused managed venv can already contain the same LingTai version with a
+    # stale editable/local direct_url.json. The dependency-resolving install
+    # above may then report the requirement satisfied without replacing that
+    # root package. Reinstall only LingTai itself from this exact checked-out
+    # source so provenance is deterministic while preserving resolved deps.
+    Write-Step 'pip install --force-reinstall --no-deps (pins provenance to this exact checkout)'
+    & $python '-m' 'pip' 'install' '--force-reinstall' '--no-deps' $KernelSource | Out-Null
+    if ($LASTEXITCODE -ne 0) { Fail "-Latest pinned kernel reinstall failed (exit $LASTEXITCODE)." }
+    $version = Confirm-KernelImport -VenvPython $python -ExpectedVersion '' -VenvDir $venvDir -KernelSource $KernelSource
+    Complete-Phase -Clock $phase -Message "lingtai $version installed into the managed venv"
+    return @{ KernelSource='main'; KernelVersion=$version; KernelProvider='github'; KernelCommit=$KernelSha }
+}
+
+function Install-FromBuiltMain {
+    param([hashtable]$Build, [string]$BinDir)
+    New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
+    $tuiDest = Join-Path $BinDir 'lingtai-tui.exe'; $portalDest = Join-Path $BinDir 'lingtai-portal.exe'
+    Remove-ParkedManagedBinaries -BinDir $BinDir
+    Copy-ManagedBinary -Source $Build.Tui -Destination $tuiDest
+    Copy-ManagedBinary -Source $Build.Portal -Destination $portalDest
+    Write-Ok "Installed pinned main binaries into $BinDir"
+    return @($tuiDest,$portalDest)
 }
 
 # --- Local-artifact install --------------------------------------------------
@@ -987,14 +1905,15 @@ function Install-FromLocalArtifact {
     # 5. Install idempotently into BinDir (only reached once both binaries and
     # the staged TUI version have been validated).
     New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
+    Remove-ParkedManagedBinaries -BinDir $BinDir
     $tuiDest = Join-Path $BinDir 'lingtai-tui.exe'
-    Copy-Item -LiteralPath $tui.FullName -Destination $tuiDest -Force
+    Copy-ManagedBinary -Source $tui.FullName -Destination $tuiDest
     Write-Ok "Installed lingtai-tui.exe -> $BinDir"
 
     $managed = New-Object System.Collections.Generic.List[string]
     $managed.Add($tuiDest)
     $portalDest = Join-Path $BinDir 'lingtai-portal.exe'
-    Copy-Item -LiteralPath $portal.FullName -Destination $portalDest -Force
+    Copy-ManagedBinary -Source $portal.FullName -Destination $portalDest
     Write-Ok "Installed lingtai-portal.exe -> $BinDir"
     $managed.Add($portalDest)
 
@@ -1086,6 +2005,12 @@ function Invoke-Main {
     if ([string]::IsNullOrWhiteSpace($BinDir))    { $BinDir    = Get-DefaultBinDir }
     if ([string]::IsNullOrWhiteSpace($GlobalDir)) { $GlobalDir = Get-DefaultGlobalDir }
 
+    $rawArch = $env:PROCESSOR_ARCHITECTURE
+    if ($env:PROCESSOR_ARCHITEW6432) { $rawArch = $env:PROCESSOR_ARCHITEW6432 }
+    if ($Latest -and $rawArch -ne 'AMD64') {
+        Fail "-Latest supports native Windows amd64 only; this host is not amd64. Use WSL2 with install.sh --latest."
+    }
+
     # prefix is the parent of BinDir, matching install.sh's <prefix>/bin layout.
     $prefix = Split-Path $BinDir -Parent
     if ([string]::IsNullOrWhiteSpace($prefix)) { $prefix = $BinDir }
@@ -1098,6 +2023,39 @@ function Invoke-Main {
     }
     if ($haveArchive -and [string]::IsNullOrWhiteSpace($Version)) {
         Fail "-Version is required with -ArchivePath so staged bytes can be verified against an exact release."
+    }
+    if ($Latest) {
+        $conflicts = New-Object System.Collections.Generic.List[string]
+        if ($haveArchive) { $conflicts.Add('-ArchivePath/-ChecksumPath') }
+        if (-not [string]::IsNullOrWhiteSpace($Version)) { $conflicts.Add('-Version/LINGTAI_VERSION') }
+        if ($SkipVenv) { $conflicts.Add('-SkipVenv') }
+        if ($conflicts.Count -gt 0) {
+            Fail "-Latest cannot be combined with $($conflicts -join ', '). Current-main mode always builds both binaries and provisions the checked-out kernel runtime."
+        }
+        Write-Info 'Mode: current main development install (-Latest)'
+        Write-Step "Binaries -> $BinDir"
+        Write-Step "State    -> $GlobalDir"
+        # 7 phases: prerequisites, 2 checkouts, portal web, 2 Go builds, runtime venv.
+        Set-PhaseTotal 7
+        $pythonIndexUrl = if ($DryRun) { $null } else { Initialize-BuildMirrors }
+        $mainBuild = Build-LatestMain
+        if ($DryRun) {
+            Write-Step "[dry-run] would install the kernel checkout into $GlobalDir\runtime\venv"
+            Write-Step "[dry-run] would copy both pinned binaries into $BinDir and write additive install.json main provenance"
+            return
+        }
+        $mainKernel = Install-MainVenv -KernelSource $mainBuild.KernelSource -KernelSha $mainBuild.KernelSha -GlobalDir $GlobalDir -PythonIndexUrl $pythonIndexUrl
+        $mainManaged = Install-FromBuiltMain -Build $mainBuild -BinDir $BinDir
+        Add-ToPath -Dir $BinDir
+        Write-InstallMetadata -GlobalDir $GlobalDir -Prefix $prefix -BinDir $BinDir -RequestedRef 'main' -ResolvedRef 'main' -ResolvedCommit $mainBuild.TuiSha -InstallKind 'powershell-latest-main' -ManagedBinaries $mainManaged -KernelSource $mainKernel.KernelSource -KernelVersion $mainKernel.KernelVersion -KernelProvider $mainKernel.KernelProvider -SourceMode 'latest-main' -TuiCommit $mainBuild.TuiSha -KernelCommit $mainBuild.KernelSha
+        Write-Completion -BinDir $BinDir -GlobalDir $GlobalDir -Headline 'Current-main development install complete.' -Facts ([ordered]@{
+            'TUI commit'     = $mainBuild.TuiSha
+            'kernel commit'  = $mainBuild.KernelSha
+            'kernel version' = $mainKernel.KernelVersion
+            'stamped as'     = $mainBuild.Version
+            'build log'      = (Join-Path $mainBuild.Stage 'build.log')
+        })
+        return
     }
 
     Write-Info "Target BinDir: $BinDir"
