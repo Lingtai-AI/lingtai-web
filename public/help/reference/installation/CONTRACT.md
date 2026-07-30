@@ -1,18 +1,22 @@
 ---
 name: lingtai-public-installation
-contract_version: 2
+contract_version: 4
 root_contract: CONTRACT.md
 related_files:
   - ANATOMY.md
   - public/help/reference/installation/ANATOMY.md
   - public/install.sh
   - public/install.ps1
+  - public/remove.sh
+  - public/remove.ps1
   - public/help/reference/installation/skill.md
   - public/_headers
   - public/help/reference/installation/assets/update.sh
   - public/help/reference/installation/assets/dev.sh
   - public/help/reference/installation/assets/fix.sh
   - public/help/reference/installation/assets/verify.sh
+  - .github/workflows/sync-installers.yml
+  - scripts/test-lifecycle-mirror-parity.sh
 maintenance: |
   This component contract is governed by the root CONTRACT.md. Keep related_files
   complete and repo-relative, keep this Contract reciprocal with its ANATOMY.md,
@@ -30,10 +34,26 @@ installation entrypoints served by `lingtai.ai`:
 
 - `/install.sh`
 - `/install.ps1`
+- `/remove.sh`
+- `/remove.ps1`
 - `/help/reference/installation/assets/update.sh`
 - `/help/reference/installation/assets/dev.sh`
 - `/help/reference/installation/assets/fix.sh`
 - `/help/reference/installation/assets/verify.sh`
+
+`Lingtai-AI/lingtai` is the sole canonical owner of every byte of these eight
+files. This repository publishes exact, unmodified mirrors at the URLs above;
+`.github/workflows/sync-installers.yml` performs that mirroring and
+`scripts/test-lifecycle-mirror-parity.sh` proves byte equality on demand. A fix
+to any executable's behavior belongs upstream in `Lingtai-AI/lingtai`, never as
+a local edit here — a local edit is silently reverted by the next sync and is
+therefore a defect regardless of intent.
+
+`/remove.sh` and `/remove.ps1` are the first deletion-purpose lifecycle assets:
+they mirror at the same tier as `/install.sh`/`/install.ps1` (repository root,
+not under `assets/`) because canonical `Lingtai-AI/lingtai` places them there
+too. Their deletion authority is bounded entirely by §2.6 and §4.6/§4.6a below;
+the receipt is their only deletion oracle.
 
 The executable files own their exact CLI syntax. This contract owns the stable
 state classes, entrypoint boundaries, allowed writes, provenance requirements,
@@ -56,23 +76,26 @@ expressly narrows one; the adapter owns that named exception.
 ### 2.1 Explicit operation selection
 
 1. `/install.sh` ordinary install is first-install-only. Its explicit `--latest`
-   selection is a separate latest-main operation: the public wrapper resolves the
-   TUI repository's current `main` to one full SHA, downloads `install.sh` from
-   that exact commit, and delegates all arguments to it. `/install.ps1` is an
-   explicit Windows adapter with the exact-release repeat semantics stated in
-   §4.1a; neither exception changes ordinary install or the update/fix separation.
-2. Update, arbitrary-ref development, repair, and verification remain separate
-   standalone assets.
+   selection is a native mode of the same mirrored script: it resolves both the
+   TUI and kernel repositories' current `main` to full SHAs, verifies both
+   checkouts, and builds/installs from them directly — there is no separate
+   public-side delegation or handoff download. `/install.ps1` is an explicit
+   Windows adapter with the exact-release repeat semantics stated in §4.1a;
+   neither exception changes ordinary install or the update/fix separation.
+2. Update, arbitrary-ref development, repair, verification, and removal remain
+   separate standalone assets. `/remove.sh` and `/remove.ps1` delete only the
+   exact artifact set the receipt they read proves the given bin directory
+   owns; see §2.6.
 3. `/skill.md`, `/help/skill.md`, and the installation skill are guidance only.
    They MUST NOT infer or authorize mutation.
 4. For `/install.sh` and the maintenance assets, a missing child URL,
    unclassified state, conflicting receipt, redirected path, or ambiguous
    provenance is a stop condition. `/install.ps1` follows its explicit
    fixed-destination trust and failure contract in §4.1a.
-5. No entrypoint downloads, sources, or executes another installation entrypoint,
-   except the explicit `/install.sh --latest` delegation described above. That
-   exception pins the child entrypoint to one resolved TUI `main` SHA, executes it
-   from a private temporary directory, and never falls back to ordinary stable.
+5. No entrypoint downloads, sources, or executes another installation entrypoint.
+   `--latest` resolves and verifies TUI/kernel main SHAs and builds from them
+   in-process within the same mirrored `install.sh`; it does not fetch or hand
+   off to a second script.
 
 ### 2.2 Exact ownership
 
@@ -117,12 +140,16 @@ expressly narrows one; the adapter owns that named exception.
 2. `update.sh` and `dev.sh` require `--yes` before mutation.
 3. `fix.sh` is read-only unless both `--apply` and `--yes` are present.
 4. `verify.sh` is always read-only.
-5. These entrypoints do not call LingTai `refresh`, merge, release, deploy, edit
+5. `remove.sh`/`remove.ps1` require `--bin-dir`/`-BinDir` and `--yes`/`-Yes`
+   before any deletion; a dry-run-shaped invocation (missing `--yes`/`-Yes`)
+   prints the exact planned deletions and deletes nothing. See §2.6.
+6. These entrypoints do not call LingTai `refresh`, merge, release, deploy, edit
    authentication/configuration, or publish a release.
-6. Only process-owned scratch may be removed automatically. Failure is not
-   permission to delete an existing target, receipt, runtime, or source checkout
-   as rollback. `dev.sh` may run normal build tooling in the explicitly supplied
-   checkouts, including generated dependency/build-tree writes.
+7. Only process-owned scratch may be removed automatically outside `remove.sh`/
+   `remove.ps1`. Failure is not permission to delete an existing target,
+   receipt, runtime, or source checkout as rollback. `dev.sh` may run normal
+   build tooling in the explicitly supplied checkouts, including generated
+   dependency/build-tree writes.
 
 ### 2.5 Receipt publication
 
@@ -139,6 +166,29 @@ expressly narrows one; the adapter owns that named exception.
    install, identity, import, and provenance postconditions pass.
 5. A receipt is evidence of completed postconditions, not a progress marker.
 
+### 2.6 Deletion is receipt-oracle-only
+
+1. `remove.sh`/`remove.ps1` delete only the exact artifact set the
+   `lingtai.tui.install/v1` receipt at the given bin directory proves that
+   directory owns: the managed binaries (and, on POSIX, the `lingtai`/
+   `lingtai-agent` symlinks only when they are exactly the owned symlink
+   shape), the receipt-pointed runtime venv, and finally the receipt itself.
+2. There is no filename-pattern sweep of any kind. A directory that merely
+   matches a naming convention (e.g. `venv-repair-*`) but is not the receipt's
+   own `runtime_venv` is never deleted; it is reported as a survivor.
+3. Config, secrets, presets, per-project state, and any receipt-unproven
+   directory are never touched. Accepted receipt kinds are `release-asset`,
+   `source-build`, and `dev-source` alike — a dev install is a real install a
+   user may fully remove.
+4. A target whose resolved binary path is Homebrew-shaped is refused, not
+   partially removed; the message points at `brew uninstall` instead.
+5. The receipt is deleted last, only after every other owned artifact's
+   deletion succeeds, so a partial failure always leaves a receipt that
+   accurately describes the still-partially-present install. Failure output
+   names exactly which artifacts were and were not removed.
+6. Running either script twice is idempotent: a second run with no receipt
+   present reports "nothing to remove" and exits 0.
+
 ## Port
 
 | Observed state | Allowed entrypoint | Why | Forbidden shortcut |
@@ -148,6 +198,7 @@ expressly narrows one; the adapter owns that named exception.
 | Healthy ordinary receipt (`release-asset` or `source-build`) with matching target and runtime | `verify.sh`; then `update.sh` for an exact update | Ownership and runtime provenance are available | Do not rerun ordinary install; do not use dev implicitly |
 | Strict ordinary receipt with a missing or broken old runtime | `fix.sh` diagnosis; then `fix.sh --apply --yes` with one new free runtime child | Repair can bind the prior receipt without executing the old runtime | Do not delete/reuse the old runtime or rerun ordinary install |
 | Valid `dev-source` receipt and explicit Git checkouts | `verify.sh` or `dev.sh` | Editable provenance remains explicit | `update.sh` and `fix.sh` MUST reject it |
+| Any valid receipt (`release-asset`, `source-build`, or `dev-source`) the user wants fully removed | `remove.sh --bin-dir DIR --yes` / `remove.ps1 -BinDir DIR -Yes` | Receipt is the only deletion oracle; deletes exactly the owned artifact set, receipt last | Do not sweep by filename pattern; do not delete a Homebrew-shaped target; do not remove config/secrets/per-project state |
 | Exact release interval needs schema/config migration | Tagged product `migration/migration.md` files | Migration history is product- and tag-owned | Do not use `main`, `latest`, another repo, or skip a tag |
 | POSIX/maintenance receipt, target, runtime, or provenance is missing, conflicting, redirected, or otherwise unclassified | Stop and report the exact state | No POSIX/maintenance executable owns an inferred recovery | Do not adopt, overwrite, auto-heal, or guess; the explicit Windows adapter remains governed by §4.1a |
 
@@ -195,8 +246,8 @@ the TUI and Portal binaries remain required and are installed.
 - No adoption, overwrite, update, or repair of existing state.
 - No arbitrary development ref. `--ref` and development/update compatibility
   flags hand off with exit status `2`.
-- No skill/helper download, source, or execution on the ordinary path. The exact
-  `--latest` delegation is governed separately by §4.1b.
+- No skill/helper download, source, or execution on the ordinary path. The
+  native `--latest` mode is governed separately by §4.1b.
 
 **Success and failure meaning**
 
@@ -206,31 +257,33 @@ the TUI and Portal binaries remain required and are installed.
   dependency state, but MUST NOT claim success or replace pre-existing state.
   A later ordinary invocation sees that state and fails closed.
 
-### 4.1b `/install.sh --latest` — explicit latest-main delegation
+### 4.1b `/install.sh --latest` — explicit latest-main install
 
 **Preconditions and authority**
 
 - `--latest` is explicit; it is not inferred from no arguments, `--ref`, receipt
   state, or any environment default.
-- Invoking it authorizes the delegated current-main install only. The delegated
-  installer owns target/runtime validation, exact TUI+kernel main resolution, and
-  receipt postconditions.
+- Invoking it authorizes a current-main install of both TUI and kernel, performed
+  natively within this same mirrored `install.sh`. There is no second script and
+  no public-side delegation; this repository publishes exactly the bytes
+  `Lingtai-AI/lingtai` owns for this mode, unmodified.
 
 **Allowed behavior**
 
-- Require `git` and `curl`; resolve `Lingtai-AI/lingtai` `refs/heads/main` to one
-  full SHA; download `install.sh` from that exact commit into a private temporary
-  directory; execute it with the original arguments; then remove only that
-  self-created temporary directory.
-- The delegated installer MUST resolve, verify, record, and show the exact TUI and
-  kernel main SHAs. It MUST fail loud rather than falling back to ordinary stable
-  releases or installing LingTai by package name.
+- Require `git`; resolve `refs/heads/main` in both `Lingtai-AI/lingtai` and
+  `Lingtai-AI/lingtai-kernel` to full SHAs; verify both checkouts against those
+  pins; build the TUI from the checked-out source; install the kernel from the
+  checked-out source (never by package name); own target/runtime validation and
+  the final receipt.
+- MUST resolve, verify, record, and show the exact TUI and kernel main SHAs. It
+  MUST fail loud rather than falling back to ordinary stable releases or
+  installing LingTai by package name.
 
 **Success and failure meaning**
 
-- Success is only the delegated installer's successful postcondition/receipt.
-  The public wrapper publishes no independent success receipt.
-- Any resolution, download, delegated install, or postcondition failure propagates
+- Success means the exact TUI+kernel main SHAs were verified and the install's
+  own postconditions and receipt publication passed.
+- Any resolution, checkout, build, install, or postcondition failure propagates
   nonzero and never retries as an ordinary stable install. No rollback is claimed.
 
 ### 4.1a `/install.ps1` — exact-release ordinary install/reinstall (native Windows)
@@ -375,6 +428,82 @@ A failed build/install/postcondition names possible runtime or binary changes an
 writes no success receipt for the new development state. No cross-component
 rollback is claimed.
 
+### 4.6 `/remove.sh` — receipt-oracle-only POSIX removal
+
+**Preconditions**
+
+- `--bin-dir DIR --yes`. Without `--yes`, prints the exact planned deletions and
+  exits without deleting anything.
+- A `lingtai.tui.install/v1` receipt at `$HOME/.lingtai-tui/install.json` whose
+  `bin_dir` matches the supplied `--bin-dir` exactly.
+
+**Allowed writes, in order**
+
+1. Delete the managed binaries (`lingtai-tui`, `lingtai-portal`) and the
+   `lingtai`/`lingtai-agent` symlinks, but only when each is exactly the owned
+   symlink shape — an unrelated pre-existing file at that name survives
+   untouched.
+2. Delete the receipt-pointed runtime venv, physically re-validated as
+   contained under `$HOME/.lingtai-tui/runtime` immediately before deletion.
+3. Delete the receipt itself, last.
+4. `rmdir`-style removal only of the runtime root and state root, and only once
+   empty — never a recursive removal of `$HOME/.lingtai-tui`.
+
+**Forbidden behavior**
+
+- No filename-pattern sweep. A directory that is not the receipt's own
+  `runtime_venv` is reported as a survivor, never deleted.
+- No touching `config.json`, `.env`, `tui_config.json`, `presets/saved/`,
+  auth material, or per-project `.lingtai/` state.
+- Refuses (does not partially remove) a Homebrew-shaped target; points at
+  `brew uninstall` instead.
+- No selective-removal flags, no automated legacy-Homebrew uninstall, no
+  recovery of a broken/tampered receipt — removal refuses rather than guesses.
+
+**Success and failure meaning**
+
+- Success (including "nothing to remove" on a second run) exits 0.
+- A missing `--bin-dir`/`--yes` is a usage error, exit `2`. A runtime/ownership
+  refusal (bin-dir mismatch, Homebrew-shaped target, unclassified state) is
+  exit `1`.
+- A partial failure leaves the receipt intact describing the still-partially-
+  present install; failure output names exactly which artifacts were and were
+  not removed. No rollback is claimed.
+
+### 4.6a `/remove.ps1` — receipt-oracle-only native-Windows removal
+
+The PowerShell counterpart to `/remove.sh`; same receipt-is-the-only-oracle
+contract, same ordered deletion, same non-goals.
+
+**Preconditions**
+
+- `-BinDir DIR -Yes`. Without `-Yes`, prints the exact planned deletions and
+  makes no destination write.
+- A `lingtai.tui.install/v1` receipt at `%USERPROFILE%\.lingtai-tui\install.json`
+  whose `bin_dir` matches the supplied `-BinDir` exactly.
+
+**Allowed writes, in order**
+
+1. Delete the managed binaries (`lingtai-tui.exe`, `lingtai-portal.exe`).
+2. Delete the receipt-pointed runtime venv.
+3. Delete the receipt itself, last.
+
+**Forbidden behavior**
+
+- Same as §4.6: no filename-pattern sweep, no touching non-owned state, refuses
+  a target outside the owned roots rather than partially removing it (there is
+  no Homebrew concept on native Windows, but the same path-based refusal logic
+  applies to a receipt pointing outside the owned roots).
+
+**Success and failure meaning**
+
+- Exit `0` means success, including "nothing to remove" on a second run.
+- Exit-code asymmetry with `remove.sh` is intentional, not a defect:
+  `remove.ps1` relies on PowerShell's own `param()` binding plus one `Fail`
+  helper for every refusal path, so a missing `-BinDir` and every other
+  refusal both exit `1` (documented in `remove.ps1`'s own `.NOTES`).
+- A partial failure leaves the receipt intact; no rollback is claimed.
+
 ## Contract rules
 
 Installation changes bytes and records ownership. Migration applies
@@ -399,7 +528,16 @@ A change is incomplete unless the same candidate updates every affected layer:
 2. `skill.md` when public selection/guidance changed;
 3. the owning executable asset;
 4. its executable-local behavior-first maintenance rule;
-5. `_headers` or routers when a public path/content type changed.
+5. `_headers` or routers when a public path/content type changed;
+6. `.github/workflows/sync-installers.yml` when the set of mirrored files or
+   their fetch/validation logic changed;
+7. `scripts/test-lifecycle-mirror-parity.sh` when the set of mirrored files or
+   their destination paths changed.
+
+Bytes never change here directly: a behavior change to any of the eight mirrored
+files is authored upstream in `Lingtai-AI/lingtai`, then mirrored by (6) and
+proven by (7). A candidate that hand-edits mirrored bytes without an upstream
+source is a defect, not a fix.
 
 The acceptance test is the actual declared operation of the exact final candidate
 in a brand-new isolated non-root Linux environment, using real precondition state
@@ -407,7 +545,9 @@ and inputs and observing postconditions or partial failure directly. Ordinary
 install additionally uses an empty `HOME`, real network/artifact inputs, and proves
 TUI, pip, pinned kernel distribution/import/version/physical provenance, and the
 strict success receipt. Update, repair, verification, and development prove their
-operation-specific state; verification also proves byte-for-byte read-only behavior.
+operation-specific state; verification also proves byte-for-byte read-only behavior;
+removal proves the owned artifact set is actually gone, NOT-owned state actually
+survives, idempotent re-run, and a real fault-injected partial-failure/retry.
 Source grep, shims, fake commands, static assertions, and hermetic simulations are
 not acceptance. Shell syntax, `--help`, citation inspection, and `git diff --check`
 are maintenance diagnostics only.
@@ -416,8 +556,9 @@ are maintenance diagnostics only.
 ## Maintenance
 
 Before changing this component, read the repository-root `CONTRACT.md`, the
-paired `ANATOMY.md`, and this contract. Keep all five executable entrypoints,
-the installation skill, both Anatomy/Contract pairs, real operation evidence, and
-any affected public routing in the same change. Validate the exact final candidate;
-do not use source text, a mock, static assertion, shim, fake command, hermetic
-simulation, or intermediate head as evidence for behavior it did not exercise.
+paired `ANATOMY.md`, and this contract. Keep all eight executable entrypoints,
+the installation skill, both Anatomy/Contract pairs, real operation evidence,
+the sync workflow, the parity script, and any affected public routing in the
+same change. Validate the exact final candidate; do not use source text, a
+mock, static assertion, shim, fake command, hermetic simulation, or
+intermediate head as evidence for behavior it did not exercise.
