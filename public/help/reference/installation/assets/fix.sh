@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # For coding-agent maintainers:
-# - Read the repository-root CONTRACT.md and
-#   public/help/reference/installation/CONTRACT.md before changing this file.
+# - Read this repository's root ANATOMY.md before changing this file.
 # - Preserve this entrypoint's operation, ownership, consent, and mutation boundary;
 #   do not turn one operation into an implicit install, update, repair, or deploy.
-# - Keep executable behavior, both Contracts, both Anatomies, and public guidance
+# - Keep executable behavior, CONTRACT.md, ANATOMY.md, and README guidance
 #   in lockstep; do not add static, shim, fake-command, or hermetic acceptance tests.
 # - Every fix.sh change must execute real diagnosis in isolated non-root Linux and,
 #   when mutation changes, real --apply --yes against owned broken runtime state;
@@ -169,8 +168,17 @@ fi
 sha "$artifact_sha" || fail "--kernel-sha256 must be 64 hex"
 work="$(mktemp -d "${TMPDIR:-/tmp}/lingtai-fix.XXXXXX")" || fail "could not create repair scratch directory"
 trap 'rm -rf "$work"' EXIT
-fetch "$artifact" "$work/kernel.whl"
-verify_sha "$work/kernel.whl" "$artifact_sha"
+# pip validates the wheel FILENAME itself (name-version-pytag-abitag-platformtag.whl)
+# before it will install it, so the staged copy must keep the artifact's own
+# basename rather than a fixed name like kernel.whl — pip rejects that outright
+# ("Invalid wheel filename") regardless of the file's actual contents.
+kernel_basename="$(basename -- "$artifact")"
+case "$kernel_basename" in
+  *.whl) ;;
+  *) fail "--kernel-artifact must be a .whl file: $artifact" ;;
+esac
+fetch "$artifact" "$work/$kernel_basename"
+verify_sha "$work/$kernel_basename" "$artifact_sha"
 # The repair directory is intentionally never removed after this point. Any
 # failure names it as possibly partial instead of claiming rollback.
 if ! "$bootstrap" -m venv "$runtime_dir"; then
@@ -183,7 +191,7 @@ fi
 new_venv="$(cd "$runtime_dir" 2>/dev/null && pwd -P)" || partial_fail "repair venv cannot be canonicalized; partial directory may exist at $runtime_dir"
 new_parent="$(cd "$(dirname "$new_venv")" 2>/dev/null && pwd -P)" || partial_fail "repair venv parent cannot be canonicalized; partial directory may exist at $runtime_dir"
 [[ "$new_parent" == "$owned_root" ]] || partial_fail "repair venv escaped its owned root; partial directory may exist at $runtime_dir"
-if ! "$new_runtime" -m pip install --disable-pip-version-check --no-deps --force-reinstall "$work/kernel.whl"; then
+if ! "$new_runtime" -m pip install --disable-pip-version-check --no-deps --force-reinstall "$work/$kernel_basename"; then
   partial_fail "kernel install failed; partial directory may exist at $runtime_dir and was not deleted or overwritten"
 fi
 if ! PYTHONPATH= "$new_runtime" - "$new_venv" "$prior_kernel_version" <<'PY'

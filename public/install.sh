@@ -1,23 +1,4 @@
 #!/usr/bin/env bash
-# For coding-agent maintainers:
-# - Read the repository-root CONTRACT.md and
-#   public/help/reference/installation/CONTRACT.md before changing this file.
-# - Preserve this entrypoint's operation, ownership, consent, and mutation boundary;
-#   do not turn one operation into an implicit install, update, repair, or deploy.
-# - Keep executable behavior, both Contracts, both Anatomies, and public guidance
-#   in lockstep; do not add static, shim, fake-command, or hermetic acceptance tests.
-# - Every install.sh change must run this exact final candidate end-to-end in a
-#   brand-new non-root isolated Linux environment with an empty HOME and real
-#   network/artifact inputs. Accept only observed TUI/runtime/import/provenance/
-#   receipt behavior or honest partial failure; source grep and fake CLI output
-#   are not acceptance.
-# - Never publish a success receipt before every declared postcondition passes;
-#   report partial state honestly and do not treat failure as cleanup authority.
-# - These maintenance rules grant no merge, release, deploy, auth, config, or
-#   deletion authority.
-# This file owns first-install ordinary state. Explicit --latest delegates to
-# the pinned current-main TUI installer, which owns that latest-main operation.
-# Other modes never adopt, update, or repair existing state; only --skip-python permits TUI-only.
 # One-shot installer for lingtai-tui and lingtai-portal, plus the Python
 # `lingtai` runtime venv at ~/.lingtai-tui/runtime/venv.
 #
@@ -27,7 +8,8 @@
 # the installed Go is missing or older than tui/go.mod requires (distro
 # packages often are), the official Go toolchain tarball is downloaded for the
 # build. It then creates or updates the Python runtime venv and installs the
-# `lingtai` package into it.
+# `lingtai` package into it. The no-argument path remains this official stable
+# release flow; use --latest explicitly for current TUI main + kernel main.
 #
 # Public entry point (once served from the website):
 #   curl -fsSL https://lingtai.ai/install.sh | bash
@@ -42,38 +24,46 @@
 # .github/workflows/release.yml):
 #   lingtai-<tag>-<os>-<arch>.tar.gz    e.g. lingtai-v0.10.5-linux-amd64.tar.gz
 # where <os> is darwin|linux and <arch> is amd64|arm64. The tarball contains
-# lingtai-tui and (when built) lingtai-portal at its top level.
+# lingtai-tui and (when built) lingtai-portal at its top level. The bundle
+# manifest may also list a lingtai-<tag>-windows-amd64.zip entry for the same
+# release; this installer's strict manifest parser accepts that entry (so a
+# Windows archive in the manifest never fails POSIX validation) but never
+# selects or downloads it — native Windows installs use install.ps1 instead.
 #
 # Source policy (--source auto|github|gitee, or LINGTAI_SOURCE env; default
 # auto): auto runs a bounded, fail-open public-IP country lookup and prefers
 # Gitee (huangzesen1997/lingtai + huangzesen1997/lingtai-kernel) for mainland
-# China. Releases may publish a small "bundle manifest" binding one exact TUI
-# tag to one exact pinned kernel release/version/artifacts/checksums — see
-# RELEASING.md. Source-only TUI releases instead commit kernel-release.json at
-# that exact tag. A provider fallback (Gitee unreachable, or missing an asset)
-# always re-fetches the SAME resolved tag/pin from the other provider; it never
-# independently re-resolves "latest" on the fallback. The Python `lingtai`
-# runtime is installed from that pinned kernel release artifact by explicit
-# local file path — never `pip install lingtai` from any package index — with
-# SHA256 verified before install. Third-party dependencies still resolve via
-# the configured package index (LINGTAI_PYPI_INDEX_URL, default pypi.org); only
+# China. Each release publishes a small "bundle manifest" binding one exact
+# TUI tag to one exact pinned kernel release/version/artifacts/checksums —
+# see RELEASING.md. A provider fallback (Gitee unreachable, or missing an
+# asset) always re-fetches the SAME resolved tag/bundle from the other
+# provider; it never independently re-resolves "latest" on the fallback. The
+# Python `lingtai` runtime is installed from that pinned kernel release
+# artifact by explicit local file path — never `pip install lingtai` from any
+# package index — with SHA256 verified before install. Those third-party
+# dependencies resolve via exactly ONE package index, chosen by
+# python_dependency_index_url: a non-empty LINGTAI_PYPI_INDEX_URL always wins,
+# otherwise the provider that actually served the final bundle manifest picks a
+# provider-aligned default (Gitee -> Tsinghua TUNA, GitHub -> pypi.org). Only
 # lingtai's own bytes are pinned. If no compatible platform wheel exists for
 # the runtime's interpreter, the pinned sdist is used instead (may require a
 # local build toolchain).
 #
 # LingTai is NEVER installed by requesting the package name "lingtai" from
-# any index — there is no PyPI fallback. On the default one-command path an
-# exact pinned bundle or release pin is mandatory: if neither can be resolved
-# (either provider, same-tag fallback attempted), or the selected kernel
-# artifact fails to verify/install, the installer FAILS LOUD with the exact
+# any index — there is no PyPI fallback. On the default one-command path a
+# pinned bundle is mandatory: if none can be resolved (either provider,
+# same-tag fallback attempted), or the resolved bundle's kernel artifact
+# fails to verify/install, the installer FAILS LOUD with the exact
 # provider/tag/error rather than degrading to a package-index install.
-# The canonical release path always requires an exact kernel pin or bundle;
-# --skip-python (alias --skip-venv) is the explicit opt-out for a TUI/portal-only
-# install; you then provision the Python runtime yourself.
+# --ref/source-ref builds have no bundle to pin against and fail loud the
+# same way. --skip-python (alias --skip-venv) is the explicit opt-out for a
+# TUI/portal-only install; you then provision the Python runtime yourself.
 set -euo pipefail
 
 REPO_SLUG="Lingtai-AI/lingtai"
 REPO="https://github.com/${REPO_SLUG}.git"
+KERNEL_REPO_SLUG="Lingtai-AI/lingtai-kernel"
+KERNEL_REPO="https://github.com/${KERNEL_REPO_SLUG}.git"
 API_BASE="https://api.github.com/repos/${REPO_SLUG}"
 DOWNLOAD_BASE="https://github.com/${REPO_SLUG}/releases/download"
 RAW_INSTALL_URL="https://raw.githubusercontent.com/${REPO_SLUG}/main/install.sh"
@@ -81,6 +71,15 @@ GO_DL_BASE="${LINGTAI_GO_DL_BASE:-https://go.dev/dl}"  # official Go toolchain d
 NODE_DL_BASE="${LINGTAI_NODE_DL_BASE:-https://nodejs.org/dist}"
 UV_INSTALLER_URL="${LINGTAI_UV_INSTALLER_URL:-https://astral.sh/uv/install.sh}"  # official uv bootstrap installer
 NODE_TOOLCHAIN_VERSION="${LINGTAI_NODE_VERSION:-22.12.0}"
+
+# The single package index used ONLY for third-party dependencies of the
+# verified local LingTai artifact — see python_dependency_index_url. Tsinghua
+# TUNA is a cloud-neutral domestic PyPI mirror; it is the Gitee-path default
+# because pypi.org is not reliably reachable from mainland-China hosts, which
+# makes dependency resolution the remaining failure point of an otherwise
+# checksum-verified Gitee install.
+PYPI_INDEX_URL_DEFAULT="https://pypi.org/simple"
+PYPI_INDEX_URL_GITEE_DEFAULT="https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
 
 # Gitee mirror: a real repository, but release assets may not exist for every
 # tag yet (see gitee_release_asset_url / gitee_bundle_manifest_url below,
@@ -109,7 +108,10 @@ TMPDIR="${TMPDIR:-/tmp}"
 BUILD_DIR="$TMPDIR/lingtai-install-$$"
 
 # --- flags / state -----------------------------------------------------------
-VERSION=""           # explicit exact release tag to install (default: latest release)
+REF=""               # explicit source ref (branch/tag/commit) => forces source build
+VERSION=""           # explicit release tag to install (default: latest release)
+LATEST_MAIN_MODE=0   # --latest: explicit current-main TUI + kernel source install
+UPDATE_MODE=0        # --update: re-run for an existing source/user-local install
 INSTALL_PREFIX=""    # --prefix: install root (bin_dir = <prefix>/bin)
 BIN_DIR_OVERRIDE=""  # --bin-dir: explicit bin directory
 NON_INTERACTIVE=0    # --non-interactive: never prompt / never sudo-install packages
@@ -119,75 +121,110 @@ SKIP_VENV=0          # --skip-python (alias: --skip-venv): don't touch the Pytho
 INSTALL_KIND=""      # "release-asset" | "source-build" (recorded in metadata)
 SOURCE_ARG="${LINGTAI_SOURCE:-auto}"  # --source auto|github|gitee (env LINGTAI_SOURCE)
 BUNDLE_PROVIDER=""    # resolved by resolve_source_provider(): "github" | "gitee"
-BUNDLE_TAG=""         # resolved TUI release tag shared by the archive + bundle/pin path
+BUNDLE_TAG=""         # resolved release tag shared by the TUI archive + bundle manifest
 BUNDLE_MANIFEST_JSON="" # raw bundle manifest body, once fetched
-BUNDLE_REQUIRED=0     # 1 on the canonical release path: an exact pinned bundle or
-                      # release pin is mandatory, so a missing/incoherent/failed pin or
-                      # kernel install fails loud rather than falling back to an index install.
-KERNEL_SOURCE=""      # "bundle" | "release-pin" (never a package-index install)
+BUNDLE_REQUIRED=0     # 1 on the default release-asset one-command path (no --ref, no --update):
+                      # a pinned kernel bundle is mandatory there, so a missing/incoherent/failed
+                      # bundle or kernel install must fail loud rather than silently falling back
+                      # to `pip install lingtai`. 0 for --ref/source-ref builds, where no bundle is
+                      # expected to exist at all — those paths require --skip-python instead (see
+                      # ensure_runtime_venv).
+KERNEL_SOURCE=""      # "bundle" | "release-pin" | "" (recorded in install.json only on a verified kernel install; LingTai is never installed from a package index by name — see ensure_runtime_venv)
 KERNEL_BUNDLE_ID=""
-KERNEL_RELEASE_TAG=""
+KERNEL_RELEASE_TAG=""  # set when KERNEL_SOURCE=="release-pin": the exact kernel tag installed from that pin
 KERNEL_VERSION_INSTALLED=""
 KERNEL_PROVIDER=""
-KERNEL_PIN_JSON=""
-KERNEL_PIN_TAG=""
-KERNEL_PIN_PROVIDER=""
-KERNEL_PIN_TUI_TAG=""
 KERNEL_MANIFEST_PROVIDER=""  # set by fetch_kernel_manifest(); which provider actually served the kernel manifest
 KERNEL_MANIFEST_JSON=""      # set by fetch_kernel_manifest() in the same shell as the provider
 BUNDLE_MANIFEST_KERNEL_TAG=""
 BUNDLE_MANIFEST_KERNEL_VERSION=""
 BUNDLE_MANIFEST_KERNEL_FILENAME=""
 BUNDLE_MANIFEST_BUNDLE_ID=""
-
-RUNTIME_VENV_DIR=""
+TUI_MAIN_SHA=""
+KERNEL_MAIN_SHA=""
+KERNEL_SOURCE_DIR=""
+# kernel-release.json exact-tag pin state (source-only TUI releases with no
+# dual bundle manifest): a second, still-strict, still-exact-tag kernel source
+# tried only after the bundle manifest is unavailable — see fetch_kernel_pin.
+KERNEL_PIN_JSON=""
+KERNEL_PIN_TAG=""
+KERNEL_PIN_PROVIDER=""
+KERNEL_PIN_TUI_TAG=""
+RUNTIME_VENV_DIR=""   # set by ensure_runtime_venv() on success; read by write_install_metadata
 
 usage() {
   cat <<'EOF'
-LingTai official installer: install the paired TUI/Portal release and pinned Python runtime.
+One-shot installer for lingtai-tui, lingtai-portal, and the Python runtime.
 
-  ./install.sh [options]
+Homebrew is not required. By default the latest release bundle is installed from the selected source:
+a prebuilt per-platform tarball when available, otherwise a source build.
 
-Maintenance and development are explicit child assets, not ordinary install modes:
-  https://lingtai.ai/help/reference/installation/skill.md
+Usage:
+  curl -fsSL https://lingtai.ai/install.sh | bash
+  curl -fsSL https://lingtai.ai/install.sh | bash -s -- --latest
+  ./install.sh [--version <tag>] [--bin-dir <dir>|--prefix <dir>]
+  ./install.sh --update --prefix <prefix> --version <tag> --non-interactive
+
+Options:
+  --latest             Explicitly build TUI main + kernel main from source;
+                       records and prints both resolved full commit SHAs
+  --version <tag>      Release tag to install (default: latest from --source)
+  --ref <ref>          Build a specific git branch/tag/commit from source
+  --bin-dir <dir>      Install binaries into <dir>
+  --prefix <dir>       Install binaries into <dir>/bin (used by --update)
+  --from-source        Always build from source (skip prebuilt release assets)
+  --skip-portal        Install only lingtai-tui (no portal)
+  --skip-python         Do not create/update the Python runtime venv (explicit
+                         opt-out; required when a pinned kernel bundle is
+                         unavailable and you still want TUI-only binaries).
+                         --skip-venv is a back-compat alias.
+  --source <mode>       auto|github|gitee (default: auto, or $LINGTAI_SOURCE).
+                         auto prefers Gitee for mainland-China public IPs via
+                         a bounded, fail-open country lookup; an explicit
+                         override always wins and skips detection.
+  --update             Update an existing source/user-local install in place
+  --non-interactive    Never prompt; never install OS packages; fail instead
+  -h, --help           Show this help
+
+Binaries install to --bin-dir/--prefix if given, otherwise a writable
+/usr/local/bin, otherwise ~/.local/bin. The portal is skipped when it can be
+built from source but npm is missing. The Python runtime venv lives at
+~/.lingtai-tui/runtime/venv.
+
+For an exact-artifact update, bounded repair, read-only verification, or an
+explicit editable development install of an existing installation, use the
+standalone maintenance entrypoints instead of this script: update.sh, fix.sh,
+verify.sh, dev.sh (each has its own --help). See ANATOMY.md for their exact
+preconditions, allowed writes, and postconditions.
 EOF
 }
-
-install_usage() {
-  cat <<'EOF'
-Usage: install.sh [options]
-
-Install one exact official TUI/Portal release and its pinned Python runtime.
-  --version <tag>        Install this official release tag instead of latest.
-  --latest               Explicitly install current TUI main + kernel main (delegated, no stable fallback).
-  --ref <ref>            Hand off arbitrary development ref work to assets/dev.sh (exit 2).
-  --bin-dir <dir>        Install binaries into <dir>.
-  --prefix <dir>         Install binaries into <prefix>/bin.
-  --from-source          Build the selected official release from source.
-  --skip-portal          Install lingtai-tui without Portal.
-  --skip-python          Do not provision the Python runtime (alias: --skip-venv).
-  --source <auto|github|gitee>  Select the official release mirror.
-  --non-interactive      Keep the ordinary install non-prompting.
-  -h, --help             Show this help.
-
-For update, development, repair, or verification, read:
-  https://lingtai.ai/help/reference/installation/skill.md
-EOF
-}
-
-compatibility_handoff() {
-  local child="$1"
-  echo "error: this maintenance surface moved out of install.sh; ordinary install does not auto-source helper assets." >&2
-  echo "Read the exact child: https://lingtai.ai/help/reference/installation/${child}" >&2
-  return 2
-}
-
-show_help_for_mode() { install_usage; }
 
 # --- messaging helpers -------------------------------------------------------
 say()  { echo "==> $*"; }
 warn() { echo "warning: $*" >&2; }
 note() { echo "    $*"; }
+
+# print_path_hint gives the user a shell-specific command without changing the
+# current process PATH or writing a shell rc file. SHELL is the user's login
+# shell on the supported macOS/Linux paths; use a direct export for an
+# unrecognized or unset shell rather than guessing its startup file.
+print_path_hint() {
+  local bin_dir="$1" shell_name="${SHELL:-}" rc_file
+  case ":${PATH}:" in
+    *":${bin_dir}:"*) return 0 ;;
+  esac
+  case "${shell_name##*/}" in
+    zsh)  rc_file="$HOME/.zshrc" ;;
+    bash) rc_file="$HOME/.bashrc" ;;
+    *)
+      say "Note: $bin_dir is not on your PATH. Add this export to your shell startup file:"
+      note "export PATH=\"$bin_dir:\$PATH\""
+      return 0
+      ;;
+  esac
+  say "Note: $bin_dir is not on your PATH. Add it with:"
+  note "echo 'export PATH=\"$bin_dir:\$PATH\"' >> \"$rc_file\" && source \"$rc_file\""
+}
 
 # is_wsl reports whether we're running under Windows Subsystem for Linux.
 is_wsl() {
@@ -388,6 +425,29 @@ resolve_source_provider() {
   fi
 }
 
+# python_dependency_index_url echoes the ONE package index used to resolve the
+# third-party dependencies of the verified local LingTai artifact. LingTai
+# itself is never requested by package name from this or any other index.
+#
+# Precedence, deliberately narrow:
+#   1. a non-empty LINGTAI_PYPI_INDEX_URL always wins (an empty value is not an
+#      override and falls through, so it can never blank out the index);
+#   2. otherwise the FINAL bundle provider — the one that actually served the
+#      bundle manifest, after any same-tag fallback moved BUNDLE_PROVIDER —
+#      picks the default it can reach: Gitee -> Tsinghua TUNA, GitHub ->
+#      official PyPI.
+# Callers pass the result as a single `--index-url <url>` argv pair; there is
+# deliberately no --extra-index-url, so exactly one index is ever consulted.
+python_dependency_index_url() {
+  if [[ -n "${LINGTAI_PYPI_INDEX_URL:-}" ]]; then
+    printf '%s' "$LINGTAI_PYPI_INDEX_URL"
+  elif [[ "${BUNDLE_PROVIDER:-github}" == "gitee" ]]; then
+    printf '%s' "$PYPI_INDEX_URL_GITEE_DEFAULT"
+  else
+    printf '%s' "$PYPI_INDEX_URL_DEFAULT"
+  fi
+}
+
 # --- Gitee release API (mirrors the GitHub helpers above) -------------------
 
 # gitee_latest_release_tag queries Gitee's public "latest release" endpoint.
@@ -439,119 +499,6 @@ bundle_manifest_url_for_provider() {
   esac
 }
 
-# Manifest validation happens before the owned runtime venv exists. Use any
-# available system python3 for that read-only boundary; on a clean machine with
-# no Python, bootstrap uv and let it provide a managed Python 3.13. Stdout stays
-# reserved for parser output because callers capture it as manifest state.
-run_manifest_python() {
-  local body="$1" uv
-  shift
-  if command -v python3 >/dev/null 2>&1; then
-    BODY="$body" python3 "$@"
-    return
-  fi
-  ensure_uv >/dev/null || return 1
-  uv="$(find_uv 2>/dev/null || true)"
-  [[ -n "$uv" && -x "$uv" ]] || return 1
-  BODY="$body" "$uv" run --no-project --managed-python --python 3.13 -- python "$@"
-}
-
-# parse_kernel_pin_manifest validates the small source-owned pin committed at an
-# exact TUI release tag. The released file has exactly these three keys: keeping
-# the parser strict prevents an accidental "latest" or provider-specific shape
-# from selecting a kernel outside the TUI release's explicit contract.
-parse_kernel_pin_manifest() {
-  local body="$1"
-  run_manifest_python "$body" - <<'PY'
-import json
-import os
-import re
-
-
-def pairs(items):
-    result = {}
-    for key, value in items:
-        if key in result:
-            raise ValueError(f"duplicate JSON key: {key}")
-        result[key] = value
-    return result
-
-try:
-    data = json.loads(os.environ["BODY"], object_pairs_hook=pairs)
-    if not isinstance(data, dict) or set(data) != {"schema", "kernel_tag", "comment"}:
-        raise ValueError("unexpected top-level keys")
-    if data["schema"] != "lingtai.tui.kernel-pin/v1":
-        raise ValueError("unexpected schema")
-    if not isinstance(data["kernel_tag"], str) or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", data["kernel_tag"]):
-        raise ValueError("kernel_tag must be a versioned vX.Y.Z tag")
-    if not isinstance(data["comment"], str) or not data["comment"].strip():
-        raise ValueError("comment must be a non-empty string")
-except (ValueError, TypeError, json.JSONDecodeError) as exc:
-    raise SystemExit(f"invalid kernel pin manifest: {exc}")
-
-print(data["kernel_tag"])
-PY
-}
-
-# kernel_pin_url_for_provider returns kernel-release.json from the exact TUI tag;
-# unlike latest-release helpers, it never resolves another tag.
-kernel_pin_url_for_provider() {
-  local provider="$1" tag="$2"
-  case "$provider" in
-    github) printf 'https://raw.githubusercontent.com/%s/%s/kernel-release.json' "$REPO_SLUG" "$tag" ;;
-    gitee) printf 'https://gitee.com/%s/%s/raw/%s/kernel-release.json' "$GITEE_OWNER" "$GITEE_REPO" "$tag" ;;
-    *) return 1 ;;
-  esac
-}
-
-# fetch_kernel_pin fetches and strictly validates kernel-release.json from the
-# exact resolved TUI tag. A missing/malformed pin on the selected provider is
-# retried on the other provider for that SAME tag only.
-fetch_kernel_pin() {
-  local tui_tag="$1" provider="${BUNDLE_PROVIDER:-github}" other url body kernel_tag candidate
-  KERNEL_PIN_JSON=""
-  KERNEL_PIN_TAG=""
-  KERNEL_PIN_PROVIDER=""
-  KERNEL_PIN_TUI_TAG=""
-
-  other="github"
-  [[ "$provider" == "github" ]] && other="gitee"
-  for candidate in "$provider" "$other"; do
-    url="$(kernel_pin_url_for_provider "$candidate" "$tui_tag" || true)"
-    [[ -n "$url" ]] || continue
-    body="$(curl -fsSL --max-time 30 "$url" 2>/dev/null || true)"
-    [[ -n "$body" ]] || continue
-    if ! kernel_tag="$(parse_kernel_pin_manifest "$body" 2>/dev/null)"; then
-      echo "error: kernel pin at $url failed strict validation" >&2
-      continue
-    fi
-    KERNEL_PIN_JSON="$body"
-    KERNEL_PIN_TAG="$kernel_tag"
-    KERNEL_PIN_PROVIDER="$candidate"
-    KERNEL_PIN_TUI_TAG="$tui_tag"
-    return 0
-  done
-  return 1
-}
-
-# kernel_tag_for_install preserves the existing bundle as the first-priority
-# source and otherwise returns the exact release pin selected above.
-kernel_tag_for_install() {
-  if [[ -n "$BUNDLE_MANIFEST_JSON" ]]; then
-    bundle_manifest_field kernel_tag
-  else
-    printf '%s\n' "$KERNEL_PIN_TAG"
-  fi
-}
-
-kernel_source_for_install() {
-  if [[ -n "$BUNDLE_MANIFEST_JSON" ]]; then
-    printf '%s\n' "bundle"
-  elif [[ -n "$KERNEL_PIN_TAG" ]]; then
-    printf '%s\n' "release-pin"
-  fi
-}
-
 # fetch_bundle_manifest resolves BUNDLE_TAG (explicit VERSION, else latest on
 # the CHOSEN provider) and BUNDLE_MANIFEST_JSON for BUNDLE_PROVIDER. If the
 # preferred provider has no manifest for the resolved tag, falls back to the
@@ -559,7 +506,7 @@ kernel_source_for_install() {
 # provider — see the module header contract). Returns nonzero if neither
 # provider has a usable manifest for the resolved tag.
 fetch_bundle_manifest() {
-  local tag="$VERSION" body url provider other candidate
+  local tag="$VERSION" body url
 
   if [[ -z "$tag" ]]; then
     if [[ "$BUNDLE_PROVIDER" == "gitee" ]]; then
@@ -575,40 +522,38 @@ fetch_bundle_manifest() {
   fi
   [[ -n "$tag" ]] || return 1
 
-  # Keep the exact resolved TUI tag even when its bundle is absent or malformed;
-  # the source-only fallback consumes this tag without resolving latest again.
+  # Keep the exact resolved TUI tag even when its bundle is absent or
+  # malformed: the source-only-release kernel-pin fallback (fetch_kernel_pin,
+  # called by main() when this function returns nonzero) consumes this same
+  # tag without ever resolving "latest" a second time.
   BUNDLE_TAG="$tag"
-  BUNDLE_MANIFEST_JSON=""
-  provider="$BUNDLE_PROVIDER"
-  other="github"
-  [[ "$provider" == "github" ]] && other="gitee"
-  for candidate in "$provider" "$other"; do
-    url="$(bundle_manifest_url_for_provider "$candidate" "$tag" || true)"
-    if [[ -z "$url" ]]; then
-      [[ "$candidate" == "$provider" ]] || continue
-      note "$provider has no bundle manifest for $tag; trying $other for the SAME tag."
-      continue
-    fi
-    body="$(curl -fsSL --max-time 30 "$url" 2>/dev/null || true)"
-    if [[ -z "$body" ]]; then
-      continue
-    fi
-    if ! load_bundle_manifest "$body" "$tag"; then
-      echo "error: bundle manifest at $url failed strict validation" >&2
-      continue
-    fi
-    BUNDLE_PROVIDER="$candidate"
-    BUNDLE_MANIFEST_JSON="$body"
-    return 0
-  done
-  return 1
+
+  url="$(bundle_manifest_url_for_provider "$BUNDLE_PROVIDER" "$tag" || true)"
+  if [[ -z "$url" ]]; then
+    local other="github"
+    [[ "$BUNDLE_PROVIDER" == "github" ]] && other="gitee"
+    note "$BUNDLE_PROVIDER has no bundle manifest for $tag; trying $other for the SAME tag."
+    url="$(bundle_manifest_url_for_provider "$other" "$tag" || true)"
+    [[ -n "$url" ]] || return 1
+    BUNDLE_PROVIDER="$other"
+  fi
+
+  body="$(curl -fsSL --max-time 30 "$url" 2>/dev/null || true)"
+  [[ -n "$body" ]] || return 1
+  if ! load_bundle_manifest "$body" "$tag"; then
+    echo "error: bundle manifest at $url failed strict validation" >&2
+    return 1
+  fi
+
+  BUNDLE_MANIFEST_JSON="$body"
+  return 0
 }
 
 # Validate the complete bundle contract at the trust boundary and print the
 # canonical digest for this host's one exact archive.
 parse_bundle_manifest() {
   local body="$1" expected_tag="$2"
-  run_manifest_python "$body" - "$expected_tag" "$(detect_os)" "$(detect_arch)" <<'PY'
+  BODY="$body" python3 - "$expected_tag" "$(detect_os)" "$(detect_arch)" <<'PY'
 import datetime, json, os, re, sys
 expected_tag, os_name, arch = sys.argv[1:]
 def pairs(items):
@@ -642,7 +587,7 @@ try:
         name = string(archive["filename"], "archive filename")
         if name in names: raise ValueError("archives contains duplicate filenames")
         names.add(name)
-        if not re.fullmatch(r"lingtai-[^/]+-(?:darwin|linux)-(?:amd64|arm64)\.tar\.gz", name): raise ValueError("archive filename is invalid")
+        if not (re.fullmatch(r"lingtai-[^/]+-(?:darwin|linux)-(?:amd64|arm64)\.tar\.gz", name) or re.fullmatch(r"lingtai-[^/]+-windows-amd64\.zip", name)): raise ValueError("archive filename is invalid")
         if not isinstance(archive["sha256"], str) or not re.fullmatch(r"[0-9a-f]{64}", archive["sha256"]): raise ValueError("archive sha256 must be lowercase 64-hex")
     target = f"lingtai-{expected_tag}-{os_name}-{arch}.tar.gz"
     hits = [archive for archive in data["archives"] if archive["filename"] == target]
@@ -691,6 +636,125 @@ bundle_manifest_field() {
   esac
 }
 
+# run_manifest_python picks any available system python3, or bootstraps a
+# managed uv Python 3.13 on a machine with neither — manifest validation is a
+# read-only boundary that happens before the owned runtime venv exists, so it
+# must not depend on that venv already being usable.
+run_manifest_python() {
+  local body="$1" uv
+  shift
+  if command -v python3 >/dev/null 2>&1; then
+    BODY="$body" python3 "$@"
+    return
+  fi
+  ensure_uv >/dev/null || return 1
+  uv="$(find_uv 2>/dev/null || true)"
+  [[ -n "$uv" && -x "$uv" ]] || return 1
+  BODY="$body" "$uv" run --no-project --managed-python --python 3.13 -- python "$@"
+}
+
+# parse_kernel_pin_manifest strictly validates kernel-release.json, the small
+# source-owned pin committed at an exact TUI release tag for releases with no
+# dual bundle manifest (source-only TUI releases). Keeping the parser strict
+# prevents an accidental "latest" or provider-specific shape from selecting a
+# kernel outside the TUI release's explicit contract.
+parse_kernel_pin_manifest() {
+  local body="$1"
+  run_manifest_python "$body" - <<'PY'
+import json
+import os
+import re
+
+
+def pairs(items):
+    result = {}
+    for key, value in items:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+try:
+    data = json.loads(os.environ["BODY"], object_pairs_hook=pairs)
+    if not isinstance(data, dict) or set(data) != {"schema", "kernel_tag", "comment"}:
+        raise ValueError("unexpected top-level keys")
+    if data["schema"] != "lingtai.tui.kernel-pin/v1":
+        raise ValueError("unexpected schema")
+    if not isinstance(data["kernel_tag"], str) or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", data["kernel_tag"]):
+        raise ValueError("kernel_tag must be a versioned vX.Y.Z tag")
+    if not isinstance(data["comment"], str) or not data["comment"].strip():
+        raise ValueError("comment must be a non-empty string")
+except (ValueError, TypeError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"invalid kernel pin manifest: {exc}")
+
+print(data["kernel_tag"])
+PY
+}
+
+# kernel_pin_url_for_provider returns kernel-release.json from the exact TUI
+# tag; unlike latest-release helpers, it never resolves another tag.
+kernel_pin_url_for_provider() {
+  local provider="$1" tag="$2"
+  case "$provider" in
+    github) printf 'https://raw.githubusercontent.com/%s/%s/kernel-release.json' "$REPO_SLUG" "$tag" ;;
+    gitee) printf 'https://gitee.com/%s/%s/raw/%s/kernel-release.json' "$GITEE_OWNER" "$GITEE_REPO" "$tag" ;;
+    *) return 1 ;;
+  esac
+}
+
+# fetch_kernel_pin fetches and strictly validates kernel-release.json from the
+# exact resolved TUI tag. A missing/malformed pin on the selected provider is
+# retried on the other provider for that SAME tag only — this is the
+# source-only-release fallback tried when fetch_bundle_manifest cannot resolve
+# a dual bundle for this tag (see BUNDLE_REQUIRED's caller in main()).
+fetch_kernel_pin() {
+  local tui_tag="$1" provider="${BUNDLE_PROVIDER:-github}" other url body kernel_tag candidate
+  KERNEL_PIN_JSON=""
+  KERNEL_PIN_TAG=""
+  KERNEL_PIN_PROVIDER=""
+  KERNEL_PIN_TUI_TAG=""
+
+  other="github"
+  [[ "$provider" == "github" ]] && other="gitee"
+  for candidate in "$provider" "$other"; do
+    url="$(kernel_pin_url_for_provider "$candidate" "$tui_tag" || true)"
+    [[ -n "$url" ]] || continue
+    body="$(curl -fsSL --max-time 30 "$url" 2>/dev/null || true)"
+    [[ -n "$body" ]] || continue
+    if ! kernel_tag="$(parse_kernel_pin_manifest "$body" 2>/dev/null)"; then
+      echo "error: kernel pin at $url failed strict validation" >&2
+      continue
+    fi
+    KERNEL_PIN_JSON="$body"
+    KERNEL_PIN_TAG="$kernel_tag"
+    KERNEL_PIN_PROVIDER="$candidate"
+    KERNEL_PIN_TUI_TAG="$tui_tag"
+    return 0
+  done
+  return 1
+}
+
+# kernel_tag_for_install preserves the existing bundle as the first-priority
+# source and otherwise returns the exact release pin selected above.
+kernel_tag_for_install() {
+  if [[ -n "$BUNDLE_MANIFEST_JSON" ]]; then
+    bundle_manifest_field kernel_tag
+  else
+    printf '%s\n' "$KERNEL_PIN_TAG"
+  fi
+}
+
+# kernel_source_for_install returns "bundle" when a dual bundle manifest was
+# resolved, else "release-pin" when the exact-tag kernel-release.json pin was
+# resolved instead, else nothing (caller must fail loud).
+kernel_source_for_install() {
+  if [[ -n "$BUNDLE_MANIFEST_JSON" ]]; then
+    printf '%s\n' "bundle"
+  elif [[ -n "$KERNEL_PIN_TAG" ]]; then
+    printf '%s\n' "release-pin"
+  fi
+}
+
 # verify_sha256 checks a file against an expected lowercase hex digest using
 # whichever checksum tool is available. Returns nonzero on mismatch or if no
 # checksum tool exists (callers must treat "no tool" as a hard failure, not a
@@ -708,7 +772,58 @@ verify_sha256() {
   [[ "$actual" == "$expected" ]]
 }
 
+# --- git checkout version helpers (used by source build + tests) -------------
+
+is_exact_checkout_tag() {
+  local repo_dir="$1" tag="$2" tag_commit head_commit
+  tag_commit="$(git -C "$repo_dir" rev-parse --verify --quiet "refs/tags/$tag^{commit}" 2>/dev/null || true)"
+  if [[ -z "$tag_commit" ]]; then
+    return 1
+  fi
+  head_commit="$(git -C "$repo_dir" rev-parse --verify HEAD 2>/dev/null || true)"
+  if [[ -z "$head_commit" ]]; then
+    return 1
+  fi
+  [[ "$head_commit" == "$tag_commit" ]]
+}
+
+version_for_checkout() {
+  local repo_dir="$1" requested_ref="$2" requested_tag
+  requested_tag="$(release_tag_name "$requested_ref")"
+  if [[ -n "$requested_tag" ]] && is_exact_checkout_tag "$repo_dir" "$requested_tag"; then
+    printf '%s\n' "$requested_tag"
+    return
+  fi
+  git -C "$repo_dir" describe --tags --always 2>/dev/null || echo "dev"
+}
+
+resolved_ref_for_checkout() {
+  local repo_dir="$1" exact_tag branch
+  exact_tag="$(git -C "$repo_dir" describe --tags --exact-match 2>/dev/null || true)"
+  if [[ -n "$exact_tag" ]]; then
+    printf '%s\n' "$exact_tag"
+    return
+  fi
+  branch="$(git -C "$repo_dir" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+  if [[ -n "$branch" ]]; then
+    printf '%s\n' "$branch"
+    return
+  fi
+  git -C "$repo_dir" rev-parse --short HEAD
+}
+
 # --- bin dir / prefix helpers ------------------------------------------------
+
+# resolve_main_branch_sha resolves one exact full commit before either source
+# checkout begins. The subsequent clones are checked against these pins; a
+# moving main branch therefore fails loudly instead of building a mixed pair.
+resolve_main_branch_sha() {
+  local repo_url="$1" sha
+  command -v git &>/dev/null || return 1
+  sha="$(git ls-remote "$repo_url" refs/heads/main 2>/dev/null | awk 'NF { print $1; exit }')"
+  [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || return 1
+  printf '%s\n' "$sha"
+}
 
 prefix_for_bin_dir() {
   local bin_dir="$1"
@@ -745,83 +860,6 @@ verify_tui_binary_version() {
   esac
 }
 
-# tui_binary_tag performs the real installed-binary probe used by existing
-# install discovery. A metadata version is only a hint: the executable's own
-# version is the source of truth for the current TUI.
-tui_binary_tag() {
-  local binary="$1" output tag
-  [[ -x "$binary" ]] || return 1
-  output="$("$binary" version 2>/dev/null || true)"
-  tag="$(printf '%s' "$output" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
-  [[ -n "$tag" ]] || return 1
-  printf '%s\n' "$tag"
-}
-
-# canonical_runtime_venv resolves a candidate runtime venv path to its
-# physical location and requires that physical location to be canonically
-# contained under $HOME/.lingtai-tui/runtime — not merely lexically prefixed.
-# A symlinked venv directory (or a symlinked ancestor) whose real target
-# escapes the owned runtime root is rejected outright: this installer must
-# never adopt or mutate a venv outside the root it claims to own. Prints the
-# physical path and returns 0 only when containment holds.
-canonical_runtime_venv() {
-  local dir="$1" runtime_root="$2" physical_root physical_dir physical_home expected_root
-  local parent base physical_parent root_parent root_base root_grandparent root_parent_base
-
-  physical_home="$(cd "$HOME" 2>/dev/null && pwd -P)" || return 1
-  expected_root="$physical_home/.lingtai-tui/runtime"
-
-  # Ownership is both lexical and physical: a path outside the declared root
-  # is not adopted merely because a symlink happens to point back inside it.
-  [[ "$dir" == "$runtime_root"/* ]] || return 1
-  [[ ! -L "$runtime_root" ]] || return 1
-
-  if [[ -d "$runtime_root" ]]; then
-    physical_root="$(cd "$runtime_root" 2>/dev/null && pwd -P)" || return 1
-  elif [[ -e "$runtime_root" ]]; then
-    return 1
-  else
-    # Resolve the not-yet-created owned root without mkdir. A completely fresh
-    # install may also lack its .lingtai-tui parent, so append at most those two
-    # fixed missing components to an existing physical HOME ancestor.
-    root_parent="$(dirname "$runtime_root")"
-    root_base="$(basename "$runtime_root")"
-    if [[ -d "$root_parent" ]]; then
-      physical_root="$(cd "$root_parent" 2>/dev/null && pwd -P)/$root_base" || return 1
-    else
-      [[ ! -e "$root_parent" && ! -L "$root_parent" ]] || return 1
-      root_grandparent="$(dirname "$root_parent")"
-      root_parent_base="$(basename "$root_parent")"
-      [[ -d "$root_grandparent" ]] || return 1
-      physical_root="$(cd "$root_grandparent" 2>/dev/null && pwd -P)/$root_parent_base/$root_base" || return 1
-    fi
-  fi
-  # `$HOME` itself may be a symlink, but `.lingtai-tui` and `runtime` may not
-  # redirect ownership elsewhere. The resolved root must be exactly beneath the
-  # canonical physical HOME, not merely whatever `pwd -P` found through an
-  # ancestor symlink.
-  [[ "$physical_root" == "$expected_root" ]] || return 1
-
-  if [[ -d "$dir" ]]; then
-    physical_dir="$(cd "$dir" 2>/dev/null && pwd -P)" || return 1
-  else
-    # A file or symlink (including dangling) is occupied untrusted state, not a
-    # free final child that venv creation may replace or follow.
-    [[ ! -e "$dir" && ! -L "$dir" ]] || return 1
-    parent="$(dirname "$dir")"
-    base="$(basename "$dir")"
-    [[ "$base" != "." && "$base" != ".." ]] || return 1
-    if [[ "$parent" == "$runtime_root" && ! -e "$runtime_root" ]]; then
-      physical_parent="$physical_root"
-    else
-      physical_parent="$(cd "$parent" 2>/dev/null && pwd -P)" || return 1
-    fi
-    physical_dir="$physical_parent/$base"
-  fi
-  [[ "$physical_dir" == "$physical_root"/* ]] || return 1
-  printf '%s\n' "$physical_dir"
-}
-
 ensure_lingtai_alias() {
   local bin_dir="$1"
   if [[ ! -e "$bin_dir/lingtai" ]] || [[ -L "$bin_dir/lingtai" && "$(readlink "$bin_dir/lingtai")" == "$bin_dir/lingtai-tui" ]]; then
@@ -834,48 +872,55 @@ ensure_lingtai_alias() {
 # --- arg parsing -------------------------------------------------------------
 
 parse_args() {
-  POSITIONAL_MODE=0
-  if [[ $# -gt 0 && "$1" != -* ]]; then
-    POSITIONAL_MODE=1
-    case "$1" in
-      install) shift ;;
-      update) compatibility_handoff 'assets/update.sh'; return 2 ;;
-      *) echo "error: unknown mode: $1" >&2; usage >&2; return 2 ;;
-    esac
-  fi
+  local saw_latest=0 saw_ref=0 saw_version=0 saw_from_source=0 saw_skip_python=0 saw_source=0 saw_update=0
+  LATEST_MAIN_MODE=0
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --dev) compatibility_handoff 'assets/dev.sh'; return 2 ;;
-      --kernel-source|--dev-kernel-source|--tui-source|--dev-tui-source)
-        compatibility_handoff 'assets/dev.sh'; return 2 ;;
-      --update) compatibility_handoff 'assets/update.sh'; return 2 ;;
-      --ref) compatibility_handoff 'assets/dev.sh'; return 2 ;;
-      --version)
-        VERSION="${2:?error: --version requires a value}"
-        [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-          echo "error: --version requires an exact official vX.Y.Z release tag" >&2
-          return 2
-        }
-        shift 2
-        ;;
+      --latest) LATEST_MAIN_MODE=1; saw_latest=1; shift ;;
+      --ref) REF="${2:?error: --ref requires a value}"; saw_ref=1; shift 2 ;;
+      --version) VERSION="${2:?error: --version requires a value}"; saw_version=1; shift 2 ;;
       --prefix) INSTALL_PREFIX="${2:?error: --prefix requires a value}"; shift 2 ;;
       --bin-dir) BIN_DIR_OVERRIDE="${2:?error: --bin-dir requires a value}"; shift 2 ;;
-      --from-source) FROM_SOURCE=1; shift ;;
+      --from-source) FROM_SOURCE=1; saw_from_source=1; shift ;;
       --skip-portal) SKIP_PORTAL=1; shift ;;
-      --skip-python|--skip-venv) SKIP_VENV=1; shift ;;
-      --source) SOURCE_ARG="${2:?error: --source requires a value}"; shift 2 ;;
+      --skip-python|--skip-venv) SKIP_VENV=1; saw_skip_python=1; shift ;;
+      --source) SOURCE_ARG="${2:?error: --source requires a value}"; saw_source=1; shift 2 ;;
+      --update) UPDATE_MODE=1; saw_update=1; shift ;;
       --non-interactive) NON_INTERACTIVE=1; shift ;;
-      -h|--help) install_usage; exit 0 ;;
-      *) echo "error: unknown flag: $1" >&2; install_usage >&2; return 2 ;;
+      -h|--help) usage; exit 0 ;;
+      *) echo "error: unknown flag: $1" >&2; usage >&2; exit 1 ;;
     esac
   done
+
+  if [[ "$saw_latest" == "1" ]]; then
+    if [[ "$saw_ref" == "1" || "$saw_version" == "1" || "$saw_from_source" == "1" || "$saw_skip_python" == "1" || "$saw_source" == "1" || "$saw_update" == "1" || "$SOURCE_ARG" != "auto" ]]; then
+      echo "error: --latest cannot be combined with --ref, --version, --from-source, --skip-python/--skip-venv, --source/LINGTAI_SOURCE, or --update" >&2
+      usage >&2
+      exit 1
+    fi
+  fi
+
+  # --update is the TUI source updater contract: it passes --prefix and
+  # --version and expects an in-place source-compatible update.
+  if [[ "$UPDATE_MODE" == "1" ]]; then
+    if [[ -z "$INSTALL_PREFIX" ]]; then
+      echo "error: --update requires --prefix <prefix>" >&2
+      usage >&2
+      exit 1
+    fi
+    if [[ -z "$(release_tag_name "$VERSION")" ]]; then
+      echo "error: --update requires --version <release-tag>" >&2
+      usage >&2
+      exit 1
+    fi
+  fi
+
   case "$SOURCE_ARG" in
     auto|github|gitee) ;;
-    *) echo "error: --source must be one of auto|github|gitee, got: $SOURCE_ARG" >&2; return 2 ;;
+    *) echo "error: --source must be one of auto|github|gitee, got: $SOURCE_ARG" >&2; usage >&2; exit 1 ;;
   esac
 }
 
-# --- install metadata
 # --- install metadata --------------------------------------------------------
 
 json_escape() {
@@ -907,19 +952,23 @@ json_escape() {
   done
 }
 
-# write_install_metadata records the ordinary install and its provenance. Future
-# maintenance uses the explicit installation assets; this canonical script is not
-# a hidden update/repair dispatcher. install_method stays "source" for existing
-# metadata compatibility; install_kind records the selected ordinary path.
+# write_install_metadata records the install so `lingtai-tui`'s source updater
+# can re-run this script for a newer tag. install_method stays "source" for
+# updater compatibility regardless of whether we downloaded a prebuilt asset or
+# built from source; install_kind records which path was taken (additive field).
 write_install_metadata() {
   local global_dir="$1" prefix="$2" bin_dir="$3" repo_url="$4" requested_ref="$5"
   local resolved_ref="$6" resolved_commit="$7" stamped_version="$8" tui_path="$9"
   local portal_path="${10:-}" metadata_path tmp_path installed_at portal_json=""
   local install_kind="${INSTALL_KIND:-source-build}"
-  # Kernel provenance is read from globals (set by the verified install path)
-  # rather than added as more positional params — this function already has 10.
-  # The block is omitted entirely when KERNEL_SOURCE is empty (for example
-  # --skip-python), preserving the old metadata shape for that explicit opt-out.
+  # Kernel/runtime provenance is read from globals (set by install_kernel_from_bundle
+  # / ensure_runtime_venv during this run) rather than added as more positional
+  # params — this function already has 10. KERNEL_SOURCE is "" (no verified
+  # kernel install happened this run — e.g. --skip-python), "bundle", "main"
+  # (--latest), or "release-pin" (source-only TUI release with no dual bundle
+  # manifest — see fetch_kernel_pin). The block is omitted entirely, not
+  # written as empty strings, when KERNEL_SOURCE is "" — old readers see
+  # exactly the same install.json shape as before this field existed.
   local bundle_json="" runtime_json=""
   if [[ -n "${RUNTIME_VENV_DIR:-}" && "$SKIP_VENV" != "1" ]]; then
     if ! canonical_runtime_venv "$RUNTIME_VENV_DIR" "$HOME/.lingtai-tui/runtime" >/dev/null; then
@@ -938,10 +987,12 @@ write_install_metadata() {
     bundle_json="$(printf ',\n  "kernel_source": "release-pin",\n  "kernel_release_tag": "%s",\n  "kernel_version": "%s",\n  "kernel_provider": "%s",\n  "tui_release_tag": "%s"' \
       "$(json_escape "$release_tag")" "$(json_escape "$KERNEL_VERSION_INSTALLED")" \
       "$(json_escape "$KERNEL_PROVIDER")" "$(json_escape "$tui_release_tag")")"
+  elif [[ "$KERNEL_SOURCE" == "main" ]]; then
+    bundle_json="$(printf ',\n  "source_mode": "latest-main",\n  "tui_commit": "%s",\n  "kernel_source": "main",\n  "kernel_commit": "%s",\n  "kernel_version": "%s",\n  "kernel_provider": "github"' \
+      "$(json_escape "$TUI_MAIN_SHA")" "$(json_escape "$KERNEL_MAIN_SHA")" "$(json_escape "$KERNEL_VERSION_INSTALLED")")"
   fi
 
   metadata_path="$global_dir/install.json"
-  tmp_path=""
   installed_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
   if [[ -L "$global_dir" ]]; then
@@ -949,17 +1000,31 @@ write_install_metadata() {
     return 1
   fi
   mkdir -p "$global_dir"
-  if [[ -e "$metadata_path" || -L "$metadata_path" ]]; then
-    echo "error: install receipt appeared before metadata creation; refusing to replace it: $metadata_path" >&2
-    return 1
-  fi
-  tmp_path="$(mktemp "$global_dir/.install.json.XXXXXX")" || {
-    echo "error: could not create an owned metadata staging file under $global_dir" >&2
-    return 1
-  }
-  chmod 600 "$tmp_path" || { rm -f "$tmp_path"; return 1; }
   if [[ -n "$portal_path" ]]; then
     portal_json="$(printf ',\n    "%s"' "$(json_escape "$portal_path")")"
+  fi
+
+  # UPDATE_MODE re-publishes over its own existing receipt by design (an
+  # in-place update of the same target), so the exclusive-create/no-clobber
+  # publication below applies only to a fresh (non-update) install — see
+  # validate_fresh_install_state, which already refuses ordinary install over
+  # an existing receipt before this function is ever reached on that path.
+  # LATEST_MAIN_MODE (--latest) is the other exception: it is an explicit,
+  # already-documented re-runnable current-main dev install, so a second run
+  # must republish its own receipt in place exactly like --update, not refuse
+  # to record newly-installed binaries/runtime it already mutated.
+  if [[ "$UPDATE_MODE" != "1" && "$LATEST_MAIN_MODE" != "1" ]]; then
+    if [[ -e "$metadata_path" || -L "$metadata_path" ]]; then
+      echo "error: install receipt appeared before metadata creation; refusing to replace it: $metadata_path" >&2
+      return 1
+    fi
+    tmp_path="$(mktemp "$global_dir/.install.json.XXXXXX")" || {
+      echo "error: could not create an owned metadata staging file under $global_dir" >&2
+      return 1
+    }
+    chmod 600 "$tmp_path" || { rm -f "$tmp_path"; return 1; }
+  else
+    tmp_path="$metadata_path.tmp.$$"
   fi
 
   cat > "$tmp_path" <<EOF
@@ -981,19 +1046,25 @@ write_install_metadata() {
   ]$bundle_json$runtime_json
 }
 EOF
-  if [[ -L "$global_dir" || -e "$metadata_path" || -L "$metadata_path" ]]; then
+
+  if [[ "$UPDATE_MODE" != "1" && "$LATEST_MAIN_MODE" != "1" ]]; then
+    if [[ -L "$global_dir" || -e "$metadata_path" || -L "$metadata_path" ]]; then
+      rm -f "$tmp_path"
+      echo "error: install receipt appeared during metadata creation; refusing to replace it: $metadata_path" >&2
+      return 1
+    fi
+    # Same-directory hard-link publication is atomic and no-clobber: if
+    # another writer creates install.json first, ln fails without replacing
+    # its bytes.
+    if ! ln "$tmp_path" "$metadata_path"; then
+      rm -f "$tmp_path"
+      echo "error: install receipt could not be published exclusively; existing state was preserved: $metadata_path" >&2
+      return 1
+    fi
     rm -f "$tmp_path"
-    echo "error: install receipt appeared during metadata creation; refusing to replace it: $metadata_path" >&2
-    return 1
+  else
+    mv "$tmp_path" "$metadata_path"
   fi
-  # Same-directory hard-link publication is atomic and no-clobber: if another
-  # writer creates install.json first, ln fails without replacing its bytes.
-  if ! ln "$tmp_path" "$metadata_path"; then
-    rm -f "$tmp_path"
-    echo "error: install receipt could not be published exclusively; existing state was preserved: $metadata_path" >&2
-    return 1
-  fi
-  rm -f "$tmp_path"
 }
 
 # --- OS package installation (Linux/WSL) -------------------------------------
@@ -1134,21 +1205,73 @@ ensure_python() {
   return 1
 }
 
-# ensure_runtime_venv creates or updates ~/.lingtai-tui/runtime/venv and
-# installs the `lingtai` package into it from a verified local kernel artifact
-# selected by the canonical release bundle or exact TUI release pin.
-# LingTai itself is NEVER requested from a package index by name (only
-# third-party dependencies resolve via the configured index; see
-# install_kernel_from_bundle). This is mirrored by the TUI's own EnsureVenv
-# logic (uv venv --python 3.13 if uv exists, else python3 -m venv; verify
-# import; stamp env marker; symlink lingtai-agent).
-#
-# On the default release-asset one-command path (BUNDLE_REQUIRED=1), a
-# resolved bundle or exact release pin plus a successful kernel-artifact
-# install are MANDATORY. A broken existing venv is never
-# deleted: when it cannot be repaired in place without destructive cleanup, a
-# new stable repair path is selected and recorded in install metadata.
+# canonical_runtime_venv resolves a candidate runtime venv path to its
+# physical location and requires that physical location to be canonically
+# contained under $HOME/.lingtai-tui/runtime — not merely lexically prefixed.
+# A symlinked venv directory (or a symlinked ancestor) whose real target
+# escapes the owned runtime root is rejected outright: this installer must
+# never adopt or mutate a venv outside the root it claims to own. Prints the
+# physical path and returns 0 only when containment holds.
+canonical_runtime_venv() {
+  local dir="$1" runtime_root="$2" physical_root physical_dir physical_home expected_root
+  local parent base physical_parent root_parent root_base root_grandparent root_parent_base
 
+  physical_home="$(cd "$HOME" 2>/dev/null && pwd -P)" || return 1
+  expected_root="$physical_home/.lingtai-tui/runtime"
+
+  # Ownership is both lexical and physical: a path outside the declared root
+  # is not adopted merely because a symlink happens to point back inside it.
+  [[ "$dir" == "$runtime_root"/* ]] || return 1
+  [[ ! -L "$runtime_root" ]] || return 1
+
+  if [[ -d "$runtime_root" ]]; then
+    physical_root="$(cd "$runtime_root" 2>/dev/null && pwd -P)" || return 1
+  elif [[ -e "$runtime_root" ]]; then
+    return 1
+  else
+    # Resolve the not-yet-created owned root without mkdir. A completely fresh
+    # install may also lack its .lingtai-tui parent, so append at most those two
+    # fixed missing components to an existing physical HOME ancestor.
+    root_parent="$(dirname "$runtime_root")"
+    root_base="$(basename "$runtime_root")"
+    if [[ -d "$root_parent" ]]; then
+      physical_root="$(cd "$root_parent" 2>/dev/null && pwd -P)/$root_base" || return 1
+    else
+      [[ ! -e "$root_parent" && ! -L "$root_parent" ]] || return 1
+      root_grandparent="$(dirname "$root_parent")"
+      root_parent_base="$(basename "$root_parent")"
+      [[ -d "$root_grandparent" ]] || return 1
+      physical_root="$(cd "$root_grandparent" 2>/dev/null && pwd -P)/$root_parent_base/$root_base" || return 1
+    fi
+  fi
+  # `$HOME` itself may be a symlink, but `.lingtai-tui` and `runtime` may not
+  # redirect ownership elsewhere. The resolved root must be exactly beneath the
+  # canonical physical HOME, not merely whatever `pwd -P` found through an
+  # ancestor symlink.
+  [[ "$physical_root" == "$expected_root" ]] || return 1
+
+  if [[ -d "$dir" ]]; then
+    physical_dir="$(cd "$dir" 2>/dev/null && pwd -P)" || return 1
+  else
+    # A file or symlink (including dangling) is occupied untrusted state, not a
+    # free final child that venv creation may replace or follow.
+    [[ ! -e "$dir" && ! -L "$dir" ]] || return 1
+    parent="$(dirname "$dir")"
+    base="$(basename "$dir")"
+    [[ "$base" != "." && "$base" != ".." ]] || return 1
+    if [[ "$parent" == "$runtime_root" && ! -e "$runtime_root" ]]; then
+      physical_parent="$physical_root"
+    else
+      physical_parent="$(cd "$parent" 2>/dev/null && pwd -P)" || return 1
+    fi
+    physical_dir="$physical_parent/$base"
+  fi
+  [[ "$physical_dir" == "$physical_root"/* ]] || return 1
+  printf '%s\n' "$physical_dir"
+}
+
+# runtime_python_for_venv resolves the python/python3 launcher under a venv
+# directory, or nothing if neither exists.
 runtime_python_for_venv() {
   local venv_dir="$1"
   if [[ -x "$venv_dir/bin/python" ]]; then
@@ -1188,7 +1311,7 @@ ensure_runtime_pip() {
   "$py" -m pip --version >/dev/null 2>&1 && return 0
 
   if [[ -n "$uv" ]]; then
-    index_url="${LINGTAI_PYPI_INDEX_URL:-https://pypi.org/simple}"
+    index_url="$(python_dependency_index_url)"
     warn "pip is still missing; using selected uv only inside the new owned runtime."
     "$uv" pip install --index-url "$index_url" -p "$venv_dir" pip || warn "uv could not seed pip in the new owned runtime."
   fi
@@ -1197,6 +1320,11 @@ ensure_runtime_pip() {
   "$py" -m pip --version >/dev/null 2>&1
 }
 
+# runtime_venv_state classifies an existing venv path as missing/broken/healthy
+# without mutating it: missing (no directory at all), broken (no interpreter,
+# too old, prefix does not match, or no working pip), or healthy. Ordinary
+# install uses this to refuse silently reusing an existing runtime — see the
+# guard at the top of ensure_runtime_venv below.
 runtime_venv_state() {
   local venv_dir="$1" py
   [[ -d "$venv_dir" ]] || { printf '%s\n' missing; return 0; }
@@ -1210,14 +1338,14 @@ runtime_venv_state() {
 
 # runtime_health_check is the install postcondition: both the public package
 # and its kernel module must import from the selected interpreter, the
-# package version must equal the exact manifest/pin version, AND both
-# module __file__ paths must resolve physically underneath the selected
-# venv's own canonical prefix — not merely be importable. This rejects a
-# same-version package injected through an external `.pth` entry, system
-# site-packages, or any other interpreter path configuration that would let
-# runtime_health_check pass while the kernel actually loads from outside the
-# venv this installer claims is healthy. PYTHONPATH= alone does not cover
-# that case, so the check is done in Python against sys.prefix/realpath.
+# package version must equal the exact manifest/pin version, AND both module
+# __file__ paths must resolve physically underneath the selected venv's own
+# canonical prefix — not merely be importable. This rejects a same-version
+# package injected through an external `.pth` entry, system site-packages, or
+# any other interpreter path configuration that would let a bare `import
+# lingtai` check pass while the kernel actually loads from outside the venv
+# this installer claims is healthy. PYTHONPATH= alone does not cover that
+# case, so the check is done in Python against sys.prefix/realpath.
 runtime_health_check() {
   local py="$1" expected="${2:-}" output selected_prefix
   selected_prefix="$(cd "$(dirname "$py")/.." 2>/dev/null && pwd -P)" || return 1
@@ -1247,97 +1375,319 @@ PY
   printf '%s\n' "$output"
 }
 
-# Editable development installs intentionally import from the declared kernel
-# checkout rather than from site-packages. Their postcondition therefore binds
-# sys.prefix to the selected venv and both LingTai modules to that exact physical
-# checkout, instead of weakening the normal provenance check to mere importability.
-dev_runtime_health_check() {
-  local py="$1" venv_dir="$2" kernel_root="$3" selected_prefix selected_kernel output
-  selected_prefix="$(cd "$venv_dir" 2>/dev/null && pwd -P)" || return 1
-  selected_kernel="$(cd "$kernel_root" 2>/dev/null && pwd -P)" || return 1
-  output="$(PYTHONPATH= "$py" - "$selected_prefix" "$selected_kernel" <<'PY'
-import importlib
-import os
-import sys
-
-selected_prefix = os.path.realpath(sys.argv[1])
-selected_kernel = os.path.realpath(sys.argv[2])
-if os.path.realpath(sys.prefix) != selected_prefix:
-    raise SystemExit(1)
-module = importlib.import_module("lingtai")
-kernel = importlib.import_module("lingtai.kernel")
-version = str(getattr(module, "__version__", ""))
-if not version:
-    raise SystemExit(1)
-for mod in (module, kernel):
-    mod_path = os.path.realpath(getattr(mod, "__file__", "") or "")
-    if not mod_path or not (mod_path == selected_kernel or mod_path.startswith(selected_kernel + os.sep)):
-        raise SystemExit(1)
-print(f"{version}\t{module.__file__}")
-PY
-  )" || return 1
-  [[ "$output" == *$'\t'* ]] || return 1
-  printf '%s\n' "$output"
-}
-
+# ensure_runtime_venv creates or updates ~/.lingtai-tui/runtime/venv and
+# installs the `lingtai` package into it from the pinned release-bundle
+# kernel artifact, by explicit local file path — LingTai itself is NEVER
+# requested from a package index by name (only third-party dependencies
+# resolve via the configured index; see install_kernel_from_bundle). This is
+# mirrored by the TUI's own EnsureVenv logic (uv venv --python 3.13 if uv
+# exists, else python3 -m venv; verify import; stamp env marker; symlink
+# lingtai-agent).
+#
+# Ordinary (non---update) install refuses to silently reuse an existing
+# runtime venv at all — healthy or broken — pointing to fix.sh instead: see
+# the guard immediately below, which runs before canonical's own
+# repair-loop. That existing loop's own venv-repair-$$-N recreation covers a
+# DIFFERENT case (a transient failure discovered DURING this run's own venv
+# creation/kernel-install attempt), not an already-occupied runtime from a
+# prior run.
+#
+# On the default release-asset one-command path (BUNDLE_REQUIRED=1), a
+# resolved bundle + a successful kernel-artifact install are MANDATORY: any
+# failure (no bundle manifest, incoherent manifest, no compatible wheel/sdist,
+# checksum mismatch, install failure) is a fail-loud error, not a fallback.
+# On a --ref source build (BUNDLE_REQUIRED=0), no bundle is expected to
+# exist at all for an arbitrary ref, so this function fails loud with a
+# distinct "pass --skip-python" message instead of silently reaching for
+# PyPI. --skip-python (alias --skip-venv) is the only way to skip the Python
+# runtime entirely; venv creation/repair problems below remain best-effort
+# (they warn and defer to the TUI's own venv repair) since those are
+# genuinely transient environment issues, not a LingTai-source violation.
 ensure_runtime_venv() {
-  local bin_dir="$1" venv_dir="${RUNTIME_VENV_DIR:-$HOME/.lingtai-tui/runtime/venv}"
-  local runtime_root="$HOME/.lingtai-tui/runtime" uv py install_kernel_tag runtime_state
-  [[ "$SKIP_VENV" == "1" ]] && { note "Skipping Python runtime venv (--skip-python)."; return 0; }
-  canonical_runtime_venv "$venv_dir" "$runtime_root" >/dev/null || {
-    echo "error: selected runtime venv is not a canonical child of the owned runtime root: $venv_dir" >&2
-    echo "       Use the explicit repair asset for an existing or redirected runtime." >&2
-    return 1
-  }
-  [[ ! -L "$runtime_root" ]] || { echo "error: runtime root is a symlink: $runtime_root" >&2; return 1; }
-  mkdir -p "$runtime_root" || { echo "error: could not create the owned runtime root: $runtime_root" >&2; return 1; }
-  install_kernel_tag="$(kernel_tag_for_install || true)"
-  if [[ -z "$install_kernel_tag" ]]; then
-    echo "error: no exact pinned kernel release could be resolved; refusing an unpinned runtime." >&2
-    return 1
+  local bin_dir="$1"
+  local venv_dir="$HOME/.lingtai-tui/runtime/venv"
+  local uv py repair_attempt
+
+  if [[ "$SKIP_VENV" == "1" ]]; then
+    note "Skipping Python runtime venv (--skip-python)."
+    return 0
   fi
-  ensure_python || { echo "error: Python 3.11+ with venv support is required for the runtime." >&2; return 1; }
-  runtime_state="$(runtime_venv_state "$venv_dir")"
-  if [[ "$runtime_state" != missing ]]; then
-    echo "error: existing runtime at $venv_dir is $runtime_state; ordinary install will not adopt or repair it." >&2
-    echo "       Review https://lingtai.ai/help/reference/installation/assets/fix.sh" >&2
-    return 1
+
+  if [[ "$LATEST_MAIN_MODE" != "1" && -z "$BUNDLE_MANIFEST_JSON" ]]; then
+    if [[ "$BUNDLE_REQUIRED" == "1" ]]; then
+      echo "error: no pinned kernel release bundle could be resolved for this install." >&2
+      echo "       Tried provider(s): $BUNDLE_PROVIDER (with same-tag fallback to the other provider)." >&2
+      echo "       LingTai's Python runtime is installed only from a verified pinned release" >&2
+      echo "       artifact, never from PyPI/an index by package name — so this is a hard stop," >&2
+      echo "       not a silent fallback." >&2
+      echo "       Options:" >&2
+      echo "         - Retry (the bundle manifest may not be published yet for this exact release)." >&2
+      echo "         - Pass --version <tag> for a release known to have a bundle manifest." >&2
+      echo "         - Pass --skip-python to install the TUI/portal binaries only, then set up the" >&2
+      echo "           Python runtime yourself (e.g. from an editable lingtai-kernel checkout)." >&2
+      return 1
+    else
+      echo "error: --ref/source-ref builds have no pinned kernel release bundle to install from." >&2
+      echo "       LingTai's Python runtime is installed only from a verified pinned release" >&2
+      echo "       artifact, never from PyPI/an index by package name, so this build cannot" >&2
+      echo "       provision the Python runtime automatically." >&2
+      echo "       Pass --skip-python to install the TUI/portal binaries only, then set up the" >&2
+      echo "       Python runtime yourself — for example an editable install against a local" >&2
+      echo "       lingtai-kernel checkout (see RELEASING.md / CLAUDE.md \"Agent venv\")." >&2
+      return 1
+    fi
   fi
-  uv="$(find_uv 2>/dev/null || true)"
-  if [[ -n "$uv" ]]; then
-    # uv venvs are unseeded by default, but every supported successor and the
-    # runtime health contract require pip inside the selected owned venv.
-    "$uv" venv --seed --python 3.13 "$venv_dir" || return 1
-  elif python_ok; then
-    python3 -m venv "$venv_dir" || return 1
-  else
-    echo "error: cannot create runtime venv without uv or Python 3.11+ venv support." >&2
-    return 1
+
+  if [[ "$UPDATE_MODE" != "1" && "$LATEST_MAIN_MODE" != "1" ]]; then
+    local runtime_root="$HOME/.lingtai-tui/runtime" existing_state
+    if ! canonical_runtime_venv "$venv_dir" "$runtime_root" >/dev/null; then
+      echo "error: selected runtime venv is not a canonical child of the owned runtime root: $venv_dir" >&2
+      echo "       Refusing to adopt or create a venv outside the root this installer owns." >&2
+      return 1
+    fi
+    if [[ -L "$runtime_root" ]]; then
+      echo "error: runtime root is a symlink: $runtime_root" >&2
+      return 1
+    fi
+    existing_state="$(runtime_venv_state "$venv_dir")"
+    if [[ "$existing_state" != "missing" ]]; then
+      echo "error: existing runtime at $venv_dir is $existing_state; ordinary install will not adopt or repair it." >&2
+      echo "       Use the standalone fix.sh to repair an existing installation, or update.sh to update one." >&2
+      return 1
+    fi
   fi
-  py="$(runtime_python_for_venv "$venv_dir")"
-  [[ -n "$py" ]] || { echo "error: runtime interpreter not found at $venv_dir." >&2; return 1; }
-  runtime_prefix_matches_venv "$py" "$venv_dir" || { echo "error: runtime interpreter prefix does not match selected venv." >&2; return 1; }
-  ensure_runtime_pip "$py" "$venv_dir" "$uv" || {
-    echo "error: selected new runtime has no usable pip after bounded self-healing." >&2
-    echo "       partial runtime retained for diagnosis: $venv_dir" >&2
-    return 1
-  }
-  install_kernel_from_bundle "$py" "$uv" || {
-    echo "error: pinned kernel artifact could not be installed; no package-name fallback is allowed." >&2
-    return 1
-  }
-  runtime_health_check "$py" "$KERNEL_VERSION_INSTALLED" >/dev/null || {
-    echo "error: final runtime import/version/provenance postcondition failed." >&2
-    return 1
-  }
+
+  say "Setting up Python runtime venv at $venv_dir ..."
+  if ! ensure_python; then
+    if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+      echo "error: --latest requires Python prerequisites to provision kernel main; refusing a partial install." >&2
+      return 1
+    fi
+    warn "Skipping Python runtime venv — Python prerequisites are missing."
+    warn "Re-run install after installing Python, or the TUI will create the venv on first launch."
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$venv_dir")"
+  repair_attempt=0
+
+  while true; do
+    uv="$(find_uv 2>/dev/null || true)"
+    py=""
+    if [[ -x "$venv_dir/bin/python" ]]; then
+      py="$venv_dir/bin/python"
+    elif [[ -x "$venv_dir/bin/python3" ]]; then
+      py="$venv_dir/bin/python3"
+    fi
+
+    local recreate_reason=""
+    if [[ -d "$venv_dir" && -z "$py" ]]; then
+      recreate_reason="runtime venv Python is missing"
+    elif [[ -n "$py" ]] && ! "$py" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; then
+      recreate_reason="runtime venv Python is older than 3.11"
+    fi
+
+    if [[ -n "$recreate_reason" ]]; then
+      if [[ "$repair_attempt" != "0" ]]; then
+        if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+          echo "error: $recreate_reason after recreate; --latest cannot leave the kernel runtime unprovisioned." >&2
+          return 1
+        fi
+        warn "$recreate_reason after recreate; leaving runtime venv repair to the TUI."
+        return 0
+      fi
+      warn "$recreate_reason; retaining it and provisioning a new runtime venv path."
+      venv_dir="$HOME/.lingtai-tui/runtime/venv-repair-$$-1"
+      repair_attempt=1
+      py=""
+    fi
+
+    if [[ -z "$py" ]]; then
+      if [[ -n "$uv" ]]; then
+        if ! "$uv" venv --python 3.13 "$venv_dir"; then
+          if python_ok; then
+            warn "uv venv failed; falling back to python3 -m venv"
+            uv=""
+          else
+            if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+              echo "error: uv could not create the kernel-main runtime venv and no supported Python fallback is available." >&2
+              return 1
+            fi
+            warn "uv venv failed and no Python 3.11+ with venv/ensurepip is available; skipping runtime setup."
+            warn "Install uv or Python with venv/ensurepip support, then re-run the installer."
+            return 0
+          fi
+        fi
+      fi
+      if [[ ! -x "$venv_dir/bin/python" && ! -x "$venv_dir/bin/python3" && -z "$uv" ]]; then
+        if python_ok; then
+          if ! python3 -m venv "$venv_dir"; then
+            if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+              echo "error: failed to create the kernel-main runtime venv." >&2
+              return 1
+            fi
+            warn "failed to create venv"
+            return 0
+          fi
+        else
+          if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+            echo "error: no supported Python/uv runtime is available for kernel main." >&2
+            return 1
+          fi
+          warn "Cannot create runtime venv: uv is unavailable and no Python 3.11+ with venv/ensurepip is available."
+          warn "Install uv or Python with venv/ensurepip support, then re-run the installer."
+          return 0
+        fi
+      fi
+      if [[ -x "$venv_dir/bin/python" ]]; then
+        py="$venv_dir/bin/python"
+      elif [[ -x "$venv_dir/bin/python3" ]]; then
+        py="$venv_dir/bin/python3"
+      else
+        if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+          echo "error: kernel-main runtime venv has no Python interpreter at $venv_dir." >&2
+          return 1
+        fi
+        warn "venv python not found at $venv_dir; skipping runtime setup."
+        return 0
+      fi
+      # Re-check Python version after creating/recreating the venv.
+      continue
+    fi
+
+    if ! ensure_runtime_pip "$py" "$venv_dir" "$uv"; then
+      if [[ "$repair_attempt" == "0" ]]; then
+        warn "runtime venv pip is missing and could not be self-healed; retaining it and provisioning a new runtime venv path."
+        venv_dir="$HOME/.lingtai-tui/runtime/venv-repair-$$-1"
+        repair_attempt=1
+        continue
+      fi
+      if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+        echo "error: kernel-main runtime venv has no pip/uv installer after recreate." >&2
+        return 1
+      fi
+      warn "runtime venv pip is missing after recreate; TUI will repair it on first launch."
+      return 0
+    fi
+
+    local install_ok=0
+    # The pinned release-bundle kernel artifact is the ONLY LingTai install
+    # source (guaranteed present at this point — see the BUNDLE_MANIFEST_JSON
+    # guard above). Any failure here (incoherent manifest, no compatible
+    # wheel/sdist, checksum mismatch, install command failure) is retried
+    # once after a venv recreate (a legitimate transient-environment repair,
+    # the same pattern every other step in this loop uses), then FAILS LOUD —
+    # it never falls back to `pip install lingtai` from an index.
+    if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+      if install_kernel_from_main "$py" "$uv"; then
+        install_ok=1
+      fi
+    elif install_kernel_from_bundle "$py" "$uv"; then
+      install_ok=1
+    fi
+    if [[ "$install_ok" != "1" ]]; then
+      if [[ "$repair_attempt" == "0" ]]; then
+        warn "failed to install the pinned kernel bundle artifact; retaining the venv and provisioning a new runtime venv path."
+        venv_dir="$HOME/.lingtai-tui/runtime/venv-repair-$$-1"
+        repair_attempt=1
+        continue
+      fi
+      if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+        echo "error: failed to install kernel main commit $KERNEL_MAIN_SHA into the runtime venv after recreate." >&2
+      else
+        echo "error: failed to install the pinned kernel bundle artifact into the runtime venv after recreate." >&2
+        echo "       bundle: $(bundle_manifest_field bundle_id 2>/dev/null || echo "?") kernel: $(bundle_manifest_field kernel_tag 2>/dev/null || echo "?") via $KERNEL_MANIFEST_PROVIDER" >&2
+      fi
+      echo "       LingTai's Python runtime is never installed from PyPI/an index by package name," >&2
+      if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+        echo "       so this is a hard stop rather than a silent fallback. Re-run --latest after fixing the error above." >&2
+      else
+        echo "       so this is a hard stop rather than a silent fallback. Re-run the installer, or" >&2
+        echo "       pass --skip-python to install the TUI/portal binaries only." >&2
+      fi
+      return 1
+    fi
+
+    # Postcondition: version + BOTH modules' __file__ must resolve physically
+    # inside this exact venv's prefix — not merely importable — so a
+    # same-version package reachable through an external .pth entry or system
+    # site-packages can never be mistaken for a healthy owned install.
+    if ! runtime_health_check "$py" "$KERNEL_VERSION_INSTALLED" >/dev/null; then
+      if [[ "$repair_attempt" == "0" ]]; then
+        warn "runtime venv failed import/provenance check; retaining it and provisioning a new runtime venv path."
+        venv_dir="$HOME/.lingtai-tui/runtime/venv-repair-$$-1"
+        repair_attempt=1
+        continue
+      fi
+      if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+        echo "error: kernel main import/provenance check failed after reinstall; refusing a partial --latest install." >&2
+        return 1
+      fi
+      warn "runtime venv is still unhealthy after reinstall; TUI will repair it on first launch."
+      return 0
+    fi
+    break
+  done
+
   RUNTIME_VENV_DIR="$venv_dir"
+
+  # Stamp the env marker (best-effort — older kernels may lack the subcommand).
   "$py" -m lingtai.venv_resolve env-marker stamp --venv "$venv_dir" >/dev/null 2>&1 || true
+
+  # Symlink lingtai-agent into the chosen bin dir (best-effort).
   if [[ -x "$venv_dir/bin/lingtai-agent" ]]; then
-    ln -sfn "$venv_dir/bin/lingtai-agent" "$bin_dir/lingtai-agent" 2>/dev/null || warn "could not symlink lingtai-agent into $bin_dir"
+    ln -sfn "$venv_dir/bin/lingtai-agent" "$bin_dir/lingtai-agent" 2>/dev/null \
+      || warn "could not symlink lingtai-agent into $bin_dir"
   fi
+  return 0
 }
 
 
+# --- kernel bundle artifact install (schema lingtai.kernel.release/v1) ------
+#
+# Installs the Python `lingtai` runtime from the release-pinned kernel
+# artifact named in the TUI bundle manifest, by explicit local file path —
+# never `pip install lingtai` against any package index. One package index
+# (python_dependency_index_url: an explicit non-empty LINGTAI_PYPI_INDEX_URL,
+# else the final bundle provider's selected default) is used ONLY to resolve
+# lingtai's own third-party dependencies during that local-path install;
+# lingtai itself is never requested from an index.
+
+# kernel_manifest_url_for_provider echoes the kernel release manifest asset
+# URL on the given provider/tag, or nothing if unavailable.
+kernel_manifest_url_for_provider() {
+  local provider="$1" tag="$2" body
+  case "$provider" in
+    github)
+      command -v curl &>/dev/null || return 1
+      body="$(curl -fsSL --max-time 15 "${KERNEL_GH_API_BASE}/releases/tags/$tag" 2>/dev/null || true)"
+      [[ -n "$body" ]] || return 1
+      if printf '%s' "$body" | grep -q '"name"[[:space:]]*:[[:space:]]*"lingtai-kernel-release-manifest.json"'; then
+        printf 'https://github.com/Lingtai-AI/lingtai-kernel/releases/download/%s/lingtai-kernel-release-manifest.json' "$tag"
+      else
+        return 1
+      fi
+      ;;
+    gitee)
+      local saved_api="$GITEE_API_BASE"
+      GITEE_API_BASE="$GITEE_KERNEL_API_BASE"
+      local url
+      url="$(gitee_release_asset_url "$tag" "lingtai-kernel-release-manifest.json" || true)"
+      GITEE_API_BASE="$saved_api"
+      [[ -n "$url" ]] || return 1
+      printf '%s' "$url"
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+# update_validate_manifest strictly validates a kernel release manifest
+# (schema lingtai.kernel.release/v1): every required top-level key present
+# and no others, exact schema/tag/version match, and every artifact's shape,
+# digest, and (for wheels) filename/tag self-consistency — this replaces a
+# substring schema check that could be satisfied by any JSON containing that
+# string anywhere, including in an unrelated field, with a real parser that
+# rejects duplicate keys, wrong shapes, and mismatched artifact metadata.
 update_validate_manifest() {
   local py="$1" manifest_file="$2" expected_tag="$3"
   "$py" - "$manifest_file" "$expected_tag" <<'PY'
@@ -1414,88 +1764,49 @@ print(json.dumps(data, sort_keys=True, separators=(",", ":")))
 PY
 }
 
-# --- kernel release artifact install (schema lingtai.kernel.release/v1) ------
-#
-# Installs the Python `lingtai` runtime from the existing verified kernel
-# release-manifest/artifact machinery. The tag comes from the bundle manifest
-# first, or from the exact TUI release pin when that bundle is source-only. The
-# artifact is always installed by explicit local file path — never `pip install
-# lingtai` against any package index. The configured package index
-# (LINGTAI_PYPI_INDEX_URL, default pypi.org) is used ONLY to resolve lingtai's
-# own third-party dependencies during that local-path install.
-
-# kernel_manifest_url_for_provider echoes the kernel release manifest asset
-# URL on the given provider/tag, or nothing if unavailable.
-kernel_manifest_url_for_provider() {
-  local provider="$1" tag="$2" body
-  case "$provider" in
-    github)
-      command -v curl &>/dev/null || return 1
-      body="$(curl -fsSL --max-time 15 "${KERNEL_GH_API_BASE}/releases/tags/$tag" 2>/dev/null || true)"
-      [[ -n "$body" ]] || return 1
-      if printf '%s' "$body" | grep -q '"name"[[:space:]]*:[[:space:]]*"lingtai-kernel-release-manifest.json"'; then
-        printf 'https://github.com/Lingtai-AI/lingtai-kernel/releases/download/%s/lingtai-kernel-release-manifest.json' "$tag"
-      else
-        return 1
-      fi
-      ;;
-    gitee)
-      local saved_api="$GITEE_API_BASE"
-      GITEE_API_BASE="$GITEE_KERNEL_API_BASE"
-      local url
-      url="$(gitee_release_asset_url "$tag" "lingtai-kernel-release-manifest.json" || true)"
-      GITEE_API_BASE="$saved_api"
-      [[ -n "$url" ]] || return 1
-      printf '%s' "$url"
-      ;;
-    *) return 1 ;;
-  esac
-}
-
-# fetch_kernel_manifest resolves the selected kernel tag/manifest for the
-# CURRENT BUNDLE_PROVIDER + the bundle's or release pin's kernel_tag. Falls back
-# to the other provider for the SAME kernel tag only (same-release fallback).
-# Populates KERNEL_MANIFEST_JSON and KERNEL_MANIFEST_PROVIDER in this shell;
-# returns nonzero if unavailable on either provider.
+# fetch_kernel_manifest resolves the pinned kernel tag/manifest for the
+# CURRENT BUNDLE_PROVIDER + the bundle's or release pin's kernel_tag. Falls
+# back to the other provider for the SAME kernel tag only (same-tag-fallback
+# contract). Populates KERNEL_MANIFEST_JSON and KERNEL_MANIFEST_PROVIDER in
+# this shell; returns nonzero if unavailable (or invalid) on either provider.
+# The optional second argument is the python3/uv-managed interpreter used for
+# strict manifest validation; a caller with no interpreter yet (before the
+# runtime venv exists) may omit it to fall back to any system python3.
 fetch_kernel_manifest() {
-  local kernel_tag="$1" provider="$BUNDLE_PROVIDER" url body other candidate
+  local kernel_tag="$1" provider="$BUNDLE_PROVIDER" url body other
   local validator="${2:-$(command -v python3 || true)}" manifest_file
   KERNEL_MANIFEST_PROVIDER=""
   KERNEL_MANIFEST_JSON=""
 
-  other="github"
-  [[ "$provider" == "github" ]] && other="gitee"
-  for candidate in "$provider" "$other"; do
-    url="$(kernel_manifest_url_for_provider "$candidate" "$kernel_tag" || true)"
-    if [[ -z "$url" ]]; then
-      if [[ "$candidate" == "$provider" ]]; then
-        # Keep fallback diagnostics on stderr; stdout remains reserved for normal
-        # installer output while the manifest is returned through explicit state.
-        echo "    $provider has no kernel manifest for $kernel_tag; trying $other for the SAME kernel tag." >&2
-      fi
-      continue
-    fi
+  url="$(kernel_manifest_url_for_provider "$provider" "$kernel_tag" || true)"
+  if [[ -z "$url" ]]; then
+    other="github"
+    [[ "$provider" == "github" ]] && other="gitee"
+    # Keep fallback diagnostics on stderr; stdout remains reserved for normal
+    # installer output while the manifest is returned through explicit state.
+    echo "    $provider has no kernel manifest for $kernel_tag; trying $other for the SAME kernel tag." >&2
+    url="$(kernel_manifest_url_for_provider "$other" "$kernel_tag" || true)"
+    [[ -n "$url" ]] || return 1
+    provider="$other"
+  fi
 
-    body="$(curl -fsSL --max-time 30 "$url" 2>/dev/null || true)"
-    [[ -n "$body" ]] || continue
-    if [[ -z "$validator" ]]; then
-      echo "error: Python is required to validate the kernel release manifest at $url" >&2
-      continue
-    fi
-    manifest_file="$(mktemp "${TMPDIR:-/tmp}/lingtai-kernel-manifest-validate.XXXXXX")"
-    printf '%s' "$body" > "$manifest_file"
-    if ! update_validate_manifest "$validator" "$manifest_file" "$kernel_tag" >/dev/null 2>&1; then
-      rm -f "$manifest_file"
-      echo "error: kernel manifest at $url failed strict validation" >&2
-      continue
-    fi
+  body="$(curl -fsSL --max-time 30 "$url" 2>/dev/null || true)"
+  [[ -n "$body" ]] || return 1
+  [[ -n "$validator" ]] || {
+    echo "error: Python is required to validate the kernel release manifest at $url" >&2
+    return 1
+  }
+  manifest_file="$(mktemp "${TMPDIR:-/tmp}/lingtai-kernel-manifest-validate.XXXXXX")"
+  printf '%s' "$body" > "$manifest_file"
+  if ! update_validate_manifest "$validator" "$manifest_file" "$kernel_tag" >/dev/null 2>&1; then
     rm -f "$manifest_file"
+    echo "error: kernel manifest at $url failed strict validation" >&2
+    return 1
+  fi
+  rm -f "$manifest_file"
 
-    KERNEL_MANIFEST_PROVIDER="$candidate"
-    KERNEL_MANIFEST_JSON="$body"
-    return 0
-  done
-  return 1
+  KERNEL_MANIFEST_PROVIDER="$provider"
+  KERNEL_MANIFEST_JSON="$body"
 }
 
 # python_platform_tags asks the venv's own Python for compatible wheel tags,
@@ -1585,7 +1896,7 @@ select_kernel_wheel() {
     # Manifest is passed by FILE PATH (not stdin) so this command can't
     # collide with a heredoc's stdin takeover.
     local hit
-    hit="$("$py" - "$manifest_file" "$combo" <<'PY'
+    hit="$(python3 - "$manifest_file" "$combo" <<'PY'
 import json, sys
 data = json.loads(open(sys.argv[1]).read())
 combo = sys.argv[2]
@@ -1608,10 +1919,10 @@ PY
 # kernel_sdist_fallback echoes "<filename> <sha256>" for the manifest's
 # declared sdist_fallback artifact.
 kernel_sdist_fallback() {
-  local manifest_json="$1" py="$2" manifest_file
+  local manifest_json="$1" manifest_file
   manifest_file="$(mktemp "${TMPDIR:-/tmp}/lingtai-kernel-manifest.XXXXXX")"
   printf '%s' "$manifest_json" > "$manifest_file"
-  "$py" - "$manifest_file" <<'PY'
+  python3 - "$manifest_file" <<'PY'
 import json, sys
 data = json.loads(open(sys.argv[1]).read())
 name = data.get("sdist_fallback", "")
@@ -1641,15 +1952,16 @@ kernel_artifact_download_url() {
 }
 
 # install_kernel_from_bundle installs the Python `lingtai` runtime from the
-# bundle's or exact release pin's kernel release, by explicit local file path —
-# this is the ONLY way this script installs LingTai; it is never requested from
-# a package index by name. Sets KERNEL_SOURCE,
-# KERNEL_BUNDLE_ID/KERNEL_RELEASE_TAG/KERNEL_VERSION_INSTALLED/KERNEL_PROVIDER
-# on success. Returns nonzero (installs nothing, KERNEL_SOURCE left untouched)
-# on any failure (missing/incoherent kernel manifest, no compatible
-# wheel/sdist, checksum mismatch, install command failure) — the caller
-# (ensure_runtime_venv) treats that as a fail-loud install error, not a
-# signal to try any other source.
+# bundle's or exact release pin's kernel release, by explicit local file path
+# — this is the ONLY way this script installs LingTai; it is never requested
+# from a package index by name. Sets KERNEL_SOURCE
+# ("bundle"|"release-pin")/KERNEL_BUNDLE_ID/KERNEL_RELEASE_TAG/
+# KERNEL_VERSION_INSTALLED/KERNEL_PROVIDER on success. Returns nonzero
+# (installs nothing, KERNEL_SOURCE left untouched) on any failure
+# (missing/incoherent kernel manifest, no compatible wheel/sdist, checksum
+# mismatch, install command failure) — the caller (ensure_runtime_venv)
+# treats that as a fail-loud install error, not a signal to try any other
+# source.
 install_kernel_from_bundle() {
   local py="$1" uv="$2"
 
@@ -1672,7 +1984,7 @@ install_kernel_from_bundle() {
   artifact_line="$(select_kernel_wheel "$kernel_manifest" "$py" || true)"
   if [[ -z "$artifact_line" ]]; then
     note "No platform wheel in kernel release $kernel_tag matches this Python; using the sdist fallback (extra build toolchain may be required)."
-    artifact_line="$(kernel_sdist_fallback "$kernel_manifest" "$py" || true)"
+    artifact_line="$(kernel_sdist_fallback "$kernel_manifest" || true)"
   fi
   [[ -n "$artifact_line" ]] || return 1
   fname="${artifact_line%% *}"
@@ -1695,11 +2007,13 @@ install_kernel_from_bundle() {
   fi
   note "Verified SHA256 for $fname."
 
-  index_url="${LINGTAI_PYPI_INDEX_URL:-https://pypi.org/simple}"
+  index_url="$(python_dependency_index_url)"
   say "Installing lingtai from local artifact (dependencies resolved via $index_url) ..."
   # Explicit local path: pip/uv never requests the package name "lingtai"
   # from any index here — only third-party dependency resolution uses
   # --index-url. This is the "no pip install lingtai from index" guarantee.
+  # One quoted `--index-url "$index_url"` pair and no --extra-index-url, so
+  # dependency resolution consults exactly one index.
   if [[ -n "$uv" ]]; then
     "$uv" pip install --index-url "$index_url" -p "$(dirname "$(dirname "$py")")" "$dest" || return 1
   else
@@ -1722,23 +2036,94 @@ install_kernel_from_bundle() {
   return 0
 }
 
-# --- install flows# --- install flows -----------------------------------------------------------
+# install_kernel_from_main installs the checked-out kernel main source tree by
+# local path. Dependencies may use the configured index, but the LingTai source
+# itself is never looked up by package name and never falls back to PyPI.
+install_kernel_from_main() {
+  local py="$1" uv="$2" index_url="${LINGTAI_PYPI_INDEX_URL:-https://pypi.org/simple}"
+  [[ -n "$KERNEL_SOURCE_DIR" && -d "$KERNEL_SOURCE_DIR" ]] || return 1
+  [[ "$KERNEL_MAIN_SHA" =~ ^[0-9a-f]{40}$ ]] || return 1
+  [[ "$(git -C "$KERNEL_SOURCE_DIR" rev-parse HEAD 2>/dev/null || true)" == "$KERNEL_MAIN_SHA" ]] || {
+    echo "error: kernel source checkout no longer matches resolved main commit $KERNEL_MAIN_SHA" >&2
+    return 1
+  }
+  say "Installing lingtai from kernel main source ($KERNEL_MAIN_SHA; dependencies via $index_url) ..."
+  if [[ -n "$uv" ]]; then
+    "$uv" pip install --index-url "$index_url" -p "$(dirname "$(dirname "$py")")" "$KERNEL_SOURCE_DIR" || return 1
+  else
+    "$py" -m pip install --index-url "$index_url" "$KERNEL_SOURCE_DIR" || return 1
+  fi
+  "$py" -c 'import lingtai; print("lingtai", getattr(lingtai, "__version__", "?"))' || return 1
+  KERNEL_SOURCE="main"
+  KERNEL_VERSION_INSTALLED="$("$py" -c 'import lingtai; print(getattr(lingtai, "__version__", "?"))' 2>/dev/null || true)"
+  KERNEL_PROVIDER="github"
+  return 0
+}
 
-# resolve_bin_dir picks the first-install binary directory honoring --bin-dir/--prefix.
-# Prefers user-writable locations; never prefers Homebrew.
+# --- install flows -----------------------------------------------------------
+
+# resolve_bin_dir picks the install bin directory honoring --bin-dir/--prefix
+# and, for --update, the existing prefix. Prefers user-writable locations; never
+# prefers Homebrew.
 resolve_bin_dir() {
+  if [[ "$UPDATE_MODE" == "1" ]]; then
+    BIN_DIR="$(bin_dir_for_prefix "$INSTALL_PREFIX")"
+    if [[ ! -d "$BIN_DIR" ]]; then
+      echo "error: update target bin dir does not exist: $BIN_DIR" >&2
+      exit 1
+    fi
+    return
+  fi
   if [[ -n "$BIN_DIR_OVERRIDE" ]]; then
     BIN_DIR="$BIN_DIR_OVERRIDE"
   elif [[ -n "$INSTALL_PREFIX" ]]; then
     BIN_DIR="$(bin_dir_for_prefix "$INSTALL_PREFIX")"
-  elif [[ -n "${DISCOVERED_BIN_DIR:-}" ]]; then
-    BIN_DIR="$DISCOVERED_BIN_DIR"
   elif [[ -w /usr/local/bin ]]; then
     BIN_DIR="/usr/local/bin"
   else
     BIN_DIR="$HOME/.local/bin"
   fi
   mkdir -p "$BIN_DIR"
+}
+
+# validate_install_target refuses ordinary (non---update) install over an
+# existing managed binary at the selected bin dir — ordinary install is
+# first-install-only; adopting or overwriting an existing target requires an
+# explicit standalone maintenance asset (update.sh/fix.sh) instead.
+validate_install_target() {
+  [[ "$BIN_DIR" == /* && "$BIN_DIR" != *$'\n'* && "$BIN_DIR" != *$'\t'* && "$BIN_DIR" != */../* && "$BIN_DIR" != */./* ]] || {
+    echo "error: install target is not an exact absolute directory: $BIN_DIR" >&2; return 1;
+  }
+  [[ ! -L "$BIN_DIR" ]] || { echo "error: install target is a symlink: $BIN_DIR" >&2; return 1; }
+  local managed
+  for managed in lingtai-tui lingtai-portal lingtai lingtai-agent; do
+    if [[ -e "$BIN_DIR/$managed" || -L "$BIN_DIR/$managed" ]]; then
+      echo "error: existing managed target $BIN_DIR/$managed was found; ordinary install will not adopt or overwrite it." >&2
+      echo "       Use the standalone fix.sh to repair an existing installation, or update.sh to update one." >&2
+      return 1
+    fi
+  done
+}
+
+# validate_fresh_install_state refuses ordinary install over an existing
+# install receipt or runtime root — checked before any target creation,
+# release resolution, download, or binary/runtime mutation, so a different
+# empty --bin-dir cannot turn ordinary install into silent adoption of
+# pre-existing state elsewhere under $HOME/.lingtai-tui.
+validate_fresh_install_state() {
+  local state_root="$HOME/.lingtai-tui"
+  local metadata="$state_root/install.json"
+  local runtime_root="$state_root/runtime"
+  if [[ -e "$metadata" || -L "$metadata" ]]; then
+    echo "error: existing install receipt $metadata was found; ordinary install is first-install-only." >&2
+    echo "       Use the standalone update.sh, fix.sh, or verify.sh for an existing installation." >&2
+    return 1
+  fi
+  if [[ -e "$runtime_root" || -L "$runtime_root" ]]; then
+    echo "error: existing runtime state $runtime_root was found; ordinary install will not adopt or repair it." >&2
+    echo "       Use the standalone fix.sh to repair an existing installation." >&2
+    return 1
+  fi
 }
 
 # try_release_asset attempts to install prebuilt binaries for the tag. Returns 0
@@ -1849,64 +2234,141 @@ try_release_asset() {
   return 0
 }
 
-# build_from_source downloads the exact official release source tarball and
+# build_from_source clones REF (or the release source tarball for a tag) and
 # builds both binaries. Installs to BIN_DIR. Sets VERSION/RESOLVED_*/PORTAL_PATH.
 build_from_source() {
   local ref="$1" requested_tag source_tarball
+
   requested_tag="$(release_tag_name "$ref")"
-  [[ -n "$requested_tag" ]] || {
-    echo "error: source fallback requires an exact official vX.Y.Z release tag" >&2
-    return 1
-  }
   mkdir -p "$(dirname "$BUILD_DIR")"
   rm -rf "$BUILD_DIR"
 
-  # --from-source is still an official-release fallback, never an arbitrary
-  # checkout workflow. Development refs are handed to assets/dev.sh.
-  ensure_build_deps 1
-  command -v curl &>/dev/null || { echo "error: curl is required to download the release source tarball" >&2; return 1; }
-  command -v tar &>/dev/null || { echo "error: tar is required to extract the release source tarball" >&2; return 1; }
-  say "Downloading lingtai release source ($requested_tag) ..."
-  source_tarball="$TMPDIR/lingtai-$requested_tag-src-$$.tar.gz"
-  curl -fsSL --max-time 120 -o "$source_tarball" \
-    "https://github.com/${REPO_SLUG}/archive/refs/tags/${requested_tag}.tar.gz"
-  mkdir -p "$BUILD_DIR"
-  tar -xzf "$source_tarball" -C "$BUILD_DIR" --strip-components 1
-  rm -f "$source_tarball"
-  VERSION="$requested_tag"
-  RESOLVED_REF="$requested_tag"
-  RESOLVED_COMMIT="$(git ls-remote --tags "$REPO" "refs/tags/$requested_tag" 2>/dev/null | awk '{print $1}' | head -1 || true)"
+  if [[ -n "$requested_tag" ]]; then
+    # Release installs must stay GitHub-Release based even when no prebuilt
+    # asset exists. Use the release source tarball instead of cloning raw main.
+    ensure_build_deps 0
+    command -v curl &>/dev/null || { echo "error: curl is required to download the release source tarball" >&2; exit 1; }
+    command -v tar &>/dev/null || { echo "error: tar is required to extract the release source tarball" >&2; exit 1; }
+    say "Downloading lingtai release source ($requested_tag) ..."
+    source_tarball="$TMPDIR/lingtai-$requested_tag-src-$$.tar.gz"
+    curl -fsSL --max-time 120 \
+      -o "$source_tarball" \
+      "https://github.com/${REPO_SLUG}/archive/refs/tags/${requested_tag}.tar.gz"
+    mkdir -p "$BUILD_DIR"
+    tar -xzf "$source_tarball" -C "$BUILD_DIR" --strip-components 1
+    rm -f "$source_tarball"
+    VERSION="$requested_tag"
+    RESOLVED_REF="$requested_tag"
+    RESOLVED_COMMIT="$(git ls-remote --tags "$REPO" "refs/tags/$requested_tag" 2>/dev/null | awk '{print $1}' | head -1 || true)"
+  else
+    ensure_build_deps 1
+    say "Cloning lingtai ($ref) ..."
+    if ! git clone --depth 1 --branch "$ref" "$REPO" "$BUILD_DIR" 2>/dev/null; then
+      # --branch only resolves branches and tags; fall back to a default clone
+      # plus an explicit fetch for commit SHAs and other refs.
+      git clone --depth 1 "$REPO" "$BUILD_DIR"
+      if [[ "$ref" != "main" ]]; then
+        if ! (cd "$BUILD_DIR" && git fetch --depth 1 origin "$ref" && git checkout --quiet FETCH_HEAD); then
+          echo "error: ref '$ref' not found in $REPO" >&2
+          exit 1
+        fi
+      fi
+    fi
+
+    VERSION="$(version_for_checkout "$BUILD_DIR" "$ref")"
+    RESOLVED_REF="$(resolved_ref_for_checkout "$BUILD_DIR")"
+    RESOLVED_COMMIT="$(git -C "$BUILD_DIR" rev-parse HEAD)"
+  fi
   INSTALL_KIND="source-build"
 
   ensure_go_for_source "$BUILD_DIR"
+
   say "Building lingtai-tui ($VERSION) ..."
   (cd "$BUILD_DIR/tui" && CGO_ENABLED=0 go build -ldflags "-X main.version=$VERSION" -o "$BUILD_DIR/lingtai-tui" .)
 
   PORTAL_BUILT=0
   if [[ "$SKIP_PORTAL" == "1" ]]; then
     note "Skipping portal (--skip-portal)."
-  elif ensure_node_for_portal; then
-    say "Building lingtai-portal ($VERSION) ..."
-    if (cd "$BUILD_DIR/portal/web" && npm ci --silent && npm run build --silent) && \
-       (cd "$BUILD_DIR/portal" && CGO_ENABLED=0 go build -ldflags "-X main.version=$VERSION" -o "$BUILD_DIR/lingtai-portal" .); then
-      PORTAL_BUILT=1
+  else
+    if ensure_node_for_portal; then
+      say "Building lingtai-portal ($VERSION) ..."
+      if (cd "$BUILD_DIR/portal/web" && npm ci --silent && npm run build --silent) &&          (cd "$BUILD_DIR/portal" && CGO_ENABLED=0 go build -ldflags "-X main.version=$VERSION" -o "$BUILD_DIR/lingtai-portal" .); then
+        PORTAL_BUILT=1
+      else
+        warn "Skipping portal — portal build failed; continuing with lingtai-tui only."
+        note "$(portal_node_requirement_note)"
+      fi
     else
-      warn "Skipping portal — portal build failed; continuing with lingtai-tui only."
+      warn "Skipping portal — could not prepare a supported Node.js/npm toolchain."
       note "$(portal_node_requirement_note)"
     fi
-  else
-    warn "Skipping portal — could not prepare a supported Node.js/npm toolchain."
-    note "$(portal_node_requirement_note)"
   fi
 
+  # Install binaries.
   PORTAL_PATH=""
-  say "Installing to $BIN_DIR ..."
-  install -m 755 "$BUILD_DIR/lingtai-tui" "$BIN_DIR/lingtai-tui"
-  if [[ "$PORTAL_BUILT" == "1" ]]; then
-    install -m 755 "$BUILD_DIR/lingtai-portal" "$BIN_DIR/lingtai-portal"
-    PORTAL_PATH="$BIN_DIR/lingtai-portal"
+  if [[ "$UPDATE_MODE" == "1" ]]; then
+    local stage_bin="$BUILD_DIR/stage/bin"
+    mkdir -p "$stage_bin"
+    install -m 755 "$BUILD_DIR/lingtai-tui" "$stage_bin/lingtai-tui"
+    verify_tui_binary_version "$stage_bin/lingtai-tui" "$VERSION"
+    say "Installing update to $BIN_DIR ..."
+    install_binary_atomically "$stage_bin/lingtai-tui" "$BIN_DIR/lingtai-tui"
+    if [[ "$PORTAL_BUILT" == "1" ]]; then
+      install -m 755 "$BUILD_DIR/lingtai-portal" "$stage_bin/lingtai-portal"
+      install_binary_atomically "$stage_bin/lingtai-portal" "$BIN_DIR/lingtai-portal"
+      PORTAL_PATH="$BIN_DIR/lingtai-portal"
+    fi
+  else
+    say "Installing to $BIN_DIR ..."
+    install -m 755 "$BUILD_DIR/lingtai-tui" "$BIN_DIR/lingtai-tui"
+    if [[ "$PORTAL_BUILT" == "1" ]]; then
+      install -m 755 "$BUILD_DIR/lingtai-portal" "$BIN_DIR/lingtai-portal"
+      PORTAL_PATH="$BIN_DIR/lingtai-portal"
+    fi
   fi
   ensure_lingtai_alias "$BIN_DIR"
+  if [[ "$UPDATE_MODE" == "1" ]]; then
+    verify_tui_binary_version "$BIN_DIR/lingtai-tui" "$VERSION"
+  fi
+}
+
+# build_latest_from_main resolves and pins both repositories before building. It
+# deliberately does not consult release metadata: --latest is a separate,
+# explicit current-main mode and never falls back to a stable tag or bundle.
+build_latest_from_main() {
+  local actual_kernel_sha
+  TUI_MAIN_SHA="$(resolve_main_branch_sha "$REPO")" || {
+    echo "error: could not resolve the full TUI main commit from $REPO" >&2
+    return 1
+  }
+  KERNEL_MAIN_SHA="$(resolve_main_branch_sha "$KERNEL_REPO")" || {
+    echo "error: could not resolve the full kernel main commit from $KERNEL_REPO" >&2
+    return 1
+  }
+  say "Resolved TUI main commit: $TUI_MAIN_SHA"
+  say "Resolved kernel main commit: $KERNEL_MAIN_SHA"
+
+  # Reuse the existing source-build path for the TUI. Its shallow clone is
+  # accepted only when it lands on the exact SHA resolved above.
+  build_from_source main
+  if [[ "${RESOLVED_COMMIT:-}" != "$TUI_MAIN_SHA" ]]; then
+    echo "error: TUI main moved during checkout (resolved $TUI_MAIN_SHA, cloned ${RESOLVED_COMMIT:-unknown})" >&2
+    return 1
+  fi
+
+  KERNEL_SOURCE_DIR="$BUILD_DIR/kernel"
+  ensure_build_deps 1
+  say "Cloning lingtai-kernel (main at $KERNEL_MAIN_SHA) ..."
+  git clone --depth 1 --branch main "$KERNEL_REPO" "$KERNEL_SOURCE_DIR"
+  actual_kernel_sha="$(git -C "$KERNEL_SOURCE_DIR" rev-parse HEAD)"
+  if [[ "$actual_kernel_sha" != "$KERNEL_MAIN_SHA" ]]; then
+    echo "error: kernel main moved during checkout (resolved $KERNEL_MAIN_SHA, cloned $actual_kernel_sha)" >&2
+    return 1
+  fi
+  TUI_MAIN_SHA="$RESOLVED_COMMIT"
+  KERNEL_MAIN_SHA="$actual_kernel_sha"
+  say "Using TUI main commit: $TUI_MAIN_SHA"
+  say "Using kernel main commit: $KERNEL_MAIN_SHA"
 }
 
 # normalize_go_version prints MAJOR.MINOR.PATCH for Go language/toolchain
@@ -2129,197 +2591,212 @@ ensure_build_deps() {
     if command -v apt-get &>/dev/null && apt_install "git (build dependency)" git; then
       :
     else
-      echo "error: git is required for the official source fallback but not found. Install it with:" >&2
+      echo "error: git is required for --ref source builds but not found. Install it with:" >&2
       suggest_install git
       exit 1
     fi
   fi
 }
 
-# Ordinary install is first-install-only. It never adopts, overwrites, or repairs
-# an existing TUI target; those operations require an explicit child asset.
-validate_install_target() {
-  [[ "$BIN_DIR" == /* && "$BIN_DIR" != *$'\n'* && "$BIN_DIR" != *$'\t'* && "$BIN_DIR" != */../* && "$BIN_DIR" != */./* ]] || {
-    echo "error: install target is not an exact absolute directory: $BIN_DIR" >&2; return 1;
-  }
-  [[ ! -L "$BIN_DIR" ]] || { echo "error: install target is a symlink: $BIN_DIR" >&2; return 1; }
-  for managed in lingtai-tui lingtai-portal lingtai lingtai-agent; do
-    if [[ -e "$BIN_DIR/$managed" || -L "$BIN_DIR/$managed" ]]; then
-      echo "error: existing managed target $BIN_DIR/$managed was found; ordinary install will not adopt or overwrite it." >&2
-      echo "       Read https://lingtai.ai/help/reference/installation/assets/fix.sh or update.sh." >&2
-      return 1
-    fi
-  done
-  mkdir -p "$BIN_DIR"
-}
-
-# A different empty --bin-dir must not turn ordinary install into adoption of a
-# pre-existing receipt or runtime. Check this before target creation, release
-# resolution, downloads, or any binary/runtime mutation.
-validate_fresh_install_state() {
-  local state_root="$HOME/.lingtai-tui"
-  local metadata="$state_root/install.json"
-  local runtime_root="$state_root/runtime"
-  if [[ -e "$metadata" || -L "$metadata" ]]; then
-    echo "error: existing install receipt $metadata was found; ordinary install is first-install-only." >&2
-    echo "       Read https://lingtai.ai/help/reference/installation/skill.md for explicit update, repair, or verification." >&2
-    return 1
-  fi
-  if [[ -e "$runtime_root" || -L "$runtime_root" ]]; then
-    echo "error: existing runtime state $runtime_root was found; ordinary install will not adopt or repair it." >&2
-    echo "       Read https://lingtai.ai/help/reference/installation/skill.md for explicit repair or verification." >&2
-    return 1
-  fi
-}
-
 # --- main --------------------------------------------------------------------
 
-latest_main_requested() {
-  local arg expect_value=0
-  for arg in "$@"; do
-    if [[ "$expect_value" == "1" ]]; then
-      expect_value=0
-      continue
-    fi
-    case "$arg" in
-      --version|--ref|--prefix|--bin-dir|--source) expect_value=1 ;;
-      --latest) return 0 ;;
-    esac
-  done
-  return 1
-}
-
-latest_main_handoff() {
-  if [[ "${1:-}" == "install" ]]; then
-    shift
-  fi
-
-  command -v git &>/dev/null || {
-    echo "error: git is required for the explicit --latest main install." >&2
-    return 1
-  }
-  command -v curl &>/dev/null || {
-    echo "error: curl is required for the explicit --latest main install." >&2
-    return 1
-  }
-
-  local ref_line resolved_sha handoff_dir handoff_script handoff_url rc
-  if ! ref_line="$(git ls-remote "$REPO" refs/heads/main)"; then
-    echo "error: could not resolve ${REPO_SLUG} refs/heads/main for --latest." >&2
-    return 1
-  fi
-  resolved_sha="${ref_line%%$'\t'*}"
-  [[ "$resolved_sha" =~ ^[0-9a-f]{40}$ ]] || {
-    echo "error: invalid ${REPO_SLUG} main SHA for --latest: ${resolved_sha:-<empty>}" >&2
-    return 1
-  }
-
-  handoff_dir="$(mktemp -d "${TMPDIR:-/tmp}/lingtai-latest.XXXXXX")" || return 1
-  handoff_script="$handoff_dir/install.sh"
-  handoff_url="https://raw.githubusercontent.com/${REPO_SLUG}/${resolved_sha}/install.sh"
-  if curl -fsSL --retry 3 --max-time 120 -o "$handoff_script" "$handoff_url"; then
-    say "Delegating explicit --latest to ${REPO_SLUG} main at $resolved_sha"
-  else
-    rc=$?
-    rm -rf -- "$handoff_dir"
-    echo "error: failed to fetch the pinned --latest installer at $resolved_sha." >&2
-    return "$rc"
-  fi
-
-  if bash "$handoff_script" "$@"; then rc=0; else rc=$?; fi
-  rm -rf -- "$handoff_dir"
-  return "$rc"
-}
-
 main() {
-  if latest_main_requested "$@"; then
-    latest_main_handoff "$@"
-    return $?
-  fi
-  parse_args "$@" || return $?
-  cleanup() { cd / 2>/dev/null || true; rm -rf "$BUILD_DIR"; }
-  trap cleanup EXIT
+parse_args "$@"
 
-  [[ ! -L "$HOME/.lingtai-tui" ]] || {
-    echo "error: $HOME/.lingtai-tui is a symlink; refusing redirected install state." >&2
-    return 1
-  }
-  validate_fresh_install_state || return 1
-  resolve_bin_dir
-  validate_install_target || return 1
+if [[ -L "$HOME/.lingtai-tui" ]]; then
+  echo "error: $HOME/.lingtai-tui is a symlink; refusing redirected install state." >&2
+  exit 1
+fi
 
-  if is_wsl; then
-    say "Detected Windows Subsystem for Linux (WSL)."
-    note "Binaries and the Python runtime install into your Linux home ($HOME)."
-  fi
+# Remove the build directory even when a build or install step fails midway.
+cleanup() {
+  cd / 2>/dev/null || true
+  rm -rf "$BUILD_DIR"
+}
+trap cleanup EXIT
 
-  # Source selection and every release/pin resolution remain in the canonical
-  # ordinary installer. No skill or asset is fetched on this path.
-  if command -v curl &>/dev/null && [ -z "${GOPROXY:-}" ] && \
-     ! curl -sSfL --max-time 3 -o /dev/null \
-       "https://proxy.golang.org/github.com/golang/go/@latest" 2>/dev/null; then
-    say "proxy.golang.org unreachable; using China-friendly build mirrors."
-    export GOPROXY="https://goproxy.cn,direct" GOSUMDB="sum.golang.google.cn" NPM_CONFIG_REGISTRY="https://registry.npmmirror.com"
+if is_wsl; then
+  say "Detected Windows Subsystem for Linux (WSL)."
+  note "Binaries and the Python runtime install into your Linux home ($HOME)."
+  note "Run lingtai-tui from your WSL shell, not Windows PowerShell."
+fi
+
+# Auto-detect CN-restricted networks. If proxy.golang.org is unreachable
+# within 3 seconds (typical on mainland China without VPN), fall back to
+# CN-accessible mirrors for Go modules, the Go checksum database, and npm.
+# Only relevant when we build from source, but harmless otherwise. Explicit
+# pre-set env vars are preserved.
+if command -v curl &>/dev/null && \
+   [ -z "${GOPROXY:-}" ] && \
+   ! curl -sSfL --max-time 3 -o /dev/null \
+     "https://proxy.golang.org/github.com/golang/go/@latest" 2>/dev/null; then
+  say "proxy.golang.org unreachable; using China-friendly build mirrors."
+  export GOPROXY="https://goproxy.cn,direct"
+  export GOSUMDB="sum.golang.google.cn"
+  export NPM_CONFIG_REGISTRY="https://registry.npmmirror.com"
+fi
+
+resolve_bin_dir
+if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+  build_latest_from_main || exit 1
+else
+  # Ordinary install is first-install-only: it never adopts, overwrites, or
+  # repairs an existing TUI target or receipt/runtime state. --update is the
+  # one existing, tested exception (an explicit in-place re-run against a
+  # known --prefix). --latest never reaches this branch at all (it returned
+  # via build_latest_from_main above), so this specific pair of checks is
+  # --latest-exempt structurally, not by the UPDATE_MODE test below — but
+  # --latest is exempted explicitly, the same way --update is, at every other
+  # guard downstream that DOES run for both modes: ensure_runtime_venv's
+  # existing-runtime check and both write_install_metadata no-clobber sites.
+  # --latest is a separate, already-documented re-runnable current-main dev
+  # install with its own re-run semantics, identical in spirit to --update's.
+  if [[ "$UPDATE_MODE" != "1" ]]; then
+    validate_fresh_install_state || exit 1
+    validate_install_target || exit 1
   fi
   resolve_source_provider
-  [[ "$BUNDLE_PROVIDER" != "gitee" ]] || say "Source: Gitee (${GITEE_OWNER}/${GITEE_REPO}) — override with --source github."
+if [[ "$BUNDLE_PROVIDER" == "gitee" ]]; then
+  say "Source: Gitee (${GITEE_OWNER}/${GITEE_REPO}) — override with --source github or LINGTAI_SOURCE=github."
+fi
 
+# Resolve one bundle (TUI tag + bundle manifest, which pins an exact kernel
+# release) up front, on BUNDLE_PROVIDER, once. Every subsequent step —
+# try_release_asset, build_from_source's tag-based source-tarball path, and
+# the kernel artifact install in ensure_runtime_venv — reuses this same
+# BUNDLE_TAG/BUNDLE_MANIFEST_JSON.
+#
+# This is the default release-asset one-command path (no --ref, not
+# --update): a pinned kernel bundle is REQUIRED here. LingTai must never be
+# installed from a package index by name, so if no bundle manifest can be
+# resolved, ensure_runtime_venv below fails loud instead of silently
+# installing from PyPI — see BUNDLE_REQUIRED.
+if [[ -z "$REF" ]]; then
   BUNDLE_REQUIRED=1
   if fetch_bundle_manifest; then
     note "Resolved bundle $BUNDLE_TAG via $BUNDLE_PROVIDER (kernel $(bundle_manifest_field kernel_tag))."
   else
-    warn "No usable bundle manifest for $BUNDLE_TAG; trying the exact TUI release pin."
+    warn "No bundle manifest available for $([[ -n "$VERSION" ]] && echo "$VERSION" || echo "the latest release") on GitHub or Gitee."
+    # Source-only TUI releases (no dual bundle manifest) instead commit an
+    # exact kernel-release.json pin at the same tag — try that before failing
+    # loud. Never re-resolves "latest" a second time; consumes BUNDLE_TAG,
+    # which fetch_bundle_manifest sets even on its own failure.
     if [[ -n "$(release_tag_name "$BUNDLE_TAG")" ]] && fetch_kernel_pin "$BUNDLE_TAG"; then
       note "Resolved kernel release pin $KERNEL_PIN_TAG from TUI $KERNEL_PIN_TUI_TAG via $KERNEL_PIN_PROVIDER."
     else
       warn "No valid kernel release pin for exact TUI tag $BUNDLE_TAG."
     fi
   fi
+fi
 
+# Decide what to install.
+#   --update      : source-compatible in-place update for the given tag
+#   --ref         : explicit source build of that ref
+#   --version tag : that release (asset, else source tarball)
+#   default       : latest release (asset, else source tarball)
+if [[ "$UPDATE_MODE" == "1" ]]; then
+  # The TUI source updater expects a source-compatible update. Try the prebuilt
+  # asset first (fast), then fall back to building the tag from source.
   TARGET_TAG="${VERSION:-$BUNDLE_TAG}"
-  [[ -n "$TARGET_TAG" ]] || { echo "error: could not determine an exact TUI release tag; pass --version vX.Y.Z." >&2; return 1; }
-  [[ -n "$(release_tag_name "$TARGET_TAG")" ]] || {
-    echo "error: selected target '$TARGET_TAG' is not an exact official vX.Y.Z release tag." >&2
-    return 1
-  }
-  [[ -n "$VERSION" ]] || say "Latest release is $TARGET_TAG"
-
+  [[ -n "$TARGET_TAG" ]] || { echo "error: --update could not resolve a release tag" >&2; exit 1; }
+  VERSION="$TARGET_TAG"
   if [[ "$FROM_SOURCE" != "1" ]]; then
-    if try_release_asset "$TARGET_TAG"; then :
+    if try_release_asset "$TARGET_TAG"; then
+      :
     else
-      asset_rc=$?; [[ "$asset_rc" != "2" ]] || return 1
+      asset_rc=$?
+      [[ "$asset_rc" != "2" ]] || exit 1
       build_from_source "$TARGET_TAG"
     fi
   else
     build_from_source "$TARGET_TAG"
   fi
-
-  verify_tui_binary_version "$BIN_DIR/lingtai-tui" "$VERSION" || {
-    echo "error: installed lingtai-tui failed its exact version postcondition." >&2; return 1
-  }
-  ensure_runtime_venv "$BIN_DIR" || {
-    echo "error: ordinary install incomplete; runtime was not proven from a pinned local artifact." >&2
-    return 1
-  }
-  final_runtime_summary="runtime intentionally skipped"
-  if [[ "$SKIP_VENV" != "1" ]]; then
-    final_runtime_python="$(runtime_python_for_venv "$RUNTIME_VENV_DIR")"
-    final_runtime_summary="$(runtime_health_check "$final_runtime_python" "$KERNEL_VERSION_INSTALLED" 2>/dev/null || true)"
-    [[ -n "$final_runtime_python" && -n "$final_runtime_summary" ]] || { echo "error: final runtime health check failed." >&2; return 1; }
+elif [[ -n "$REF" ]]; then
+  build_from_source "$REF"
+else
+  TARGET_TAG="$VERSION"
+  if [[ -z "$TARGET_TAG" ]]; then
+    if [[ -n "$BUNDLE_TAG" ]]; then
+      # Reuse the tag already resolved by fetch_bundle_manifest above instead
+      # of re-querying "latest" a second time (which could race to a newer
+      # tag between the two calls and silently combine a bundle from one
+      # release with TUI binaries from another).
+      TARGET_TAG="$BUNDLE_TAG"
+      say "Latest release is $TARGET_TAG"
+    else
+      say "Resolving latest release ..."
+      if [[ "$BUNDLE_PROVIDER" == "gitee" ]]; then
+        TARGET_TAG="$(gitee_latest_release_tag || true)"
+      fi
+      if [[ -z "$TARGET_TAG" ]]; then
+        TARGET_TAG="$(latest_release_tag || true)"
+      fi
+      if [[ -z "$TARGET_TAG" ]]; then
+        echo "error: could not determine the latest release tag from GitHub or Gitee." >&2
+        echo "       Pass one explicitly: ./install.sh --version vX.Y.Z" >&2
+        exit 1
+      fi
+      say "Latest release is $TARGET_TAG"
+    fi
   fi
+  if [[ -z "$(release_tag_name "$TARGET_TAG")" ]]; then
+    warn "'$TARGET_TAG' is not a vX.Y.Z release tag; treating it as a source ref."
+    build_from_source "$TARGET_TAG"
+  elif [[ "$FROM_SOURCE" != "1" ]]; then
+    if try_release_asset "$TARGET_TAG"; then
+      :
+    else
+      asset_rc=$?
+      [[ "$asset_rc" != "2" ]] || exit 1
+      build_from_source "$TARGET_TAG"
+    fi
+  else
+    build_from_source "$TARGET_TAG"
+  fi
+fi
 
-  GLOBAL_DIR="$HOME/.lingtai-tui"
-  PREFIX="$(prefix_for_bin_dir "$BIN_DIR")"
-  REQUESTED_REF="${VERSION:-$TARGET_TAG}"
-  write_install_metadata "$GLOBAL_DIR" "$PREFIX" "$BIN_DIR" "$REPO" "$REQUESTED_REF" \
-    "${RESOLVED_REF:-$VERSION}" "${RESOLVED_COMMIT:-}" "$VERSION" \
-    "$BIN_DIR/lingtai-tui" "$PORTAL_PATH" || return 1
-  say "Wrote install metadata to $GLOBAL_DIR/install.json"
-  say "Done. $("$BIN_DIR/lingtai-tui" version 2>&1 || echo "$VERSION")"
-  case ":$PATH:" in
-    *":$BIN_DIR:"*) ;;
-    *) say "Note: $BIN_DIR is not on your PATH. Add it with:"; note "echo 'export PATH=\"$BIN_DIR:\$PATH\"' >> ~/.bashrc && source ~/.bashrc" ;;
-  esac
+fi
+
+# Provision the pinned runtime before recording install metadata. This makes
+# kernel_source and its bundle fields a postcondition of verified provisioning,
+# never a claim about a partially completed install.
+if ! ensure_runtime_venv "$BIN_DIR"; then
+  echo "error: LingTai install incomplete — the TUI/portal binaries installed, but the" >&2
+  if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+    echo "       Python runtime could not be provisioned from kernel main commit $KERNEL_MAIN_SHA." >&2
+  else
+    echo "       Python runtime could not be provisioned from a verified pinned bundle." >&2
+  fi
+  if [[ "$LATEST_MAIN_MODE" == "1" ]]; then
+    echo "       See the error above and re-run --latest after fixing it." >&2
+  else
+    echo "       See the error above. Re-run, or pass --skip-python if TUI-only is intended." >&2
+  fi
+  exit 1
+fi
+
+# Record install metadata for the TUI source updater only after the runtime
+# gate above succeeds (or --skip-python explicitly opted out).
+GLOBAL_DIR="$HOME/.lingtai-tui"
+PREFIX="$(prefix_for_bin_dir "$BIN_DIR")"
+REQUESTED_REF="${REF:-${VERSION:-main}}"
+write_install_metadata \
+  "$GLOBAL_DIR" \
+  "$PREFIX" \
+  "$BIN_DIR" \
+  "$REPO" \
+  "$REQUESTED_REF" \
+  "${RESOLVED_REF:-$VERSION}" \
+  "${RESOLVED_COMMIT:-}" \
+  "$VERSION" \
+  "$BIN_DIR/lingtai-tui" \
+  "$PORTAL_PATH"
+say "Wrote install metadata to $GLOBAL_DIR/install.json"
+
+say "Done. $("$BIN_DIR/lingtai-tui" version 2>&1 || echo "$VERSION")"
+
+# Tell the user how to put BIN_DIR on PATH if it isn't already.
+print_path_hint "$BIN_DIR"
 }
 
 if [[ "${LINGTAI_INSTALL_SH_SOURCE_ONLY:-0}" != "1" ]]; then

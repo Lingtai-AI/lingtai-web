@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # For coding-agent maintainers:
-# - Read the repository-root CONTRACT.md and
-#   public/help/reference/installation/CONTRACT.md before changing this file.
+# - Read this repository's root ANATOMY.md before changing this file.
 # - Preserve this entrypoint's operation, ownership, consent, and mutation boundary;
 #   do not turn one operation into an implicit install, update, repair, or deploy.
-# - Keep executable behavior, both Contracts, both Anatomies, and public guidance
+# - Keep executable behavior, CONTRACT.md, ANATOMY.md, and README guidance
 #   in lockstep; do not add static, shim, fake-command, or hermetic acceptance tests.
 # - Every verify.sh change must execute this exact final candidate against real
 #   healthy and mismatched installation state in isolated non-root Linux, proving

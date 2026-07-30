@@ -1,37 +1,30 @@
-name: Sync install.ps1 from lingtai
+name: Sync lifecycle scripts from lingtai
 
-# public/install.ps1 is what https://lingtai.ai/install.ps1 serves, and it was a
-# vendored copy with no automation. It had fallen six PRs behind
-# Lingtai-AI/lingtai: its blob hashed to the commit that shipped the verified
-# Windows bundle installer, which predates `-Latest` entirely, so
-#     &([scriptblock]::Create((irm https://lingtai.ai/install.ps1))) -Latest
-# failed on an unknown parameter for anyone following the documented route.
+# Lingtai-AI/lingtai is the sole canonical owner of every lifecycle script byte:
+# install.sh, install.ps1, update.sh, fix.sh, verify.sh, dev.sh, remove.sh,
+# remove.ps1. This job mirrors all eight here byte-for-byte and never writes in
+# the other direction: a fix applied to any public/ copy is silently reverted by
+# the next sync, so every lifecycle-script fix belongs upstream in lingtai.
 #
-# Lingtai-AI/lingtai is CANONICAL for install.ps1. This job mirrors it here and
-# never writes in the other direction: a fix applied to public/install.ps1 is
-# silently reverted by the next sync, so PowerShell installer fixes belong
-# upstream in lingtai.
+# This was previously install.ps1-only. install.sh was deliberately excluded
+# because this repository's copy had drifted into an independent, more capable
+# fork carrying runtime health/self-heal and install-state governance functions
+# lingtai@main's copy lacked. That gap has since been closed: PR #768 integrated
+# the full web-only capability matrix upstream (runtime_health_check,
+# runtime_venv_state, canonical_runtime_venv, ensure_runtime_pip,
+# validate_fresh_install_state, validate_install_target, update_validate_manifest,
+# fetch_kernel_pin, parse_kernel_pin_manifest, kernel_pin_url_for_provider,
+# python_dependency_index_url, print_path_hint, and native current-main support
+# replacing the old handoff shim). lingtai@main is now strictly the superset, so
+# install.sh mirrors like every other lifecycle script. Do not resurrect a
+# fork here -- any further web-side installer change belongs upstream.
 #
-# ---------------------------------------------------------------------------
-# install.sh is DELIBERATELY NOT SYNCED. Do not "finish the job" by adding it.
-# ---------------------------------------------------------------------------
-# public/install.sh is not a stale mirror -- it is an independent, more capable
-# fork maintained here. It carries ~22 functions lingtai's copy does not,
-# including the runtime health/self-heal and install-state governance
-# subsystems (runtime_health_check, dev_runtime_health_check, runtime_venv_state,
-# canonical_runtime_venv, ensure_runtime_pip, validate_fresh_install_state,
-# validate_install_target, update_validate_manifest, fetch_kernel_pin,
-# parse_kernel_pin_manifest, kernel_pin_url_for_provider, ...) plus the
-# latest-main handoff added by #67. Overwriting it from lingtai@main would
-# DELETE all of that from the installer real users curl.
-#
-# The gap runs both ways. lingtai@main has a handful install.sh here lacks --
-# notably python_dependency_index_url (the TUNA index for Gitee bundle
-# dependencies) and print_path_hint (zsh PATH guidance, which matters because
-# macOS defaults to zsh) -- plus native current-main support rather than a
-# handoff shim. Those are worth BACKPORTING upstream-to-here by hand, or
-# reconciling the two into one canonical script. Either is a deliberate
-# decision, not something an unattended mirror should make.
+# remove.sh / remove.ps1 (PR #769) are the first deletion-purpose lifecycle
+# assets: receipt-is-the-only-oracle removal, never a filename-pattern sweep.
+# They mirror to public/ at the same tier as install.sh/install.ps1 (not under
+# help/reference/installation/assets/, which holds the update/fix/verify/dev
+# maintenance children) because canonical lingtai places them at repo root
+# alongside install.sh/install.ps1, not alongside the assets/ scripts.
 #
 # No cross-repo secret is needed: lingtai is public, so the fetch is
 # unauthenticated, and the commit uses this repository's own GITHUB_TOKEN.
@@ -60,15 +53,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fetch canonical install.ps1 from lingtai@main
+      - name: Fetch canonical lifecycle scripts from lingtai@main
         id: fetch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          # Resolve main to an exact SHA first, then download AT that SHA, so a
-          # push landing mid-run cannot serve a half-updated revision.
+          # Resolve main to an exact SHA first, then download every file AT that
+          # SHA, so a push landing mid-run cannot serve a half-updated revision
+          # or mix bytes from two different upstream commits.
           SHA="$(gh api repos/Lingtai-AI/lingtai/commits/main --jq .sha)"
           if [ ${#SHA} -ne 40 ]; then echo "::error::bad SHA: $SHA"; exit 1; fi
           case "$SHA" in
@@ -78,22 +72,47 @@ jobs:
           echo "Canonical revision: $SHA"
 
           mkdir -p .sync
-          curl -fsSL --retry 3 --retry-delay 2 \
-            "https://raw.githubusercontent.com/Lingtai-AI/lingtai/$SHA/install.ps1" \
-            -o .sync/install.ps1
 
-          # Validate before letting it near public/. A truncated download or an
-          # HTML error page must never be published as an installer people pipe
-          # into a shell.
-          if [ ! -s .sync/install.ps1 ]; then
-            echo "::error::install.ps1 downloaded empty"; exit 1
+          fetch_one() {
+            local source_path="$1" dest_name="$2"
+            curl -fsSL --retry 3 --retry-delay 2 \
+              "https://raw.githubusercontent.com/Lingtai-AI/lingtai/$SHA/$source_path" \
+              -o ".sync/$dest_name"
+          }
+
+          fetch_one install.sh install.sh
+          fetch_one install.ps1 install.ps1
+          fetch_one update.sh update.sh
+          fetch_one fix.sh fix.sh
+          fetch_one verify.sh verify.sh
+          fetch_one dev.sh dev.sh
+          fetch_one remove.sh remove.sh
+          fetch_one remove.ps1 remove.ps1
+
+          # Validate every file before letting it near public/. A truncated
+          # download or an HTML error page must never be published as a script
+          # people pipe into a shell.
+          for f in install.sh install.ps1 update.sh fix.sh verify.sh dev.sh remove.sh remove.ps1; do
+            if [ ! -s ".sync/$f" ]; then
+              echo "::error::$f downloaded empty"; exit 1
+            fi
+            if grep -qi '<!doctype html\|<html' ".sync/$f"; then
+              echo "::error::$f looks like an HTML error page"; exit 1
+            fi
+          done
+
+          SIZE=$(wc -c < .sync/install.sh)
+          if [ "$SIZE" -lt 20000 ]; then
+            echo "::error::install.sh is only $SIZE bytes -- refusing to publish"; exit 1
           fi
+          grep -q '^#!/usr/bin/env bash' .sync/install.sh \
+            || { echo "::error::install.sh lost its shebang"; exit 1; }
+          grep -q -- '--latest' .sync/install.sh \
+            || { echo "::error::install.sh has no --latest mode"; exit 1; }
+
           SIZE=$(wc -c < .sync/install.ps1)
           if [ "$SIZE" -lt 20000 ]; then
             echo "::error::install.ps1 is only $SIZE bytes -- refusing to publish"; exit 1
-          fi
-          if grep -qi '<!doctype html\|<html' .sync/install.ps1; then
-            echo "::error::install.ps1 looks like an HTML error page"; exit 1
           fi
           grep -q '^#requires -Version' .sync/install.ps1 \
             || { echo "::error::install.ps1 lost its #requires header"; exit 1; }
@@ -102,26 +121,70 @@ jobs:
           grep -q '\[switch\]\$Latest' .sync/install.ps1 \
             || { echo "::error::install.ps1 has no -Latest parameter"; exit 1; }
 
+          for f in update.sh fix.sh verify.sh dev.sh remove.sh; do
+            grep -q '^#!/usr/bin/env bash' ".sync/$f" \
+              || { echo "::error::$f lost its shebang"; exit 1; }
+            grep -q '^set -euo pipefail' ".sync/$f" \
+              || { echo "::error::$f lost its strict-mode header"; exit 1; }
+          done
+          # remove.sh is the only deletion-purpose asset; its receipt-is-the-
+          # only-oracle contract must survive every sync, not just its shell
+          # boilerplate.
+          grep -q -- '--bin-dir' .sync/remove.sh \
+            || { echo "::error::remove.sh lost its --bin-dir flag"; exit 1; }
+          grep -q -- '--yes' .sync/remove.sh \
+            || { echo "::error::remove.sh lost its --yes consent flag"; exit 1; }
+
+          grep -q '^#requires -Version' .sync/remove.ps1 \
+            || { echo "::error::remove.ps1 lost its #requires header"; exit 1; }
+          grep -q -- '-BinDir' .sync/remove.ps1 \
+            || { echo "::error::remove.ps1 lost its -BinDir parameter"; exit 1; }
+          grep -q -- '-Yes' .sync/remove.ps1 \
+            || { echo "::error::remove.ps1 lost its -Yes consent parameter"; exit 1; }
+
       - name: Publish if changed
         id: publish
         env:
           SOURCE_SHA: ${{ steps.fetch.outputs.source_sha }}
         run: |
           set -euo pipefail
-          if cmp -s .sync/install.ps1 public/install.ps1; then
-            rm -rf .sync
+
+          declare -A DEST=(
+            [install.sh]=public/install.sh
+            [install.ps1]=public/install.ps1
+            [remove.sh]=public/remove.sh
+            [remove.ps1]=public/remove.ps1
+            [update.sh]=public/help/reference/installation/assets/update.sh
+            [fix.sh]=public/help/reference/installation/assets/fix.sh
+            [verify.sh]=public/help/reference/installation/assets/verify.sh
+            [dev.sh]=public/help/reference/installation/assets/dev.sh
+          )
+
+          changed=()
+          for name in "${!DEST[@]}"; do
+            dest="${DEST[$name]}"
+            if ! cmp -s ".sync/$name" "$dest"; then
+              cp ".sync/$name" "$dest"
+              changed+=("$dest")
+            fi
+          done
+          rm -rf .sync
+
+          if [ "${#changed[@]}" -eq 0 ]; then
             echo "already in sync"
             exit 0
           fi
-          cp .sync/install.ps1 public/install.ps1
-          rm -rf .sync
+
           git config user.name  'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add public/install.ps1
+          git add "${changed[@]}"
+          printf '%s\n' "${changed[@]}" | sort > /tmp/changed-list.txt
           # Separate -m flags become separate paragraphs. A single -m with
           # embedded newlines would have to dedent inside this block scalar,
           # which silently ends the YAML block instead.
           git commit \
-            -m "chore(installers): sync install.ps1 from lingtai@${SOURCE_SHA:0:12}" \
-            -m "Mirrored from Lingtai-AI/lingtai at $SOURCE_SHA. Edit install.ps1 there; this copy is overwritten on every sync. install.sh is intentionally not synced -- see the workflow header."
+            -m "chore(installers): sync lifecycle scripts from lingtai@${SOURCE_SHA:0:12}" \
+            -m "Mirrored from Lingtai-AI/lingtai at $SOURCE_SHA. Edit these files there; these copies are overwritten on every sync." \
+            -m "Changed: $(paste -sd ' ' /tmp/changed-list.txt)"
+          rm -f /tmp/changed-list.txt
           git push

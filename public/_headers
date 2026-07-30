@@ -6,6 +6,14 @@
   Content-Type: text/plain; charset=utf-8
   Cache-Control: public, max-age=300
 
+/remove.sh
+  Content-Type: text/x-shellscript; charset=utf-8
+  Cache-Control: public, max-age=300
+
+/remove.ps1
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=300
+
 /skill.md
   Content-Type: text/markdown; charset=utf-8
   Cache-Control: public, max-age=300
