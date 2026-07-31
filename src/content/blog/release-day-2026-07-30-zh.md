@@ -68,7 +68,7 @@ PR 计数依据 squash-merge 标题（形如 `(#N)`）或 `Merge pull request #N
 
 上文四位是本次严格发布窗口内的已合并 PR / 提交作者，并非曾经帮助过这个项目的所有人。若统计所有从 kernel `v0.19.0` 或 TUI/Portal `v0.12.0` 可追溯到的、由真实 GitHub 账号（不含 bot）提交的历史，已发布历史共识别出：[@huangzesen](https://github.com/huangzesen)、[@TZZheng](https://github.com/TZZheng)、[@9s5bz2jvd2-lang](https://github.com/9s5bz2jvd2-lang)、[@wchwawa](https://github.com/wchwawa)、[@ZigongXu](https://github.com/ZigongXu)、[@BatalloLu](https://github.com/BatalloLu)、[@batallo](https://github.com/batallo)、[@BrianLiubr](https://github.com/BrianLiubr)、[@ZacharyHu0](https://github.com/ZacharyHu0)、[@rawpaper123](https://github.com/rawpaper123)、[@ktwu01](https://github.com/ktwu01)、[@yzliu03](https://github.com/yzliu03) 与 [@TatsuKo-Tsukimi](https://github.com/TatsuKo-Tsukimi)。
 
-这是“截至本次发布 tag 的 GitHub 可识别贡献者账号”名单，不是对所有参与者的穷尽统计，其范围也比上文严格发布窗口内致谢的 6 个账号更广。不同 GitHub 账号在此保持各自独立列出，我们不会猜测哪些账号可能属于同一个人。例如，@BrianLiubr 提出的 [issue #496](https://github.com/Lingtai-AI/lingtai/issues/496) 由 PR #500 修复，而该 PR 已包含在更早的 `v0.11.8` tag 中，因此这个账号被列在此处，而非上文严格的 v0.12.0 窗口名单内。
+这是“截至本次发布 tag 的 GitHub 可识别贡献者账号”名单，不是对所有参与者的穷尽统计，其范围也比上文严格发布窗口内致谢的 6 个账号更广。不同 GitHub 账号在此保持各自独立列出，我们不会猜测哪些账号可能属于同一个人。例如，@BrianLiubr 提出的 [issue #496](https://github.com/Lingtai-AI/lingtai/issues/496) 由 PR #465 修复，而该 PR 已包含在更早的 `v0.11.8` tag 中，因此这个账号被列在此处，而非上文严格的 v0.12.0 窗口名单内。
 
 ## 验证与诚实边界
 
