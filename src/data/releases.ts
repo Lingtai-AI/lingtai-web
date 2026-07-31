@@ -65,6 +65,142 @@ export interface Release {
 
 
 
+const v0_19_0_kernel_v0_12_0_tui: Release = {
+  id: '20260730-1',
+  version: 'Kernel v0.19.0 · TUI/Portal v0.12.0',
+  titleEn: 'LingTai 0.19.0 / 0.12.0: one tool protocol, visible long-running work, and one canonical lifecycle',
+  titleZh: 'LingTai 0.19.0 / 0.12.0：统一工具协议、可见的长任务与唯一规范生命周期',
+  date: '2026-07-30',
+  pkg: 'LingTai Kernel + TUI/Portal',
+  tag: 'Kernel v0.19.0 · TUI/Portal v0.12.0',
+  install: 'curl -fsSL https://lingtai.ai/install.sh | bash',
+  runtimeNoteEn: "Kernel v0.19.0 publishes 15 CPython wheels, one sdist fallback, `lingtai-kernel-release-manifest.json`, and `SHA256SUMS` through GitHub and Gitee, with the same frozen wheel/sdist bytes published to PyPI. TUI/Portal v0.12.0 publishes its GitHub source release, updates the Homebrew formula, and produces a Windows AMD64 bundle pinned to kernel v0.19.0. Per the explicit release scope, Windows artifacts were cross-built and hash-verified but not executed. The supported install and upgrade entrypoint is `curl -fsSL https://lingtai.ai/install.sh | bash`; existing Homebrew users remain supported.",
+  runtimeNoteZh: "Kernel v0.19.0 通过 GitHub 与 Gitee 发布 15 个 CPython wheel、1 个 sdist fallback、`lingtai-kernel-release-manifest.json` 与 `SHA256SUMS`，并将同一组冻结的 wheel/sdist 字节发布至 PyPI。TUI/Portal v0.12.0 发布 GitHub 源码 Release、更新 Homebrew 配方，并生成绑定 kernel v0.19.0 的 Windows AMD64 bundle。按照本次明确的发布范围，Windows 产物只进行了交叉构建与哈希校验，未执行。受支持的安装与升级入口为 `curl -fsSL https://lingtai.ai/install.sh | bash`；现有 Homebrew 用户继续受到支持。",
+  summaryEn: "This coordinated release makes LingTai easier to operate as a long-lived system: model-facing tools converge on LingTai Tool Protocol v2, Task Card gives long-running work a complete and visible lifecycle, install/update/remove scripts gain one canonical source of truth, and channel, notification, mail, and TUI reliability work makes failures more bounded and observable. The release window contains 85 commits and 72 merged PRs from four human contributors.",
+  summaryZh: "这次协同发布让 LingTai 更适合作为长期运行的系统：面向模型的工具统一到 LingTai Tool Protocol v2；Task Card 为长任务提供完整、可见的生命周期；安装、更新与移除脚本获得唯一规范源；渠道、通知、邮件与 TUI 的可靠性改进让失败更有界、更可观察。本次发布窗口包含 85 个提交、72 个已合并 PR，来自 4 位人类贡献者。",
+  features: [
+    {
+      "titleEn": "One tool protocol across the runtime and channels",
+      "titleZh": "运行时与各通信渠道统一为一套工具协议",
+      "leadEn": "LingTai Tool Protocol v2 now gives model-facing tools one predictable action/input envelope while preserving each integration's real ownership and side-effect boundaries.",
+      "leadZh": "LingTai Tool Protocol v2 让面向模型的工具共享可预测的 action/input 信封，同时保留每个集成真实的所有权与副作用边界。",
+      "bulletsEn": [
+        "Web, email, system, daemon, Psyche, Telegram, IMAP, Feishu, WeChat, WhatsApp, and Cloud Mail surfaces now use the common ToolFamily contract instead of bespoke call shapes.",
+        "Web search and browse preserve complete outputs, while channel adapters keep transport stdout protocol-only and expose rate-limit or retry states honestly.",
+        "The result is a smaller model-facing grammar without pretending that different channels have identical operational semantics."
+      ],
+      "bulletsZh": [
+        "Web、email、system、daemon、Psyche、Telegram、IMAP、Feishu、WeChat、WhatsApp 与 Cloud Mail 现统一采用 ToolFamily 契约，不再各自暴露不同调用形状。",
+        "Web 搜索与浏览保留完整输出；各渠道适配器则保持传输 stdout 仅承载协议，并如实暴露限流与重试状态。",
+        "这让模型面对的语法更小、更一致，同时不把不同渠道伪装成具有相同的运行语义。"
+      ],
+      "whyEn": "New tools and channels become easier to learn, audit, and compose, while failures remain attributable to the integration that actually owns them.",
+      "whyZh": "新工具与新渠道更容易学习、审计和组合；失败仍可追溯到真正拥有该行为的集成。"
+    },
+    {
+      "titleEn": "Long-running work is visible through a complete Task Card lifecycle",
+      "titleZh": "长任务通过完整的 Task Card 生命周期变得可见",
+      "leadEn": "Task Card is now a declarative intrinsic producer with an explicit terminal lifecycle, a Telegram projection that respects programmable intent, and a TUI viewer for the current artifact.",
+      "leadZh": "Task Card 现拥有声明式内建生产者、明确的终止生命周期、尊重可编程意图的 Telegram 投影，以及用于查看当前产物的 TUI 界面。",
+      "bulletsEn": [
+        "Agents can start, inspect, retry, stop, and remove one truthful Task Card watch instead of leaving stale progress behind.",
+        "Telegram keeps its transport-specific projection and automatic composition, while the programmable frame controls only task state and active/inactive intent.",
+        "The TUI adds `/taskcard` so operators can open the same current artifact without scraping chat history."
+      ],
+      "bulletsZh": [
+        "智能体可启动、检查、重试、停止并移除一个真实的 Task Card watch，不再把过期进度留给用户。",
+        "Telegram 继续拥有其传输层投影与自动组合；可编程 frame 仅控制任务状态及 active/inactive 意图。",
+        "TUI 新增 `/taskcard`，操作者无需翻查聊天记录即可打开同一份当前产物。"
+      ],
+      "whyEn": "People can see what a long job is doing, whether it is still active, and when its progress artifact has been deliberately retired.",
+      "whyZh": "用户可以看到长任务正在做什么、是否仍在运行，以及其进度产物何时被明确退役。"
+    },
+    {
+      "titleEn": "Install, update, and removal now have one canonical lifecycle",
+      "titleZh": "安装、更新与移除现在拥有唯一的规范生命周期",
+      "leadEn": "The `Lingtai-AI/lingtai` repository now owns the complete POSIX and PowerShell lifecycle; the public website mirrors those exact bytes instead of carrying an independent installer fork.",
+      "leadZh": "`Lingtai-AI/lingtai` 仓库现统一拥有 POSIX 与 PowerShell 的完整生命周期；公开网站只镜像这些精确字节，不再维护独立 installer 分叉。",
+      "bulletsEn": [
+        "Stable `install.sh` and `install.ps1` entrypoints cover install and update, with canonical fix, verify, dev, and removal children behind them.",
+        "New `remove.sh` and `remove.ps1` delete only receipt-owned installation state, preserve user configuration, secrets, presets, projects, auth, and shared tooling, and remain idempotent on a second run.",
+        "Web parity checks fail loud on any mirror drift, so documentation and copy-paste URLs cannot silently diverge from the maintained lifecycle source."
+      ],
+      "bulletsZh": [
+        "稳定入口 `install.sh` 与 `install.ps1` 覆盖安装和更新，并在其后提供规范的 fix、verify、dev 与移除子流程。",
+        "新的 `remove.sh` 与 `remove.ps1` 只删除 receipt 明确拥有的安装状态，保留用户配置、secrets、presets、projects、auth 与共享工具，并支持第二次幂等执行。",
+        "Web 字节一致性检查会在任何镜像漂移时明确失败，避免文档与复制粘贴 URL 静默偏离维护中的生命周期源。"
+      ],
+      "whyEn": "Users get one documented lifecycle and one ownership boundary instead of platform-specific scripts drifting apart over time.",
+      "whyZh": "用户面对的是一套有文档的生命周期与一个清晰所有权边界，而不是随时间漂移的平台脚本。"
+    },
+    {
+      "titleEn": "Mail, notification, and operator surfaces fail more honestly",
+      "titleZh": "邮件、通知与操作界面以更诚实的方式处理失败",
+      "leadEn": "A broad reliability pass makes channel retries, notification delivery, live logs, credential handling, and the mail conversation rail more bounded and observable.",
+      "leadZh": "一轮广泛的可靠性改进让渠道重试、通知投递、实时日志、凭证处理与邮件会话侧栏都更有界、更可观察。",
+      "bulletsEn": [
+        "Telegram rate limits propagate their real retry contract; WeChat and Cloud Mail retry failed wake delivery; Feishu keeps MCP stdio protocol-only; filesystem mail polling is sliced instead of monopolizing a turn.",
+        "Concurrent daemon terminal wakes and synthetic notification calls remain schema-valid, and live SQLite readers see current data.",
+        "The TUI mail rail gains clearer focus/collapse/mouse behavior, consistent credential-family handling, and faster live network refreshes that avoid rescanning mail history."
+      ],
+      "bulletsZh": [
+        "Telegram 限流会传播真实重试契约；WeChat 与 Cloud Mail 会重试失败的唤醒投递；Feishu 保持 MCP stdio 仅承载协议；文件系统邮件轮询被切片，不再独占整个 turn。",
+        "并发 daemon 终态唤醒与合成通知调用保持 schema 合法，实时 SQLite 读取者也能看到当前数据。",
+        "TUI 邮件侧栏获得更清晰的焦点、折叠与鼠标行为，一致的凭证家族处理，以及避免重复扫描邮件历史的更快实时网络刷新。"
+      ],
+      "whyEn": "Operators get fewer silent stalls and clearer evidence when a transport, retry, or live view is the thing that actually failed.",
+      "whyZh": "当真正失败的是传输、重试或实时视图时，操作者会获得更少的静默停滞与更清晰的证据。"
+    }
+  ],
+  contributors: ["huangzesen", "TZZheng", "BatalloLu", "ZacharyHu0"],
+  validation: {
+    commit: 'Kernel candidate a15453ff1e59181aec7cf70759b9821e569cecd7 · TUI candidate fdbee4705554369bc4c2800927482a51a5114997',
+    items: [
+      {
+            "label": "Kernel governance",
+            "result": "305 documents validated; diff check PASS"
+      },
+      {
+            "label": "Kernel terminal source-checkout suite",
+            "result": "7,239 passed, 27 skipped; 18 inherited failure/error nodes, zero new node names versus the exact prior baseline (recorded nonzero, not PASS)"
+      },
+      {
+            "label": "Kernel package workflow",
+            "result": "Run 30598196925 SUCCESS; 15 wheels + 1 sdist + strict manifest/SHA256SUMS"
+      },
+      {
+            "label": "Package integrity and metadata",
+            "result": "All 16 package hashes agree across bytes, manifest, and SHA256SUMS; twine check PASS"
+      },
+      {
+            "label": "Clean package smokes",
+            "result": "CPython 3.13.14 native macOS arm64 wheel and CPython 3.14.6 sdist fallback import/version — PASS"
+      },
+      {
+            "label": "TUI/Portal builds and tests",
+            "result": "Native/cross builds and Portal tests PASS; all TUI tests except two exact inherited cursor nodes PASS; both nodes reproduce identically on base and candidate"
+      },
+      {
+            "label": "Windows execution",
+            "result": "Not run by explicit release scope (Telegram 11734); Windows artifacts were cross-built and hash-verified only"
+      },
+      {
+            "label": "Release window",
+            "result": "85 commits and 72 merged PRs across kernel and TUI/Portal; four human contributors audited"
+      }
+],
+  },
+  links: [
+    { label: 'Kernel v0.19.0', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.19.0' },
+    { label: 'TUI/Portal v0.12.0', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v0.12.0' },
+    { label: 'Kernel changes v0.18.2...v0.19.0', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.18.2...v0.19.0' },
+    { label: 'TUI/Portal changes v0.11.8...v0.12.0', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.11.8...v0.12.0' },
+    { label: 'Kernel package workflow run', href: 'https://github.com/Lingtai-AI/lingtai-kernel/actions/runs/30598196925' },
+    { label: 'Install LingTai', href: 'https://lingtai.ai/install.sh' },
+  ],
+};
+
+
 const v0_18_1_kernel_v0_11_6_tui: Release = {
   id: '20260723-1',
   version: 'Kernel v0.18.1 · TUI/Portal v0.11.6',
@@ -4036,7 +4172,7 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_18_1_kernel_v0_11_6_tui, v0_18_0_kernel_v0_11_5_tui, v0_17_1_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+export const releases: Release[] = [v0_19_0_kernel_v0_12_0_tui, v0_18_1_kernel_v0_11_6_tui, v0_18_0_kernel_v0_11_5_tui, v0_17_1_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
