@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # For coding-agent maintainers:
-# - Read the repository-root CONTRACT.md and
-#   public/help/reference/installation/CONTRACT.md before changing this file.
+# - Read this repository's root ANATOMY.md before changing this file.
 # - Preserve this entrypoint's operation, ownership, consent, and mutation boundary;
 #   do not turn one operation into an implicit install, update, repair, or deploy.
-# - Keep executable behavior, both Contracts, both Anatomies, and public guidance
+# - Keep executable behavior, CONTRACT.md, ANATOMY.md, and README guidance
 #   in lockstep; do not add static, shim, fake-command, or hermetic acceptance tests.
 # - Every update.sh change must execute this exact final candidate in isolated
 #   non-root Linux against real owned ordinary state and exact artifacts, then
@@ -174,11 +173,18 @@ current_identity="$(parse_tui_identity "$current_output")" || fail "installed TU
 work="$(mktemp -d "${TMPDIR:-/tmp}/lingtai-update.XXXXXX")" || fail "could not create update scratch directory"
 trap 'rm -rf "$work"' EXIT
 fetch "$tui_archive" "$work/tui.tar.gz"
-# Keep the official pinned kernel wheel recognizable to pip. The exact pip
-# argument below is always this .whl path, even when the source name is opaque.
-fetch "$kernel_artifact" "$work/kernel.whl"
+# pip validates the wheel FILENAME itself (name-version-pytag-abitag-platformtag.whl)
+# before it will install it, so the staged copy must keep the artifact's own
+# basename rather than a fixed name like kernel.whl — pip rejects that outright
+# ("Invalid wheel filename") regardless of the file's actual contents.
+kernel_basename="$(basename -- "$kernel_artifact")"
+case "$kernel_basename" in
+  *.whl) ;;
+  *) fail "--kernel-artifact must be a .whl file: $kernel_artifact" ;;
+esac
+fetch "$kernel_artifact" "$work/$kernel_basename"
 verify_sha "$work/tui.tar.gz" "$tui_sha"
-verify_sha "$work/kernel.whl" "$kernel_sha"
+verify_sha "$work/$kernel_basename" "$kernel_sha"
 mkdir "$work/tui"
 while IFS= read -r member; do
   case "$member" in
@@ -197,7 +203,7 @@ printf 'Preflight complete: exact TUI %s, kernel %s, target %s\n' "$tui_tag" "$k
 
 # Mutation phases are deliberately explicit. Cross-component rollback is not
 # possible: every failure names which components may have changed.
-if ! "$runtime" -m pip install --disable-pip-version-check --no-deps --force-reinstall "$work/kernel.whl"; then
+if ! "$runtime" -m pip install --disable-pip-version-check --no-deps --force-reinstall "$work/$kernel_basename"; then
   partial_fail "kernel component may have changed; TUI and metadata were not intentionally changed"
 fi
 if ! PYTHONPATH= "$runtime" - "$selected_venv" "$kernel_version" <<'PY'

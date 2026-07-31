@@ -1,6 +1,6 @@
 ---
 name: lingtai-installation
-description: Route ordinary installation and explicit installation maintenance assets.
+description: Route ordinary installation, removal, and explicit installation maintenance assets.
 ---
 
 # LingTai installation
@@ -41,10 +41,12 @@ Use the explicit opt-in when you want both current TUI `main` and current kernel
 curl -fsSL https://lingtai.ai/install.sh | bash -s -- --latest
 ```
 
-The public wrapper first resolves the TUI repository's current `main` to one full
-SHA and delegates to `install.sh` from that exact commit. This is not the ordinary
-stable path and never falls back to it. The delegated installer owns target/runtime
-checks and the final receipt; arbitrary `--ref` work still belongs to `assets/dev.sh`.
+`--latest` is a native mode inside this same mirrored `install.sh`: it resolves
+`refs/heads/main` in both `Lingtai-AI/lingtai` and `Lingtai-AI/lingtai-kernel` to
+full SHAs, verifies both checkouts against those pins, and builds/installs from
+them directly. There is no separate delegated download or handoff script. This
+is not the ordinary stable path and never falls back to it; arbitrary `--ref`
+work still belongs to `assets/dev.sh`.
 
 ## Native Windows install
 
@@ -66,6 +68,30 @@ runtime postconditions pass. `-SkipVenv` remains the explicit TUI-only opt-out
 that omits the managed runtime and its receipt fields; it is not the default
 public path. WSL2 with `/install.sh` remains a supported alternative for users
 who prefer a Unix-like terminal on Windows.
+
+## Removal
+
+`https://lingtai.ai/remove.sh` and `https://lingtai.ai/remove.ps1` fully remove
+an installation this receipt proves you own — nothing more:
+
+```sh
+curl -fsSL https://lingtai.ai/remove.sh | bash -s -- --bin-dir "$BIN_DIR" --yes
+```
+
+```powershell
+& ([scriptblock]::Create((irm https://lingtai.ai/remove.ps1))) -BinDir $BinDir -Yes
+```
+
+Both require an explicit bin directory and explicit consent; without `--yes`/
+`-Yes` they print the exact planned deletions and delete nothing. The
+`lingtai.tui.install/v1` receipt is the only deletion oracle: removal deletes
+exactly the managed binaries, symlinks, and receipt-pointed runtime venv the
+receipt proves that directory owns, then deletes the receipt itself last. There
+is **no** filename-pattern sweep — a directory that merely looks like a runtime
+path but isn't the receipt's own `runtime_venv` is reported as a survivor, never
+deleted. Config, secrets, presets, and per-project state are never touched. A
+Homebrew-shaped target is refused, not partially removed. Running either script
+twice is safe: the second run reports nothing to remove.
 
 ## Choose an explicit asset
 
@@ -110,7 +136,16 @@ flag before mutation. Skill prose is not a safety mechanism.
   the metadata-declared kernel source. TUI output must contain exactly one
   release identity token or standalone `dev`, matching the receipt; the observed
   `lingtai.__version__` must exactly match `kernel_version`.
+- **Full removal** —
+  [`remove.sh`](https://lingtai.ai/remove.sh) /
+  [`remove.ps1`](https://lingtai.ai/remove.ps1). Requires `--bin-dir`/`-BinDir`
+  and `--yes`/`-Yes`. Deletes exactly the artifact set the receipt at that bin
+  directory proves owned — managed binaries, owned symlinks, receipt-pointed
+  runtime venv, then the receipt itself last — and nothing matched by filename
+  pattern alone. Refuses a Homebrew-shaped target instead of partially removing
+  it. Idempotent: a second run with no receipt present reports nothing to
+  remove and exits 0.
 
 All mutating assets independently validate exact target ownership, metadata
 provenance, authorization, and postconditions. Assets do not call `refresh`,
-merge, release, deploy, or source `install.sh`.
+merge, release, deploy, or source `install.sh`/`install.ps1`/each other.

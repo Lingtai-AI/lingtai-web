@@ -135,12 +135,13 @@ locale text. Astro emits static output; the Cloudflare adapter and Wrangler own
 preview/deploy mechanics. Public files bypass Astro component transformation and
 are copied as exact origin bytes.
 
-The public installation component is deliberately standalone: `install.sh` is
-the fresh ordinary entrypoint plus one explicit `--latest` delegation to the
-TUI repository's pinned current-main installer, while arbitrary-ref development,
-update, repair, and verification are separate executable assets explained by one
-installation skill and governed by
-one child Contract.
+The public installation component is a byte-for-byte mirror: `Lingtai-AI/lingtai`
+is the sole canonical owner of every lifecycle script byte, and `install.sh`,
+`install.ps1`, `remove.sh`, `remove.ps1`, `update.sh`, `fix.sh`, `verify.sh`,
+and `dev.sh` are published here unmodified from that source, including
+`install.sh`'s native `--latest` current-main mode. Arbitrary-ref development,
+update, repair, verification, and removal remain separate executable assets,
+explained by one installation skill and governed by one child Contract.
 
 ## State
 
