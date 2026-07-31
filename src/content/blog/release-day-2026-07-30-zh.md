@@ -8,7 +8,7 @@ description: "LingTai Tool Protocol v2 统一面向模型的工具；Task Card �
 
 > **协同发布** — [Kernel v0.19.0](https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.19.0) 与 [TUI/Portal v0.12.0](https://github.com/Lingtai-AI/lingtai/releases/tag/v0.12.0) 作为一组配对版本发布。kernel 候选提交为 `a15453ff1e59181aec7cf70759b9821e569cecd7`；TUI/Portal 候选提交为 `fdbee4705554369bc4c2800927482a51a5114997`，并固定使用 kernel v0.19.0。
 
-> **TL;DR** — 本次发布让 LingTai 更适合作为长期运行的系统。面向模型的工具统一到 LingTai Tool Protocol v2；Task Card 为长任务提供完整、可见的生命周期；安装、更新与移除脚本获得唯一规范源；渠道、通知、邮件与 TUI 的可靠性改进让失败更有界、更可观察。严格发布窗口横跨 kernel 与 TUI/Portal，共包含 **85 个提交与 72 个已合并 PR**，并审计了 4 位人类贡献者。
+> **TL;DR** — 本次发布让 LingTai 更适合作为长期运行的系统。面向模型的工具统一到 LingTai Tool Protocol v2；Task Card 为长任务提供完整、可见的生命周期；安装、更新与移除脚本获得唯一规范源；渠道、通知、邮件与 TUI 的可靠性改进让失败更有界、更可观察。严格发布窗口横跨 kernel 与 TUI/Portal，共包含 **87 个提交与 78 个已合并 PR**。本次发布窗口共致谢 6 个账号，分为下文的“已合并 PR / 提交作者”与“补充的共同作者 / 问题诊断致谢”两类；另有一份更广的项目历史贡献者账号名单单独列出。
 
 ## 发生了什么变化
 
@@ -47,11 +47,28 @@ LingTai 不是一个只处理单次请求/响应的程序。它是一个长期�
 
 ## 发布窗口审计
 
-- **Kernel 范围：** `v0.18.2..718262f879acd5bb7d2bcf83f23378b759988c0f` — 55 个提交、44 个已合并 PR
-- **TUI/Portal 范围：** `v0.11.8..8c0d2c22ca554729b850c0feadc2c35fe93e9f63` — 30 个提交、28 个已合并 PR
-- **人类贡献者：** [@huangzesen](https://github.com/huangzesen)、[@TZZheng](https://github.com/TZZheng)、[@BatalloLu](https://github.com/BatalloLu)、[@ZacharyHu0](https://github.com/ZacharyHu0)
+- **Kernel 范围：** `v0.18.2..v0.19.0` — 56 个提交、49 个去重后的已合并 PR
+- **TUI/Portal 范围：** `v0.11.8..v0.12.0` — 31 个提交、29 个去重后的已合并 PR
+- **合计：** 87 个提交、78 个去重后的已合并 PR
 
-完整变更清单可在下方两个 compare 页面查看；本文按用户可感知的契约组织工作，而不是重复粘贴 72 个 PR 标题。
+PR 计数依据 squash-merge 标题（形如 `(#N)`）或 `Merge pull request #N`，不计提交正文中偶然出现的 `#N` 引用。
+
+**本次严格窗口内已合并 PR / 提交作者：** [@huangzesen](https://github.com/huangzesen)、[@TZZheng](https://github.com/TZZheng)、[@BatalloLu](https://github.com/BatalloLu)、[@ZacharyHu0](https://github.com/ZacharyHu0)。
+
+**补充的严格发布窗口致谢**，与上面的作者名单分开列出，避免把不是提交作者的人误标为作者：
+
+- [@9s5bz2jvd2-lang](https://github.com/9s5bz2jvd2-lang)（王润远）— 在 kernel 提交 `ec87d382` / [PR #1019](https://github.com/Lingtai-AI/lingtai-kernel/pull/1019) 中被列为 `Co-authored-by`。
+- [@ZigongXu](https://github.com/ZigongXu) — 提出 [issue #672](https://github.com/Lingtai-AI/lingtai-kernel/issues/672)，由窗口内 [PR #1094](https://github.com/Lingtai-AI/lingtai-kernel/pull/1094) 修复（`Fixes #672`）；以及提出 [issue #644](https://github.com/Lingtai-AI/lingtai-kernel/issues/644)，其诊断与窗口内 [PR #1099](https://github.com/Lingtai-AI/lingtai-kernel/pull/1099) 的修复一致。
+
+以上两类合计，本次严格发布窗口共致谢 6 个账号。
+
+完整变更清单可在下方两个 compare 页面查看；本文按用户可感知的契约组织工作，而不是重复粘贴 78 个 PR 标题。
+
+## 项目历史贡献者账号（截至本次发布 tag）
+
+上文四位是本次严格发布窗口内的已合并 PR / 提交作者，并非曾经帮助过这个项目的所有人。若统计所有从 kernel `v0.19.0` 或 TUI/Portal `v0.12.0` 可追溯到的、由真实 GitHub 账号（不含 bot）提交的历史，已发布历史共识别出：[@huangzesen](https://github.com/huangzesen)、[@TZZheng](https://github.com/TZZheng)、[@9s5bz2jvd2-lang](https://github.com/9s5bz2jvd2-lang)、[@wchwawa](https://github.com/wchwawa)、[@ZigongXu](https://github.com/ZigongXu)、[@BatalloLu](https://github.com/BatalloLu)、[@batallo](https://github.com/batallo)、[@BrianLiubr](https://github.com/BrianLiubr)、[@ZacharyHu0](https://github.com/ZacharyHu0)、[@rawpaper123](https://github.com/rawpaper123)、[@ktwu01](https://github.com/ktwu01)、[@yzliu03](https://github.com/yzliu03) 与 [@TatsuKo-Tsukimi](https://github.com/TatsuKo-Tsukimi)。
+
+这是“截至本次发布 tag 的 GitHub 可识别贡献者账号”名单，不是对所有参与者的穷尽统计，其范围也比上文严格发布窗口内致谢的 6 个账号更广。不同 GitHub 账号在此保持各自独立列出，我们不会猜测哪些账号可能属于同一个人。例如，@BrianLiubr 提出的 [issue #496](https://github.com/Lingtai-AI/lingtai/issues/496) 由 PR #500 修复，而该 PR 已包含在更早的 `v0.11.8` tag 中，因此这个账号被列在此处，而非上文严格的 v0.12.0 窗口名单内。
 
 ## 验证与诚实边界
 

@@ -8,7 +8,7 @@ description: "LingTai Tool Protocol v2 unifies model-facing tools, Task Card mak
 
 > **Coordinated release** — [Kernel v0.19.0](https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v0.19.0) and [TUI/Portal v0.12.0](https://github.com/Lingtai-AI/lingtai/releases/tag/v0.12.0) ship as one paired release. The kernel candidate is `a15453ff1e59181aec7cf70759b9821e569cecd7`; the TUI/Portal candidate is `fdbee4705554369bc4c2800927482a51a5114997` and pins kernel v0.19.0.
 
-> **TL;DR** — This release makes LingTai easier to operate as a long-lived system. Model-facing tools converge on LingTai Tool Protocol v2. Task Card gives long-running work a complete, visible lifecycle. Install, update, and removal scripts gain one canonical source of truth. Channel, notification, mail, and TUI reliability work makes failures more bounded and observable. The strict release window contains **85 commits and 72 merged PRs** across the kernel and TUI/Portal, with four audited human contributors.
+> **TL;DR** — This release makes LingTai easier to operate as a long-lived system. Model-facing tools converge on LingTai Tool Protocol v2. Task Card gives long-running work a complete, visible lifecycle. Install, update, and removal scripts gain one canonical source of truth. Channel, notification, mail, and TUI reliability work makes failures more bounded and observable. The strict release window contains **87 commits and 78 merged PRs** across the kernel and TUI/Portal. Six accounts are credited for the exact release window, split below into merged-PR/commit authors and additional co-author/diagnosis credits; a broader project-to-date acknowledgment follows separately.
 
 ## What changed
 
@@ -47,11 +47,28 @@ This release reduces those long-term costs. Tools speak one model-facing protoco
 
 ## Release-window accounting
 
-- **Kernel range:** `v0.18.2..718262f879acd5bb7d2bcf83f23378b759988c0f` — 55 commits, 44 merged PRs
-- **TUI/Portal range:** `v0.11.8..8c0d2c22ca554729b850c0feadc2c35fe93e9f63` — 30 commits, 28 merged PRs
-- **Human contributors:** [@huangzesen](https://github.com/huangzesen), [@TZZheng](https://github.com/TZZheng), [@BatalloLu](https://github.com/BatalloLu), [@ZacharyHu0](https://github.com/ZacharyHu0)
+- **Kernel range:** `v0.18.2..v0.19.0` — 56 commits, 49 distinct merged PRs
+- **TUI/Portal range:** `v0.11.8..v0.12.0` — 31 commits, 29 distinct merged PRs
+- **Combined:** 87 commits, 78 distinct merged PRs
 
-The complete change ledger is available in the two compare views linked below; the release narrative above groups the work by user-visible contract rather than repeating 72 PR titles.
+PRs are counted by squash-merge title (`(#N)`) or `Merge pull request #N`, not by incidental `#N` references inside commit bodies.
+
+**Merged-PR / commit authors of record for this exact window:** [@huangzesen](https://github.com/huangzesen), [@TZZheng](https://github.com/TZZheng), [@BatalloLu](https://github.com/BatalloLu), [@ZacharyHu0](https://github.com/ZacharyHu0).
+
+**Additional exact-release credits**, kept separate so no one is misstated as an author of record:
+
+- [@9s5bz2jvd2-lang](https://github.com/9s5bz2jvd2-lang) (Wang Runyuan) — `Co-authored-by` on kernel commit `ec87d382` / [PR #1019](https://github.com/Lingtai-AI/lingtai-kernel/pull/1019).
+- [@ZigongXu](https://github.com/ZigongXu) — filed [issue #672](https://github.com/Lingtai-AI/lingtai-kernel/issues/672), fixed in-window by [PR #1094](https://github.com/Lingtai-AI/lingtai-kernel/pull/1094) (`Fixes #672`); and [issue #644](https://github.com/Lingtai-AI/lingtai-kernel/issues/644), whose diagnosis matches in-window [PR #1099](https://github.com/Lingtai-AI/lingtai-kernel/pull/1099).
+
+That is six accounts credited in the exact release window, across the two categories above.
+
+The complete change ledger is available in the two compare views linked below; the release narrative above groups the work by user-visible contract rather than repeating 78 PR titles.
+
+## Project contributor accounts through these released tags
+
+The exact-release credits above are not the complete set of people who have ever helped this project. Counting every distinct GitHub account (bots excluded) with an authored commit reachable from kernel `v0.19.0` or TUI/Portal `v0.12.0`, the released history recognizes: [@huangzesen](https://github.com/huangzesen), [@TZZheng](https://github.com/TZZheng), [@9s5bz2jvd2-lang](https://github.com/9s5bz2jvd2-lang), [@wchwawa](https://github.com/wchwawa), [@ZigongXu](https://github.com/ZigongXu), [@BatalloLu](https://github.com/BatalloLu), [@batallo](https://github.com/batallo), [@BrianLiubr](https://github.com/BrianLiubr), [@ZacharyHu0](https://github.com/ZacharyHu0), [@rawpaper123](https://github.com/rawpaper123), [@ktwu01](https://github.com/ktwu01), [@yzliu03](https://github.com/yzliu03), and [@TatsuKo-Tsukimi](https://github.com/TatsuKo-Tsukimi).
+
+This is a list of GitHub-recognized contributor accounts through these released tags, not an exhaustive list of every human ever involved, and it is broader than the six accounts credited for the exact release window above. Distinct GitHub accounts are kept distinct here; we do not guess which ones might belong to the same person. For example, @BrianLiubr's [issue #496](https://github.com/Lingtai-AI/lingtai/issues/496) was fixed by PR #500, already part of the prior `v0.11.8` tag, so that account is recognized here rather than in the exact v0.12.0 window above.
 
 ## Validation and honest limits
 
