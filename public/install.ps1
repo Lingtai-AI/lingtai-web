@@ -17,7 +17,10 @@
         lingtai-<tag>-windows-amd64.zip archive plus its .sha256 sidecar, verify
         the archive's SHA-256 against the manifest before extraction, and confirm
         the staged lingtai-tui.exe and lingtai-portal.exe are present, with the
-        TUI reporting exactly that tag, before touching BinDir.
+        TUI reporting exactly that tag, before touching BinDir. The TUI release
+        and the kernel runtime are DECOUPLED: the venv installs the LATEST
+        published lingtai-kernel release, not the kernel the TUI release
+        happened to pin when it was cut.
 
       * LOCAL ARTIFACT MODE (-ArchivePath + -ChecksumPath): install the TUI/portal
         binaries FROM an already-downloaded release archive plus its sha256
@@ -759,19 +762,32 @@ function Confirm-KernelManifest {
     if ($data.kernel_version -ne $expectedVersion) {
         Fail "invalid kernel release manifest: kernel_version '$($data.kernel_version)' does not match the pinned kernel tag $ExpectedKernelTag"
     }
+    $foundWindowsWheel = $false
     foreach ($art in @($data.artifacts)) {
-        if ($art.kind -eq 'wheel') {
-            # Validate the filename shape BEFORE it is ever used in a
-            # download URL or Join-Path -- a malformed/adversarial filename
-            # (path separators, traversal) is rejected here rather than
-            # relying on downstream code to handle it safely.
-            if ([string]::IsNullOrEmpty($art.filename) -or $art.filename -notmatch '^lingtai-[0-9A-Za-z_.+!-]+-(cp3(1[1-3]))-\1-win_amd64\.whl$') {
-                Fail "invalid kernel release manifest: wheel artifact has an invalid filename '$($art.filename)'"
-            }
-            if ($art.sha256 -notmatch '^[0-9a-f]{64}$') {
-                Fail "invalid kernel release manifest: wheel artifact '$($art.filename)' has a malformed sha256"
-            }
+        if ($art.kind -ne 'wheel') { continue }
+        # Validate the filename shape BEFORE it is ever used in a download URL
+        # or Join-Path -- a malformed/adversarial filename (path separators,
+        # traversal) is rejected here rather than relying on downstream code
+        # to handle it safely.
+        if ([string]::IsNullOrEmpty($art.filename) -or $art.filename -notmatch '^[0-9A-Za-z_.+!-]+\.whl$' -or $art.filename -match '[/\\]') {
+            Fail "invalid kernel release manifest: wheel artifact has an invalid filename '$($art.filename)'"
         }
+        if ($art.sha256 -notmatch '^[0-9a-f]{64}$') {
+            Fail "invalid kernel release manifest: wheel artifact '$($art.filename)' has a malformed sha256"
+        }
+        # The manifest is a MULTI-PLATFORM collection: macosx/manylinux wheels
+        # legitimately coexist with the Windows wheel. Only the win_amd64 wheel
+        # this installer actually needs must match the strict cp311-13 shape
+        # (Select-KernelWheel enforces the exact interpreter match below).
+        if ($art.platform_tag -eq 'win_amd64') {
+            if ($art.filename -notmatch '^lingtai-[0-9A-Za-z_.+!-]+-(cp3(1[1-3]))-\1-win_amd64\.whl$') {
+                Fail "invalid kernel release manifest: win_amd64 wheel artifact has an invalid filename '$($art.filename)'"
+            }
+            $foundWindowsWheel = $true
+        }
+    }
+    if (-not $foundWindowsWheel) {
+        Fail "invalid kernel release manifest: no win_amd64 wheel artifact found for this Windows install"
     }
     return $data
 }
@@ -798,6 +814,31 @@ function Get-KernelManifest {
     }
     $raw = Get-TextAssetContent -Url $url
     return Confirm-KernelManifest -RawJson $raw -ExpectedKernelTag $KernelTag
+}
+
+# Resolve-LatestKernelRelease resolves the LATEST published lingtai-kernel
+# release and returns a @{ KernelTag; KernelManifestFilename } pair for it.
+# The TUI release and the kernel runtime are deliberately DECOUPLED: a TUI
+# install must not be held back by the kernel version a TUI release happened
+# to pin when it was cut, and a kernel release must not wait for a TUI
+# release. Public-mode installs therefore pull the newest kernel wheel, not
+# the bundle's pinned one. Local-artifact mode (explicit -ArchivePath) keeps
+# the bundle pin because the user is deliberately installing an exact
+# historical TUI bundle and its pinned kernel is part of that contract.
+function Resolve-LatestKernelRelease {
+    $release = Invoke-GitHubApi -Url "$KernelApiBase/releases/latest"
+    $tag = $release.tag_name
+    if ([string]::IsNullOrWhiteSpace($tag) -or $tag -notmatch '^v\d+\.\d+\.\d+$') {
+        Fail "Could not resolve an exact vX.Y.Z tag from the latest kernel GitHub release (got '$tag')."
+    }
+    $manifest = $release.assets | Where-Object { $_.name -eq 'lingtai-kernel-release-manifest.json' } | Select-Object -First 1
+    if (-not $manifest) {
+        Fail "Latest kernel release $tag has no lingtai-kernel-release-manifest.json asset."
+    }
+    return @{
+        KernelTag              = $tag
+        KernelManifestFilename = 'lingtai-kernel-release-manifest.json'
+    }
 }
 
 # --- Runtime venv (fail-loud; no PyPI-by-name; mirrors install.sh) -----------
@@ -1304,17 +1345,25 @@ function Remove-OrphanedKernelDistInfo {
 }
 
 # Install-Venv provisions %USERPROFILE%\.lingtai-tui\runtime\venv from the
-# bundle's pinned kernel release, exactly like install.sh's
+# selected kernel release, exactly like install.sh's
 # ensure_runtime_venv/install_kernel_from_bundle: create the venv from an
 # already-available supported Python, select the wheel matching the venv's
 # actual interpreter tag, verify its digest, install by explicit local path,
 # verify import/version/provenance, and only then write the provenance stamp.
-# LingTai is NEVER installed from a package index by name and the kernel tag
-# is NEVER changed from the one the bundle manifest pins. Returns a hashtable
-# of kernel_source/kernel_bundle_id/kernel_version/kernel_provider for
-# Write-InstallMetadata.
+# LingTai is NEVER installed from a package index by name. In PUBLIC MODE the
+# caller resolves the LATEST kernel release (TUI/kernel decoupled) and passes
+# it as -KernelOverride; local-artifact mode keeps the bundle's pin. Returns a
+# hashtable of kernel_source/kernel_bundle_id/kernel_version/kernel_provider
+# for Write-InstallMetadata.
 function Install-Venv {
-    param([hashtable]$Bundle, [string]$TuiTag, [string]$GlobalDir)
+    param([hashtable]$Bundle, [string]$TuiTag, [string]$GlobalDir, [hashtable]$KernelOverride = $null)
+
+    # TUI and kernel are decoupled: PUBLIC-MODE installs (no archive) resolve
+    # the LATEST kernel release so a TUI release never pins a stale kernel.
+    # Local-artifact mode passes a KernelOverride; when null, fall back to the
+    # bundle's pin only as a last resort.
+    $kernelTag = if ($KernelOverride) { $KernelOverride.KernelTag } else { $Bundle.KernelTag }
+    $kernelManifestFilename = if ($KernelOverride) { $KernelOverride.KernelManifestFilename } else { $Bundle.KernelManifestFilename }
 
     $venvDir = Join-Path $GlobalDir 'runtime\venv'
     Write-Info "Provisioning Python runtime venv at $venvDir ..."
@@ -1340,15 +1389,15 @@ function Install-Venv {
     Remove-OrphanedKernelDistInfo -VenvDir $venvDir
 
     $wheelTag = Get-VenvWheelTag -VenvPython $venvPython
-    $kernelManifest = Get-KernelManifest -KernelTag $Bundle.KernelTag -ManifestFilename $Bundle.KernelManifestFilename
+    $kernelManifest = Get-KernelManifest -KernelTag $kernelTag -ManifestFilename $kernelManifestFilename
     $wheel = Select-KernelWheel -KernelManifest $kernelManifest -WheelTag $wheelTag
 
     $stage = New-StagingDir
-    Install-KernelWheel -VenvPython $venvPython -Wheel $wheel -KernelTag $Bundle.KernelTag -StageDir $stage | Out-Null
+    Install-KernelWheel -VenvPython $venvPython -Wheel $wheel -KernelTag $kernelTag -StageDir $stage | Out-Null
     $installedVersion = Confirm-KernelImport -VenvPython $venvPython -ExpectedVersion $kernelManifest.kernel_version
 
     Write-KernelProvenance -VenvDir $venvDir -TuiTag $TuiTag -TuiCommit $Bundle.TuiCommit -BundleId $Bundle.BundleId `
-        -KernelTag $Bundle.KernelTag -KernelVersion $installedVersion -WheelFilename $wheel.filename `
+        -KernelTag $kernelTag -KernelVersion $installedVersion -WheelFilename $wheel.filename `
         -WheelSha256 $wheel.sha256 -Provider 'github' | Out-Null
 
     return @{
@@ -2085,7 +2134,17 @@ function Invoke-Main {
     # is the explicit TUI-only opt-out; DryRun performs no writes at all.
     $kernelMeta = $null
     if (-not $SkipVenv -and -not $DryRun) {
-        $kernelMeta = Install-Venv -Bundle $bundle -TuiTag $resolvedTag -GlobalDir $GlobalDir
+        # TUI release and kernel runtime are decoupled: in public mode resolve
+        # the LATEST kernel release instead of the bundle's pinned one, so a
+        # TUI install never drags a stale kernel. Local-artifact mode keeps the
+        # bundle pin (the user deliberately selected an exact historical TUI
+        # bundle whose pinned kernel is part of that contract).
+        $kernelOverride = $null
+        if (-not $haveArchive) {
+            $kernelOverride = Resolve-LatestKernelRelease
+            Write-Ok "Resolved latest kernel release: $($kernelOverride.KernelTag) (TUI/kernel decoupled)"
+        }
+        $kernelMeta = Install-Venv -Bundle $bundle -TuiTag $resolvedTag -GlobalDir $GlobalDir -KernelOverride $kernelOverride
         # Static shape check on Install-Venv's return contract. This function
         # returns a plain hashtable with exactly these four keys; if that ever
         # regresses (e.g. an unsuppressed statement inside Install-Venv or a
@@ -2108,7 +2167,8 @@ function Invoke-Main {
         }
     } elseif (-not $SkipVenv -and $DryRun) {
         if ($bundle) {
-            Write-Step "[dry-run] would provision the runtime venv from kernel $($bundle.KernelTag) at $GlobalDir\runtime\venv"
+            $dryKernel = if (-not $haveArchive) { 'latest kernel release (TUI/kernel decoupled)' } else { "kernel $($bundle.KernelTag) (archive bundle pin)" }
+            Write-Step "[dry-run] would provision the runtime venv from $dryKernel at $GlobalDir\runtime\venv"
         } else {
             Write-Step "[dry-run] would resolve the release bundle for $resolvedTag and provision the runtime venv at $GlobalDir\runtime\venv"
         }
