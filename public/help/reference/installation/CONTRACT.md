@@ -50,9 +50,12 @@ a local edit here — a local edit is silently reverted by the next sync and is
 therefore a defect regardless of intent.
 
 `/remove.sh` and `/remove.ps1` are the first deletion-purpose lifecycle assets:
-they mirror at the same tier as `/install.sh`/`/install.ps1` (repository root,
-not under `assets/`) because canonical `Lingtai-AI/lingtai` places them there
-too. Their deletion authority is bounded entirely by §2.6 and §4.6/§4.6a below;
+they mirror at the same tier as `/install.sh`/`/install.ps1` (site root, not
+under `assets/`) because they act on the whole installation rather than on one
+maintenance concern. Upstream `Lingtai-AI/lingtai` keeps them under `scripts/`
+with the other lifecycle maintenance scripts and only `install.sh`/`install.ps1`
+at its repo root; the published paths above are unaffected by that layout.
+Their deletion authority is bounded entirely by §2.6 and §4.6/§4.6a below;
 the receipt is their only deletion oracle.
 
 The executable files own their exact CLI syntax. This contract owns the stable
