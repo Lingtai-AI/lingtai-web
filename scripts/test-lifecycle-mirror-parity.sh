@@ -13,10 +13,11 @@
 #   scripts/test-lifecycle-mirror-parity.sh <path-to-lingtai-checkout> [path-to-remove-source]
 #
 # <path-to-lingtai-checkout> is a local clone/worktree of Lingtai-AI/lingtai
-# (any ref) whose root holds the canonical install.sh, install.ps1, update.sh,
-# fix.sh, verify.sh, dev.sh, remove.sh, remove.ps1. Compares each against this
-# repo's public mirror byte-for-byte and reports every mismatch before exiting
-# nonzero.
+# (any ref) whose root holds the canonical install.sh and install.ps1 and whose
+# scripts/ holds the canonical update.sh, fix.sh, verify.sh, dev.sh, remove.sh,
+# remove.ps1 (lingtai PR #796 moved those six out of the repo root). Compares
+# each against this repo's public mirror byte-for-byte and reports every
+# mismatch before exiting nonzero.
 #
 # [path-to-remove-source] is optional and defaults to the same checkout as the
 # first argument. It exists only for the pre-merge window where remove.sh/
@@ -69,11 +70,19 @@ source_root_for() {
     *) echo "$CANON" ;;
   esac
 }
+# Path of each script inside the canonical checkout: only the two installers
+# sit at the repo root; every lifecycle maintenance script lives under scripts/.
+source_rel_for() {
+  case "$1" in
+    install.sh|install.ps1) echo "$1" ;;
+    *) echo "scripts/$1" ;;
+  esac
+}
 
 fail=0
 for name in $NAMES; do
   source_root="$(source_root_for "$name")"
-  canon_file="$source_root/$name"
+  canon_file="$source_root/$(source_rel_for "$name")"
   mirror_rel="$(mirror_path_for "$name")"
   mirror_file="$REPO_ROOT/$mirror_rel"
 

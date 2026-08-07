@@ -23,8 +23,11 @@ name: Sync lifecycle scripts from lingtai
 # assets: receipt-is-the-only-oracle removal, never a filename-pattern sweep.
 # They mirror to public/ at the same tier as install.sh/install.ps1 (not under
 # help/reference/installation/assets/, which holds the update/fix/verify/dev
-# maintenance children) because canonical lingtai places them at repo root
-# alongside install.sh/install.ps1, not alongside the assets/ scripts.
+# maintenance children) because they act on the whole installation, not on one
+# maintenance concern. Upstream (lingtai PR #796) keeps every lifecycle
+# maintenance script -- update/fix/verify/dev/remove.sh/remove.ps1 -- under
+# scripts/, with only install.sh/install.ps1 at repo root; that is why the
+# source paths fetched below are split while the published paths are not.
 #
 # No cross-repo secret is needed: lingtai is public, so the fetch is
 # unauthenticated, and the commit uses this repository's own GITHUB_TOKEN.
@@ -82,12 +85,12 @@ jobs:
 
           fetch_one install.sh install.sh
           fetch_one install.ps1 install.ps1
-          fetch_one update.sh update.sh
-          fetch_one fix.sh fix.sh
-          fetch_one verify.sh verify.sh
-          fetch_one dev.sh dev.sh
-          fetch_one remove.sh remove.sh
-          fetch_one remove.ps1 remove.ps1
+          fetch_one scripts/update.sh update.sh
+          fetch_one scripts/fix.sh fix.sh
+          fetch_one scripts/verify.sh verify.sh
+          fetch_one scripts/dev.sh dev.sh
+          fetch_one scripts/remove.sh remove.sh
+          fetch_one scripts/remove.ps1 remove.ps1
 
           # Validate every file before letting it near public/. A truncated
           # download or an HTML error page must never be published as a script
