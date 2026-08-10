@@ -4172,7 +4172,114 @@ const v0_10_10: Release = {
   ],
 };
 
-export const releases: Release[] = [v0_19_0_kernel_v0_12_0_tui, v0_18_1_kernel_v0_11_6_tui, v0_18_0_kernel_v0_11_5_tui, v0_17_1_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
+const v1_0_0_kernel_v1_0_0_tui: Release = {
+  id: '20260810-1',
+  version: 'Kernel v1.0.0 · TUI/Portal v1.0.0',
+  titleEn: 'LingTai 1.0.0: daemon supervision, dependable channels, a hardened shell, and Agent Plugins',
+  titleZh: 'LingTai 1.0.0：神识监管、可靠的通道、加固的 shell 与 Agent Plugins',
+  date: '2026-08-10',
+  pkg: 'LingTai Kernel + TUI/Portal',
+  tag: 'Kernel v1.0.0 · TUI/Portal v1.0.0',
+  install: 'curl -fsSL https://lingtai.ai/install.sh | bash',
+  runtimeNoteEn: 'Kernel v1.0.0 publishes source, all-platform wheels, one sdist, and the release manifest through GitHub and Gitee (PyPI publication was discontinued). TUI/Portal v1.0.0 publishes its GitHub source release and updates the Homebrew formula. The supported install and upgrade entrypoint is `curl -fsSL https://lingtai.ai/install.sh | bash`; existing Homebrew users remain supported.',
+  runtimeNoteZh: 'Kernel v1.0.0 通过 GitHub 与 Gitee 发布源码、全平台 wheel、1 个 sdist 与发布清单（已停止 PyPI 发布）。TUI/Portal v1.0.0 发布 GitHub 源码 Release 并更新 Homebrew 配方。受支持的安装与升级入口为 `curl -fsSL https://lingtai.ai/install.sh | bash`；现有 Homebrew 用户继续受到支持。',
+  summaryEn: 'This coordinated 1.0 milestone covers 225 commits and 134 merged pull requests (Kernel v0.19.5 → v1.0.0: 169 commits, 95 merged + 119 closed PRs, 65 issues closed; TUI/Portal v0.12.0 → v1.0.0: 56 commits, 39 merged + 18 closed PRs, 37 issues closed), with +18,725/−5,421 lines changed across 480 files from 16 human contributors. The kernel hardens daemon supervision and terminal notifications, makes Telegram, IMAP, mail, Feishu, WeChat, and WhatsApp more dependable, and reworks the shell contract for Windows, macOS, and POSIX; the TUI/Portal adds launch reliability, preset expansion, a GitHub-only kernel update check (fixing the PyPI downgrade), and doctor D1–D5 startup checks. Agent Plugins become a first-class capability, and the LLM layer gains seven-tier thinking and OpenAI Responses reasoning semantics.',
+  summaryZh: '这次协同发布的 1.0 里程碑覆盖 225 个提交与 134 个已合并 PR（Kernel v0.19.5 → v1.0.0：169 个提交、95 个已合并 + 119 个已关闭 PR、65 个已关闭 issue；TUI/Portal v0.12.0 → v1.0.0：56 个提交、39 个已合并 + 18 个已关闭 PR、37 个已关闭 issue），共 480 个文件、+18,725/−5,421 行，来自 16 位人类贡献者。内核加固了神识监管与终态通知，让 Telegram、IMAP、邮件、飞书、微信与 WhatsApp 更加可靠，并重构了 Windows、macOS 与 POSIX 的 shell 契约；TUI/Portal 增加启动可靠性、preset 扩展、只查 GitHub release 的内核更新检查（修复 PyPI 降级）与 doctor D1–D5 启动检查。Agent Plugins 成为一等能力，LLM 层新增七级思考层级与 OpenAI Responses 推理语义。',
+  features: [
+    {
+      titleEn: 'Daemon supervision and honest terminal notifications',
+      titleZh: '神识监管与诚实的终态通知',
+      leadEn: 'Daemon work gets a detached supervisor lifecycle, exactly-once terminal notifications, and truthful failure receipts instead of silent or partial completion.',
+      leadZh: '神识工作获得分离监管生命周期、恰好一次的终态通知，以及诚实的失败回执，不再出现静默或部分完成。',
+      bulletsEn: [
+        'The detached supervisor publishes done/failed/cancelled/timeout terminal notifications exactly once, with the result path attached for follow-up.',
+        'Partial-finish receipts, per-batch timeouts, and provider_defaults survive detached-child reconstruction, so fleets report effort truthfully.',
+        'Daemon tasks can carry Agent Plugins and per-task plugin paths, and task cards add proactive nudges for expired watches and fleets.'
+      ],
+      bulletsZh: [
+        '分离监管器以恰好一次的方式发布 done/failed/cancelled/timeout 终态通知，并附上结果路径供后续处理。',
+        '部分完成回执、每批超时与 provider_defaults 在分离子进程重建后仍被保留，任务群如实汇报投入。',
+        '神识任务可携带 Agent Plugins 与按任务的插件路径；Task Card 为过期 watch 与任务群增加主动提醒。'
+      ],
+      whyEn: 'Long-running agent work becomes observable and attributable: when a fleet finishes, fails, or stalls, operators get one clear terminal signal and a path to the evidence.',
+      whyZh: '长任务变得可见、可追溯：当任务群完成、失败或卡住时，操作者会得到一条明确的终态信号与证据路径。'
+    },
+    {
+      titleEn: 'Dependable channels: Telegram, IMAP, mail, Feishu, WeChat, WhatsApp',
+      titleZh: '可靠的通道：Telegram、IMAP、邮件、飞书、微信与 WhatsApp',
+      leadEn: 'Channel adapters converge on one protocol while each surface gains real reliability fixes: native rich rendering, correct account routing, and replay-safe webhooks.',
+      leadZh: '各通道适配器统一到同一套协议，同时每个界面都获得真实的可靠性修复：原生富文本渲染、正确的账号路由与防重放的 webhook。',
+      bulletsEn: [
+        'Telegram gains native Rich Messages rendering, configurable Task Card locale, three-boundary read/seen/replied reactions, and device-footer + latency visibility.',
+        'IMAP responses preserve the requested account; mail stops dropping unreadable or corrupt messages, prunes unbounded seen-state, and guards against double-start listeners.',
+        'Feishu gets the full channel/task-card integration; WeChat and WhatsApp add personal-account bridging, webhook replay dedup, and credential redaction.'
+      ],
+      bulletsZh: [
+        'Telegram 新增原生富消息渲染、可配置的 Task Card 语言、已读/已见/已回三态反应，以及设备页脚与延迟可见性。',
+        'IMAP 响应保留请求的账号；邮件不再丢弃不可读或损坏的邮件、修剪无界增长的已读状态，并防止 listener 重复启动。',
+        '飞书获得完整的通道与 Task Card 集成；微信与 WhatsApp 增加个人账号桥接、webhook 重放去重与凭证脱敏。'
+      ],
+      whyEn: 'Messages arrive, read receipts are honest, and credentials stay out of logs — the transport surfaces operators actually depend on stop failing silently.',
+      whyZh: '消息可靠送达、回执诚实、凭证不落入日志——操作者真正依赖的传输层不再静默失败。'
+    },
+    {
+      titleEn: 'A hardened shell contract for Windows, macOS, and POSIX',
+      titleZh: '面向 Windows、macOS 与 POSIX 的加固 shell 契约',
+      leadEn: 'The shell adapter learns real platform semantics: Windows PowerShell discovery and tree-kill, macOS detection, benign non-zero exits, and a hard timeout ceiling.',
+      leadZh: 'shell 适配器学会真实的平台语义：Windows PowerShell 发现与进程树终止、macOS 检测、良性的非零退出码，以及硬性超时上限。',
+      bulletsEn: [
+        'Windows: pwsh discovery from well-known paths, UTF-8 console output with OEM fallback, Job Object tree-kill with identity re-check, quote-aware metachar safety, and trusted cmd.exe shims.',
+        'POSIX/macOS: ShellKind classifier drives spawn args and model-facing descriptions, macOS login-shell detection, and process-group kill with timeout fallbacks.',
+        'Everywhere: benign non-zero exits (grep/rg no-match), ANSI/control sanitization, ASCII-only cmdline + UTF-8 stdin bootstrap, and LINGTAI_TOOL_TIMEOUT_MAX_SECONDS as a hard ceiling.'
+      ],
+      bulletsZh: [
+        'Windows：从已知路径发现 pwsh、UTF-8 控制台输出（OEM 回退）、带身份复核的 Job Object 进程树终止、引号感知的元字符安全扫描与受信任的 cmd.exe shim。',
+        'POSIX/macOS：ShellKind 分类器驱动生成参数与面向模型的描述、macOS 登录 shell 检测、带超时回退的进程组终止。',
+        '全局：良性的非零退出码（grep/rg 无匹配）、ANSI/控制字符消毒、纯 ASCII 命令行 + UTF-8 stdin 引导，以及 LINGTAI_TOOL_TIMEOUT_MAX_SECONDS 硬性上限。'
+      ],
+      whyEn: 'Shell automation is predictable across every host the kernel runs on, with failures that are bounded in time and safe to reason about.',
+      whyZh: '无论在哪种宿主上运行，shell 自动化都可预测：失败在时间上有界，且可以安全地推理。'
+    },
+    {
+      titleEn: 'LLM, Agent Plugins, and the TUI/Portal 1.0',
+      titleZh: 'LLM、Agent Plugins 与 TUI/Portal 1.0',
+      leadEn: 'The runtime grows a seven-tier thinking model and OpenAI Responses reasoning semantics; plugins become a first-class capability; the TUI/Portal reaches 1.0 with launch reliability and a GitHub-only kernel check.',
+      leadZh: '运行时新增七级思考层级与 OpenAI Responses 推理语义；插件成为一等能力；TUI/Portal 达到 1.0，具备启动可靠性与只查 GitHub 的内核检查。',
+      bulletsEn: [
+        'Seven-tier thinking levels, Responses default allow, generic reasoning_content round-trip fallback, and provider-aware reasoning-effort contracts for Claude Code, Kimi, DeepSeek, and GLM.',
+        'Agent Plugins become a real capability: plugin.json manifests mount skills and MCP servers for the main agent and daemon tasks, with resident prompt sections.',
+        'TUI/Portal 1.0: launch heartbeat and agent.log fd/atomic-write fixes, preset expansion, doctor D1–D5 startup checks, recipe picker simplification, install.sh fixes, and a kernel update check that reads GitHub releases only — ending the 0.19.5→0.19.3 PyPI downgrade.'
+      ],
+      bulletsZh: [
+        '七级思考层级、Responses 默认放行、通用 reasoning_content 往返回退，以及面向 Claude Code、Kimi、DeepSeek 与 GLM 的按 provider 推理投入契约。',
+        'Agent Plugins 成为真实能力：plugin.json 清单为主智能体与神识任务挂载技能与 MCP 服务器，并写入常驻提示区。',
+        'TUI/Portal 1.0：启动心跳与 agent.log fd/原子写入修复、preset 扩展、doctor D1–D5 启动检查、recipe picker 简化、install.sh 系列修复，以及只读 GitHub release 的内核更新检查——终结 0.19.5→0.19.3 的 PyPI 降级。'
+      ],
+      whyEn: 'The system gets smarter about reasoning, more extensible through plugins, and dramatically more reliable to install and keep up to date.',
+      whyZh: '系统在推理上更聪明、通过插件更可扩展，并且在安装与保持更新上大幅更可靠。'
+    }
+  ],
+  contributors: ['888yzbt888', 'BatalloLu', 'BrianLiubr', 'Micropeptide', 'TZZheng', 'ZacharyHu0', 'ZhangJian97', 'ZigongXu', 'dtu2026', 'huangzesen', 'iron-water', 'lin-du', 'rawpaper123', 'runyuan-wang', 'wchwawa', 'zhiping0913'],
+  validation: {
+    commit: '5297de5839b3b87a82e7cf37dd31e1c9cbc402cd',
+    items: [
+      { label: 'Kernel Python suites (daemon, telegram, task card, shell, mail, imap, vision)', result: 'passed' },
+      { label: 'TUI/Portal tests', result: 'go test ./... passed' },
+      { label: 'Windows PowerShell contract', result: 'passed on merged main' },
+      { label: 'Wheels + sdist', result: 'cp311/312/313 × Linux/macOS/Windows via wheels.yml' },
+      { label: 'Release window', result: '225 commits · 134 merged + 137 closed PRs · 102 issues closed' }
+    ]
+  },
+  links: [
+    { label: 'Kernel GitHub release', href: 'https://github.com/Lingtai-AI/lingtai-kernel/releases/tag/v1.0.0' },
+    { label: 'TUI/Portal GitHub release', href: 'https://github.com/Lingtai-AI/lingtai/releases/tag/v1.0.0' },
+    { label: 'Kernel compare v0.19.5...v1.0.0', href: 'https://github.com/Lingtai-AI/lingtai-kernel/compare/v0.19.5...v1.0.0' },
+    { label: 'TUI/Portal compare v0.12.0...v1.0.0', href: 'https://github.com/Lingtai-AI/lingtai/compare/v0.12.0...v1.0.0' },
+    { label: 'Install', href: 'https://lingtai.ai/install.sh' }
+  ]
+};
+
+export const releases: Release[] = [v1_0_0_kernel_v1_0_0_tui, v0_19_0_kernel_v0_12_0_tui, v0_18_1_kernel_v0_11_6_tui, v0_18_0_kernel_v0_11_5_tui, v0_17_1_kernel_v0_11_0_tui, v0_10_7_tui, v0_16_3_kernel_v0_10_6_tui, v0_16_2_kernel_v0_10_5_tui, v0_16_1_kernel_v0_10_4_tui, v0_16_0_kernel_v0_10_3_tui, v0_15_3_kernel_v0_10_2_tui, v0_15_2_kernel, v0_15_1_kernel_v0_10_1_tui, v0_15_0_kernel_v0_10_0_tui, v0_14_2_kernel_v0_9_6_tui, v0_14_1_kernel, v0_14_0_kernel_v0_9_5_tui, v0_13_0_kernel_v0_9_3_tui, v0_12_4_kernel, v0_12_3_kernel, v0_9_1_v0_12_2, v0_9_0_v0_12_0, v0_8_15_v0_11_3, v0_8_14_v0_11_2, v0_8_13_v0_11_1, v0_8_12_v0_11_0, v0_10_10];
 
 export function getRelease(id: string): Release | undefined {
   return releases.find((r) => r.id === id);
