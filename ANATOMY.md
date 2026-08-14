@@ -23,7 +23,12 @@ maintenance: |
   every governed child Anatomy linked in both parent and child directions. Code
   is the structural source of truth: update this map with file, symbol,
   connection, composition, or state changes. Preserve the child template and
-  validate the distributed graph before merge.
+  validate the distributed graph before merge. Capability mentions in any
+  document require explicit navigation mapping to the implementing code: a
+  related_files entry in the owning ANATOMY.md (or a markdown link to that node
+  when the document lives in the anatomy graph itself), bidirectional between
+  document and owner. A capability with no mapping is drift; fix the mapping in
+  the same change.
 ---
 # LingTai Web Distributed Code Navigation Convention
 
@@ -165,6 +170,15 @@ auto-fixing the graph.
 A real file move repairs Anatomy from code. A behavior disagreement does not
 rewrite Contract from accidental implementation; it fails until code conforms or
 an authorized product decision changes the promise.
+
+**Capability mentions require explicit bidirectional mapping to implementing
+code.** Any document (README, docs, skill, blog, issue/PR body) that names a
+user-visible or agent-visible capability of lingtai-web (release archive,
+installation scripts, bilingual help) must resolve to the code or public bytes
+that implement it: either the owning ANATOMY.md lists that document in its
+`related_files` and the implementing files, or the document links to the owning
+anatomy node. A capability with no mapping is navigation drift and must be
+repaired in the same change, not deferred.
 
 ## Template
 

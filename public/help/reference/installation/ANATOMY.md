@@ -19,7 +19,12 @@ maintenance: |
   Keep this Anatomy reciprocal with its installation CONTRACT.md and with the
   root ANATOMY.md. Code is structural truth: update file/symbol/connections/state
   citations with executable changes, keep public guidance linked, and run each
-  changed executable as a real operation on the exact final candidate.
+  changed executable as a real operation on the exact final candidate. Capability
+  mentions in any document require explicit navigation mapping to the
+  implementing code: a related_files entry in the owning ANATOMY.md (or a
+  markdown link to that node when the document lives in the anatomy graph
+  itself), bidirectional between document and owner. A capability with no
+  mapping is drift; fix the mapping in the same change.
 ---
 # Public installation Anatomy
 
