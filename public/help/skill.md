@@ -11,6 +11,10 @@ router.
 - **Installation** —
   [help/reference/installation/skill.md](https://lingtai.ai/help/reference/installation/skill.md)
   for the ordinary installer, explicit update/dev/fix assets, and verification.
+- **Beginner manual** —
+  [help/beginner-manual.md](https://lingtai.ai/help/beginner-manual.md)
+  for first-time users who need installation, configuration, first task, common
+  slash commands, troubleshooting, and privacy guidance.
 - **Migration** —
   [help/reference/migration/skill.md](https://lingtai.ai/help/reference/migration/skill.md)
   for exact-tag product migration history.
