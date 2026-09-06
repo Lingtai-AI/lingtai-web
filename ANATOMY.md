@@ -16,6 +16,7 @@ related_files:
   - public/skill.md
   - public/help/skill.md
   - public/_headers
+  - docs/release-mirror/ANATOMY.md
 maintenance: |
   This file is both the repository-root Anatomy and the normative
   anatomy-of-anatomy for lingtai-web. Keep related_files repo-relative,
@@ -115,6 +116,11 @@ registry or create empty documents solely for filename symmetry.
   [`public/help/reference/installation/ANATOMY.md`](public/help/reference/installation/ANATOMY.md)
   and governed by its paired Contract. It owns the deployed shell entrypoints,
   operation selection, receipts, runtime provenance, and real behavior evidence.
+- **Release-mirror download route** is mapped by
+  [`docs/release-mirror/ANATOMY.md`](docs/release-mirror/ANATOMY.md) and governed by its
+  paired Contract. It re-serves already-published GitHub release assets from
+  Cloudflare R2 for download acceleration; it owns no version selection or
+  release-publication authority.
 - **Build/deploy composition** `package.json:6-12` exposes local build, preview,
   and deploy commands; `astro.config.mjs:5-8` declares a static
   site with the Cloudflare adapter; `wrangler.jsonc:1-12` owns Cloudflare runtime

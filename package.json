@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "npm run generate-types && astro dev",
+    "build": "npm run generate-types && astro build",
     "preview": "npm run build && wrangler dev",
     "generate-types": "wrangler types",
     "deploy": "npm run build && wrangler deploy"
