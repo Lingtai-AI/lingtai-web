@@ -7,6 +7,21 @@
 		"directory": "./dist",
 		"binding": "ASSETS"
 	},
+	// Deployment prerequisite (not created by this PR): before `wrangler
+	// deploy` can serve anything from src/pages/dl/, an operator must run
+	// `wrangler r2 bucket create lingtai-release-mirror` under this Cloudflare
+	// account, and set these GitHub Actions secrets/vars for
+	// .github/workflows/mirror-release-assets.yml: secrets.CLOUDFLARE_API_TOKEN,
+	// secrets.CLOUDFLARE_ACCOUNT_ID, vars.RELEASE_MIRROR_BUCKET (identical to
+	// bucket_name below). See docs/release-mirror/CONTRACT.md. This entry is
+	// configuration-as-template: no bucket exists yet, and this PR does not
+	// create one.
+	"r2_buckets": [
+		{
+			"binding": "RELEASE_MIRROR_BUCKET",
+			"bucket_name": "lingtai-release-mirror"
+		}
+	],
 	"observability": {
 		"enabled": true
 	}

@@ -4,6 +4,7 @@ contract_version: 2
 related_files:
   - ANATOMY.md
   - public/help/reference/installation/CONTRACT.md
+  - docs/release-mirror/CONTRACT.md
   - package.json
   - astro.config.mjs
 maintenance: |
@@ -63,6 +64,8 @@ This file is the **contract of contract**: it defines repository-wide behavior,
 child frontmatter/body/link rules, maintenance, and validation. The first
 governed child is the public installation component at
 [`public/help/reference/installation/CONTRACT.md`](public/help/reference/installation/CONTRACT.md).
+The second governed child is the release-mirror download route at
+[`docs/release-mirror/CONTRACT.md`](docs/release-mirror/CONTRACT.md).
 
 [`ANATOMY.md`](ANATOMY.md) is the paired distributed code navigation system.
 Anatomy says where code is and how it composes; Contract says how a layer may be
