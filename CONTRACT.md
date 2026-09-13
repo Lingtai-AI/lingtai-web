@@ -64,7 +64,8 @@ This file is the **contract of contract**: it defines repository-wide behavior,
 child frontmatter/body/link rules, maintenance, and validation. The first
 governed child is the public installation component at
 [`public/help/reference/installation/CONTRACT.md`](public/help/reference/installation/CONTRACT.md).
-The second governed child is the release-mirror download route at
+The second governed child is the latest-only release-mirror metadata and
+asset-serving component at
 [`docs/release-mirror/CONTRACT.md`](docs/release-mirror/CONTRACT.md).
 
 [`ANATOMY.md`](ANATOMY.md) is the paired distributed code navigation system.

@@ -24,6 +24,7 @@ ASSET_NAME="lingtai-v1.0.8-windows-amd64.zip"
 printf 'fixture-release-bytes-%s' "$(date +%s)" > "$WORKDIR/fixture-asset"
 GOOD_SHA256="$(shasum -a 256 "$WORKDIR/fixture-asset" | cut -d' ' -f1)"
 GOOD_SIZE="$(wc -c < "$WORKDIR/fixture-asset" | tr -d ' ')"
+CORRUPT_SIZE="$(printf 'corrupted-bytes-not-matching-digest' | wc -c | tr -d ' ')"
 
 # --- Fixture "good" curl: always returns the correct fixture bytes -------
 mkdir -p "$WORKDIR/bin-good"
@@ -57,23 +58,27 @@ CURL_STUB
 chmod +x "$WORKDIR/bin-corrupt/curl"
 
 # --- Fake wrangler recording its invocation -------------------------------
-mkdir -p "$WORKDIR/bin-wrangler"
-cat > "$WORKDIR/bin-wrangler/fake-wrangler" << 'WRANGLER_STUB'
+# Its path deliberately contains a space: WRANGLER_BIN is one executable path,
+# never a multiword shell command string.
+WRANGLER_STUB="$WORKDIR/fake wrangler"
+cat > "$WRANGLER_STUB" << 'WRANGLER_STUB_BODY'
 #!/usr/bin/env bash
 set -euo pipefail
 echo "$@" >> "$FAKE_WRANGLER_LOG"
-WRANGLER_STUB
-chmod +x "$WORKDIR/bin-wrangler/fake-wrangler"
+WRANGLER_STUB_BODY
+chmod +x "$WRANGLER_STUB"
 
 WRANGLER_LOG="$WORKDIR/wrangler.log"
 
 run() {
   local curl_bin_dir="$1"; shift
   env -i \
-    PATH="$curl_bin_dir:$WORKDIR/bin-wrangler:/usr/bin:/bin" \
-    WRANGLER_BIN="$WORKDIR/bin-wrangler/fake-wrangler" \
+    PATH="$curl_bin_dir:/usr/bin:/bin" \
+    WRANGLER_BIN="$WRANGLER_STUB" \
     FAKE_WRANGLER_LOG="$WRANGLER_LOG" \
     RELEASE_MIRROR_BUCKET="test-bucket" \
+    GENERATION="100-1" \
+    EXPECTED_SIZE="$GOOD_SIZE" \
     "$@" \
     "$SCRIPT"
 }
@@ -88,9 +93,9 @@ else
   echo "$OUT" >&2
   fail "happy path should have succeeded"
 fi
-grep -q "r2 object put test-bucket/releases/Lingtai-AI/lingtai/v1.0.8/$ASSET_NAME" "$WRANGLER_LOG" \
-  || fail "wrangler was not invoked with the expected tag-scoped key"
-pass "wrangler received the correct tag-scoped object key"
+grep -q "r2 object put test-bucket/releases/Lingtai-AI/lingtai/objects/v1.0.8/100-1/$ASSET_NAME" "$WRANGLER_LOG" \
+  || fail "wrangler was not invoked with the expected generation-scoped key"
+pass "wrangler received the correct generation-scoped object key"
 
 # --- Test 2: disallowed source repo is rejected before any download ------
 rm -f "$WRANGLER_LOG"
@@ -106,7 +111,7 @@ pass "disallowed source repo is rejected before any network/upload action"
 rm -f "$WRANGLER_LOG"
 if OUT="$(run "$WORKDIR/bin-corrupt" \
     SOURCE_REPO="Lingtai-AI/lingtai" TAG="v1.0.8" ASSET_NAME="$ASSET_NAME" \
-    EXPECTED_SHA256="$GOOD_SHA256" 2>&1)"; then
+    EXPECTED_SHA256="$GOOD_SHA256" EXPECTED_SIZE="$CORRUPT_SIZE" 2>&1)"; then
   echo "$OUT" >&2
   fail "corrupted download must be rejected, not uploaded"
 fi
@@ -149,6 +154,25 @@ if run "$WORKDIR/bin-good" \
 fi
 [ ! -f "$WRANGLER_LOG" ] || fail "wrangler must never run when the size check fails"
 pass "size mismatch is rejected before upload"
+
+# --- Test 7: generation and positive-size grammar are validated -------------
+rm -f "$WRANGLER_LOG"
+if run "$WORKDIR/bin-good" \
+    SOURCE_REPO="Lingtai-AI/lingtai" TAG="v1.0.8" GENERATION="client-value" ASSET_NAME="$ASSET_NAME" \
+    EXPECTED_SHA256="$GOOD_SHA256" > /dev/null 2>&1; then
+  fail "non-workflow generation must be rejected"
+fi
+[ ! -f "$WRANGLER_LOG" ] || fail "wrangler must never run for an invalid generation"
+pass "non-numeric workflow generation is rejected before download/upload"
+
+rm -f "$WRANGLER_LOG"
+if run "$WORKDIR/bin-good" \
+    SOURCE_REPO="Lingtai-AI/lingtai" TAG="v1.0.8" ASSET_NAME="$ASSET_NAME" \
+    EXPECTED_SHA256="$GOOD_SHA256" EXPECTED_SIZE="0" > /dev/null 2>&1; then
+  fail "zero size must be rejected"
+fi
+[ ! -f "$WRANGLER_LOG" ] || fail "wrangler must never run for a non-positive size"
+pass "non-positive expected size is rejected before download/upload"
 
 echo
 echo "PASS: sync-release-asset.sh fixture suite"

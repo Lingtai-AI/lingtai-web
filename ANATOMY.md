@@ -116,11 +116,12 @@ registry or create empty documents solely for filename symmetry.
   [`public/help/reference/installation/ANATOMY.md`](public/help/reference/installation/ANATOMY.md)
   and governed by its paired Contract. It owns the deployed shell entrypoints,
   operation selection, receipts, runtime provenance, and real behavior evidence.
-- **Release-mirror download route** is mapped by
+- **Latest-only release mirror** is mapped by
   [`docs/release-mirror/ANATOMY.md`](docs/release-mirror/ANATOMY.md) and governed by its
-  paired Contract. It re-serves already-published GitHub release assets from
-  Cloudflare R2 for download acceleration; it owns no version selection or
-  release-publication authority.
+  paired Contract. It mirrors GitHub's current official latest independently per
+  allowlisted repository, exposes trusted latest metadata, and serves only the
+  active manifest's exact assets from Cloudflare R2. GitHub retains all
+  release-publication and latest-selection authority.
 - **Build/deploy composition** `package.json:6-12` exposes local build, preview,
   and deploy commands; `astro.config.mjs:5-8` declares a static
   site with the Cloudflare adapter; `wrangler.jsonc:1-12` owns Cloudflare runtime
@@ -159,6 +160,11 @@ explained by one installation skill and governed by one child Contract.
 Most website state is repository-owned static source. Release/tutorial/project
 records are TypeScript data; blog posts are content files; translations are
 source maps. Build output is generated and is not the source of truth.
+
+The latest-only release mirror owns one external R2 state object per allowlisted
+repository, selecting one active generation and retaining exact pending deletion
+intent. Its full key and transaction model lives only in the release-mirror child
+Contract/Anatomy; this root maps that component without duplicating its rules.
 
 The installation executables act on external machine state: target binaries,
 `$HOME/.lingtai-tui/runtime`, and a strict install receipt. That state model and
