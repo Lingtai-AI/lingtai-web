@@ -14,31 +14,28 @@
 #                      it is not configurable, so a compromised or mistaken
 #                      caller cannot redirect this script at an arbitrary repo.
 #   TAG                exact "vX.Y.Z" release tag. Never "latest".
+#   GENERATION         workflow-owned numeric GITHUB_RUN_ID-GITHUB_RUN_ATTEMPT;
+#                      never accepted from repository_dispatch client_payload.
 #   ASSET_NAME         exact release asset filename (basename only).
 #   EXPECTED_SHA256    64 lowercase hex chars; the byte digest this asset must
 #                      have. Sourced from the publisher's own release manifest,
 #                      never re-derived here.
-#   EXPECTED_SIZE      optional exact byte size. When set, a size mismatch is
-#                      rejected before the sha256 check even runs.
+#   EXPECTED_SIZE      required positive exact byte size. A mismatch is rejected
+#                      before the sha256 check even runs.
 #   RELEASE_MIRROR_BUCKET       target R2 bucket name.
 #   CLOUDFLARE_API_TOKEN        wrangler auth (not read directly by this script;
 #                                consumed by the wrangler subprocess).
 #   CLOUDFLARE_ACCOUNT_ID       wrangler account scope (same as above).
-#   WRANGLER_BIN                optional override for the wrangler invocation,
-#                                e.g. a fixture stub used by
-#                                scripts/test-sync-release-asset.sh. Defaults to
-#                                "npx --no-install wrangler".
+#   WRANGLER_BIN                optional exact executable-path override, e.g. a
+#                                fixture stub used by
+#                                scripts/test-sync-release-asset.sh. When unset,
+#                                argv defaults to `npx --no-install wrangler`.
 #
-# Object key: releases/<SOURCE_REPO>/<TAG>/<ASSET_NAME> — tag-scoped, so two
-# different releases (or repos) can never collide. This script always
-# verifies THIS invocation's downloaded bytes against THIS invocation's
-# EXPECTED_SHA256 before uploading, so it never uploads bytes that disagree
-# with its own caller-supplied digest -- but it does NOT guarantee the key's
-# content is stable across separate invocations: if a publisher re-dispatches
-# the same tag/asset with a genuinely different digest (e.g. a regenerated
-# manifest file with a fresh timestamp), this script will overwrite the
-# existing object with those new, verified bytes. Callers/consumers must not
-# treat a tag-scoped key as long-lived-immutable content.
+# Object key:
+# releases/<SOURCE_REPO>/objects/<TAG>/<GENERATION>/<ASSET_NAME>. A candidate
+# generation is immutable and disjoint from currently served bytes, including
+# when a same-tag rerun carries a legitimately changed digest. Only the state
+# object's active manifest can make this exact key servable.
 set -euo pipefail
 
 # Lingtai-AI/lingtai-kernel and Lingtai-AI/lingtai are the two actual upstream
@@ -54,8 +51,10 @@ fail() {
 
 : "${SOURCE_REPO:?SOURCE_REPO is required}"
 : "${TAG:?TAG is required}"
+: "${GENERATION:?GENERATION is required}"
 : "${ASSET_NAME:?ASSET_NAME is required}"
 : "${EXPECTED_SHA256:?EXPECTED_SHA256 is required}"
+: "${EXPECTED_SIZE:?EXPECTED_SIZE is required}"
 : "${RELEASE_MIRROR_BUCKET:?RELEASE_MIRROR_BUCKET is required}"
 
 allowed=0
@@ -72,6 +71,8 @@ done
 # regex operator instead, matching the route's own strict TAG_RE exactly
 # (src/lib/release-mirror.mjs).
 [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "TAG '$TAG' is not an exact vX.Y.Z release tag"
+[[ "$GENERATION" =~ ^[1-9][0-9]*-[1-9][0-9]*$ ]] \
+  || fail "GENERATION '$GENERATION' is not numeric GITHUB_RUN_ID-GITHUB_RUN_ATTEMPT"
 
 case "$ASSET_NAME" in
   */*|.*|*..*) fail "ASSET_NAME '$ASSET_NAME' is not a safe basename" ;;
@@ -85,11 +86,8 @@ case "$EXPECTED_SHA256" in
   *) fail "EXPECTED_SHA256 '$EXPECTED_SHA256' is not 64 lowercase hex characters" ;;
 esac
 
-if [ -n "${EXPECTED_SIZE:-}" ]; then
-  case "$EXPECTED_SIZE" in
-    ''|*[!0-9]*) fail "EXPECTED_SIZE '$EXPECTED_SIZE' is not a positive integer" ;;
-  esac
-fi
+[[ "$EXPECTED_SIZE" =~ ^[1-9][0-9]*$ ]] \
+  || fail "EXPECTED_SIZE '$EXPECTED_SIZE' is not a positive integer"
 
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
@@ -111,7 +109,7 @@ if [ ! -s "$DEST" ]; then
 fi
 
 ACTUAL_SIZE="$(wc -c < "$DEST" | tr -d ' ')"
-if [ -n "${EXPECTED_SIZE:-}" ] && [ "$ACTUAL_SIZE" != "$EXPECTED_SIZE" ]; then
+if [ "$ACTUAL_SIZE" != "$EXPECTED_SIZE" ]; then
   fail "$ASSET_NAME size mismatch: expected $EXPECTED_SIZE bytes, got $ACTUAL_SIZE bytes -- refusing to upload a truncated/corrupt download"
 fi
 
@@ -122,12 +120,15 @@ fi
 
 echo "Verified $ASSET_NAME: $ACTUAL_SIZE bytes, sha256=$ACTUAL_SHA256"
 
-KEY="releases/$SOURCE_REPO/$TAG/$ASSET_NAME"
-WRANGLER_BIN="${WRANGLER_BIN:-npx --no-install wrangler}"
+KEY="releases/$SOURCE_REPO/objects/$TAG/$GENERATION/$ASSET_NAME"
+if [ -n "${WRANGLER_BIN:-}" ]; then
+  WRANGLER_CMD=("$WRANGLER_BIN")
+else
+  WRANGLER_CMD=(npx --no-install wrangler)
+fi
 
 echo "Uploading to r2://$RELEASE_MIRROR_BUCKET/$KEY"
-# shellcheck disable=SC2086
-$WRANGLER_BIN r2 object put "$RELEASE_MIRROR_BUCKET/$KEY" \
+"${WRANGLER_CMD[@]}" r2 object put "$RELEASE_MIRROR_BUCKET/$KEY" \
   --file "$DEST" \
   --content-type application/octet-stream \
   --remote \
