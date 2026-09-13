@@ -1,28 +1,13 @@
-name: Mirror release assets to R2
+name: Mirror latest release to R2
 
-# Receives one repository_dispatch per finished, successfully-uploaded release
-# from Lingtai-AI/lingtai-kernel (wheels.yml) or Lingtai-AI/lingtai
-# (release.yml), AFTER those workflows have already uploaded the assets to
-# their own GitHub release -- never on release-creation alone. See
-# docs/release-mirror/CONTRACT.md for the full contract this workflow and
-# scripts/sync-release-asset.sh must honor.
-#
-# client_payload shape:
-#   {
-#     "source_repo": "Lingtai-AI/lingtai-kernel" | "Lingtai-AI/lingtai",
-#     "tag": "vX.Y.Z",
-#     "assets": [{ "name": "<filename>", "sha256": "<64 hex>", "size": <int> }, ...]
-#   }
-#
-# Deployment prerequisite (not performed by this workflow or by this repo's
-# CI): an R2 bucket must exist and the following repository secrets/variables
-# must be configured before this workflow can do anything but fail loud:
-#   - secrets.CLOUDFLARE_API_TOKEN   (R2 read/write scope)
-#   - secrets.CLOUDFLARE_ACCOUNT_ID
-#   - vars.RELEASE_MIRROR_BUCKET     (the R2 bucket name)
-# Until then every run fails at the "Mirror asset" step with wrangler's own
-# authentication/bucket-not-found error -- a visible, honest failure, not a
-# silently skipped mirror.
+# Receives one repository_dispatch only after an allowlisted publisher has
+# uploaded every named asset to its GitHub release. GitHub releases/latest is
+# checked before upload and immediately before promotion. This per-repo Actions
+# concurrency group is the supported single-writer path; it is not a general
+# storage CAS fence. GitHub may retain only one pending run, so every run also
+# revalidates official latest before it can switch state. If GitHub discards a
+# newer pending dispatch, the source release owner must visibly re-send current
+# latest; this workflow has no scheduler or background reconciler.
 on:
   repository_dispatch:
     types: [release-asset-published]
@@ -31,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mirror-release-assets-${{ github.event.client_payload.source_repo }}-${{ github.event.client_payload.tag }}
+  group: mirror-release-assets-${{ github.event.client_payload.source_repo }}
   cancel-in-progress: false
 
 jobs:
@@ -42,8 +27,13 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       RELEASE_MIRROR_BUCKET: ${{ vars.RELEASE_MIRROR_BUCKET }}
+      GITHUB_TOKEN: ${{ github.token }}
       SOURCE_REPO: ${{ github.event.client_payload.source_repo }}
       TAG: ${{ github.event.client_payload.tag }}
+      ASSETS_JSON: ${{ toJson(github.event.client_payload.assets) }}
+      # Workflow context is authoritative. client_payload cannot choose a key
+      # generation and therefore cannot overwrite the active generation.
+      GENERATION: ${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,33 +43,8 @@ jobs:
         with:
           node-version: '22.12.0'
 
-      - name: Install wrangler
+      - name: Install locked dependencies
         run: npm ci
 
-      - name: Validate dispatch payload shape
-        id: assets
-        env:
-          ASSETS_JSON: ${{ toJson(github.event.client_payload.assets) }}
-        run: |
-          set -euo pipefail
-          if [ -z "$SOURCE_REPO" ] || [ -z "$TAG" ]; then
-            echo "::error::client_payload is missing source_repo or tag" >&2
-            exit 1
-          fi
-          echo "$ASSETS_JSON" > /tmp/assets.json
-          count="$(node -e 'const a = require("/tmp/assets.json"); if (!Array.isArray(a) || a.length === 0) throw new Error("client_payload.assets must be a non-empty array"); for (const e of a) { if (typeof e.name !== "string" || typeof e.sha256 !== "string") throw new Error("each asset needs name and sha256"); } console.log(a.length);')"
-          echo "count=$count" >> "$GITHUB_OUTPUT"
-
-      - name: Mirror each asset
-        run: |
-          set -euo pipefail
-          node -e 'const a = require("/tmp/assets.json"); for (const e of a) console.log(JSON.stringify(e));' \
-            | while IFS= read -r asset_json; do
-                ASSET_NAME="$(node -e "console.log(JSON.parse(process.argv[1]).name)" "$asset_json")"
-                EXPECTED_SHA256="$(node -e "console.log(JSON.parse(process.argv[1]).sha256)" "$asset_json")"
-                EXPECTED_SIZE="$(node -e "const e=JSON.parse(process.argv[1]); console.log(e.size ?? '')" "$asset_json")"
-                echo "::group::Mirroring $ASSET_NAME"
-                ASSET_NAME="$ASSET_NAME" EXPECTED_SHA256="$EXPECTED_SHA256" EXPECTED_SIZE="$EXPECTED_SIZE" \
-                  scripts/sync-release-asset.sh
-                echo "::endgroup::"
-              done
+      - name: Validate payload and synchronize latest release
+        run: node scripts/sync-latest-release.mjs
