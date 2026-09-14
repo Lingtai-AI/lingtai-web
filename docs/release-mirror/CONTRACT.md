@@ -9,6 +9,7 @@ related_files:
   - src/pages/dl/[owner]/[repo]/[tag]/[asset].ts
   - src/pages/dl/[owner]/[repo]/latest.json.ts
   - scripts/sync-release-asset.sh
+  - scripts/sync-release-latest.sh
   - .github/workflows/mirror-release-assets.yml
   - wrangler.jsonc
 maintenance: |
@@ -41,8 +42,10 @@ catches up.
    release can exist before its assets finish uploading.
 2. `.github/workflows/mirror-release-assets.yml` accepts exactly one
    `repository_dispatch` event type (`release-asset-published`) and processes
-   only the assets named in that event's own payload; it never lists a
-   release's assets itself and never discovers new tags on a schedule.
+   only the assets named in that event's own payload. After every asset sync
+   succeeds, `scripts/sync-release-latest.sh` uses the workflow's contents-read
+   token to verify the exact GitHub release ID/tag and publishes the strict
+   latest metadata object last.
 3. `scripts/sync-release-asset.sh` re-downloads each named asset directly from
    `github.com/<repo>/releases/download/<tag>/<asset>` and independently
    re-verifies its size (when supplied) and sha256 against the digest the
@@ -60,11 +63,11 @@ catches up.
    lifetime (`Cache-Control`) is short precisely because this key is not
    guaranteed immutable; it is never a silent version change to a *different
    release*, only a possible byte change within the same tag's own re-sync.
-5. `src/pages/dl/[owner]/[repo]/latest.json.ts` fetches GitHub's official
-   latest release, validates its exact `vX.Y.Z` tag, positive release ID, and
-   every asset's safe name, positive size, and GitHub-provided SHA-256 digest,
-   then emits `lingtai.release_mirror.latest/v1`. Invalid or unavailable
-   upstream metadata fails as 502; it is never guessed or partially emitted.
+5. `scripts/sync-release-latest.sh` validates the exact `vX.Y.Z` tag,
+   positive GitHub release ID, and every dispatched asset's safe name, positive
+   size, and SHA-256, then publishes `lingtai.release_mirror.latest/v1` to the
+   repo-scoped R2 key. The HTTP route serves only that object; missing binding
+   or metadata returns 503 and never triggers a rate-limited runtime API call.
 6. `src/pages/dl/[owner]/[repo]/[tag]/[asset].ts` serves exactly the R2 object
    at that derived key when present. If the binding or object is absent, the
    same validated repo/tag/asset is redirected to GitHub Releases. Invalid
@@ -81,7 +84,7 @@ catches up.
 |---|---|---|---|
 | Publisher workflow's own asset upload just succeeded | Publisher fires `repository_dispatch: release-asset-published` with the exact asset name/sha256/size | Mirrors only bytes GitHub has already accepted | Do not dispatch on `release.published` before assets are uploaded |
 | Valid dispatch payload for an allowlisted repo/tag/asset | `scripts/sync-release-asset.sh` (one call per asset) | Re-verifies bytes independently before upload | Do not trust the payload's digest without re-hashing the download |
-| Caller requests `/dl/<owner>/<repo>/latest.json` | Strict projection of GitHub's official latest-release API | One authoritative tag and complete digest-bearing asset set | Do not guess missing digests or emit partial metadata |
+| Caller requests `/dl/<owner>/<repo>/latest.json` | Read the publisher-validated repo-scoped R2 object | One authoritative tag and complete digest-bearing asset set | Do not query GitHub per request, guess digests, or emit partial metadata |
 | Caller requests `/dl/<owner>/<repo>/<tag>/<asset>` | `bucket.get` on the exact key, then exact GitHub release redirect only on a miss | R2 stays primary while an unmirrored release remains installable | Do not list the bucket, change tags, or change asset names |
 | `owner/repo` not in the allowlist, or `tag`/`asset` fails validation | 404 | No arbitrary-repo proxying and no path traversal | Do not construct any upstream URL |
 
@@ -118,12 +121,12 @@ constructs a fallback URL for a rejected request.
 
 ### `src/pages/dl/[owner]/[repo]/latest.json.ts`
 
-**Allowed reads:** one GitHub official latest-release API response for an
+**Allowed reads:** exactly one repo-scoped R2 latest metadata object for an
 allowlisted repository.
 
-**Failure meaning:** invalid repositories return 404. Upstream HTTP, transport,
-JSON, schema, tag, release-ID, asset-name, size, duplicate-name, or digest
-failures return 502 with no partial metadata.
+**Failure meaning:** invalid repositories return 404. A missing binding or
+metadata object returns 503; the request path never calls GitHub or emits stale,
+guessed, or partial metadata.
 
 ## Contract rules
 
