@@ -42,6 +42,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       RELEASE_MIRROR_BUCKET: ${{ vars.RELEASE_MIRROR_BUCKET }}
+      GITHUB_TOKEN: ${{ github.token }}
       SOURCE_REPO: ${{ github.event.client_payload.source_repo }}
       TAG: ${{ github.event.client_payload.tag }}
     steps:
@@ -83,3 +84,8 @@ jobs:
                   scripts/sync-release-asset.sh
                 echo "::endgroup::"
               done
+
+      - name: Publish latest release metadata
+        env:
+          ASSETS_JSON: ${{ toJson(github.event.client_payload.assets) }}
+        run: scripts/sync-release-latest.sh

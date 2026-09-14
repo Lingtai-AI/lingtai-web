@@ -37,6 +37,10 @@ export function mirrorObjectKey(owner, repo, tag, asset) {
   return `releases/${owner}/${repo}/${tag}/${asset}`;
 }
 
+export function latestMetadataObjectKey(owner, repo) {
+  return `releases/${owner}/${repo}/latest.json`;
+}
+
 // Safe fallback for a valid, exact release asset when its R2 copy has not been
 // populated yet. Validation stays identical to the mirror object-key path.
 export function githubReleaseAssetUrl(owner, repo, tag, asset) {
