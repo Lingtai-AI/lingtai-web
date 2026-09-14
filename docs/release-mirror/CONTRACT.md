@@ -7,6 +7,7 @@ related_files:
   - docs/release-mirror/ANATOMY.md
   - src/lib/release-mirror.mjs
   - src/pages/dl/[owner]/[repo]/[tag]/[asset].ts
+  - src/pages/dl/[owner]/[repo]/latest.json.ts
   - scripts/sync-release-asset.sh
   - .github/workflows/mirror-release-assets.yml
   - wrangler.jsonc
@@ -21,15 +22,14 @@ maintenance: |
 
 ## Purpose
 
-This is the normative contract for `lingtai.ai/dl/<owner>/<repo>/<tag>/<asset>`:
-a download-acceleration mirror intended for mainland-China users, serving GitHub release assets for
-the two actual upstream repositories, `Lingtai-AI/lingtai-kernel` and
-`Lingtai-AI/lingtai`. GitHub remains the sole official release authority; this
-component never creates, edits, or supersedes a release, and it never selects
-a version on the user's behalf. It exists only to shorten the network path for
-bytes GitHub has already published, for callers (such as `install.sh`'s
-mirror source, see the TUI repository's own contract for that caller's rules)
-that choose to use it.
+This is the normative contract for `lingtai.ai/dl/<owner>/<repo>/latest.json`
+and `lingtai.ai/dl/<owner>/<repo>/<tag>/<asset>`. The component projects
+GitHub's official latest release into strict installer metadata and accelerates
+its release assets from R2 when populated. GitHub remains the sole release
+authority; this component never creates, edits, or supersedes a release. An
+exact valid asset missing from R2 is routed to that same tag and filename on
+GitHub Releases so the public installer remains available while mirroring
+catches up.
 
 ## Behavior
 
@@ -60,12 +60,16 @@ that choose to use it.
    lifetime (`Cache-Control`) is short precisely because this key is not
    guaranteed immutable; it is never a silent version change to a *different
    release*, only a possible byte change within the same tag's own re-sync.
-5. `src/pages/dl/[owner]/[repo]/[tag]/[asset].ts` serves exactly the object at
-   that derived key, or 404 when the repo/tag/asset shape is invalid or the
-   object does not exist, or 503 when the `RELEASE_MIRROR_BUCKET` binding
-   itself is absent (unconfigured deployment). It never redirects to GitHub,
-   never serves a different tag's bytes, and never lists the bucket.
-6. This component performs no merge, deploy, release, or publication action
+5. `src/pages/dl/[owner]/[repo]/latest.json.ts` fetches GitHub's official
+   latest release, validates its exact `vX.Y.Z` tag, positive release ID, and
+   every asset's safe name, positive size, and GitHub-provided SHA-256 digest,
+   then emits `lingtai.release_mirror.latest/v1`. Invalid or unavailable
+   upstream metadata fails as 502; it is never guessed or partially emitted.
+6. `src/pages/dl/[owner]/[repo]/[tag]/[asset].ts` serves exactly the R2 object
+   at that derived key when present. If the binding or object is absent, the
+   same validated repo/tag/asset is redirected to GitHub Releases. Invalid
+   paths still return 404; the route never substitutes another tag or asset.
+7. This component performs no merge, deploy, release, or publication action
    itself; the deployment prerequisites in `wrangler.jsonc` and this
    workflow's required secrets/vars (`CLOUDFLARE_API_TOKEN`,
    `CLOUDFLARE_ACCOUNT_ID`, `vars.RELEASE_MIRROR_BUCKET`) are explicit
@@ -77,9 +81,9 @@ that choose to use it.
 |---|---|---|---|
 | Publisher workflow's own asset upload just succeeded | Publisher fires `repository_dispatch: release-asset-published` with the exact asset name/sha256/size | Mirrors only bytes GitHub has already accepted | Do not dispatch on `release.published` before assets are uploaded |
 | Valid dispatch payload for an allowlisted repo/tag/asset | `scripts/sync-release-asset.sh` (one call per asset) | Re-verifies bytes independently before upload | Do not trust the payload's digest without re-hashing the download |
-| Caller requests `/dl/<owner>/<repo>/<tag>/<asset>` | Route adapter `bucket.get` on the derived key | One exact key in, one exact object out | Do not list the bucket or guess a nearby key |
-| `owner/repo` not in the allowlist, or `tag`/`asset` fails validation | 404 | No arbitrary-repo mirroring, no path traversal | Do not proxy to GitHub as a fallback from this route |
-| `RELEASE_MIRROR_BUCKET` binding absent | 503 | Honest "not deployed yet", not a silent empty response | Do not fabricate a redirect or a fake success |
+| Caller requests `/dl/<owner>/<repo>/latest.json` | Strict projection of GitHub's official latest-release API | One authoritative tag and complete digest-bearing asset set | Do not guess missing digests or emit partial metadata |
+| Caller requests `/dl/<owner>/<repo>/<tag>/<asset>` | `bucket.get` on the exact key, then exact GitHub release redirect only on a miss | R2 stays primary while an unmirrored release remains installable | Do not list the bucket, change tags, or change asset names |
+| `owner/repo` not in the allowlist, or `tag`/`asset` fails validation | 404 | No arbitrary-repo proxying and no path traversal | Do not construct any upstream URL |
 
 ## Adapters
 
@@ -107,12 +111,19 @@ handler via `src/lib/release-mirror.mjs`.
 **Allowed reads:** exactly one `bucket.get(key)` call per request, for the key
 derived from the request's own path params.
 
-**Failure meaning:** 404 for any invalid or unmirrored request; 503 when the
-binding itself is missing. The handler itself never fabricates a redirect,
-a fake success, or a different tag's bytes as a fallback; it does not claim
-that an unexpected platform-level error (e.g. R2 unavailable) can never
-surface as a generic 5xx — that is an honest transport failure, not a
-disguised success.
+**Failure meaning:** invalid requests return 404. A valid request whose R2
+binding or object is absent receives a 302 to the exact same repo/tag/asset on
+GitHub Releases. The handler never lists R2, changes a tag or filename, or
+constructs a fallback URL for a rejected request.
+
+### `src/pages/dl/[owner]/[repo]/latest.json.ts`
+
+**Allowed reads:** one GitHub official latest-release API response for an
+allowlisted repository.
+
+**Failure meaning:** invalid repositories return 404. Upstream HTTP, transport,
+JSON, schema, tag, release-ID, asset-name, size, duplicate-name, or digest
+failures return 502 with no partial metadata.
 
 ## Contract rules
 

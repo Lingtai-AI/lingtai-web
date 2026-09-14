@@ -118,9 +118,9 @@ registry or create empty documents solely for filename symmetry.
   operation selection, receipts, runtime provenance, and real behavior evidence.
 - **Release-mirror download route** is mapped by
   [`docs/release-mirror/ANATOMY.md`](docs/release-mirror/ANATOMY.md) and governed by its
-  paired Contract. It re-serves already-published GitHub release assets from
-  Cloudflare R2 for download acceleration; it owns no version selection or
-  release-publication authority.
+  paired Contract. It projects GitHub's authoritative latest release into
+  installer metadata, serves R2 assets first, and routes exact unmirrored assets
+  to GitHub; it owns no release-publication authority.
 - **Build/deploy composition** `package.json:6-12` exposes local build, preview,
   and deploy commands; `astro.config.mjs:5-8` declares a static
   site with the Cloudflare adapter; `wrangler.jsonc:1-12` owns Cloudflare runtime
