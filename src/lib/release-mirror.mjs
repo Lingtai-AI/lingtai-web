@@ -37,6 +37,14 @@ export function mirrorObjectKey(owner, repo, tag, asset) {
   return `releases/${owner}/${repo}/${tag}/${asset}`;
 }
 
+// Safe fallback for a valid, exact release asset when its R2 copy has not been
+// populated yet. Validation stays identical to the mirror object-key path.
+export function githubReleaseAssetUrl(owner, repo, tag, asset) {
+  const resolved = resolveDownloadRequest({ owner, repo, tag, asset });
+  if (!resolved.ok) return null;
+  return `https://github.com/${owner}/${repo}/releases/download/${tag}/${asset}`;
+}
+
 /**
  * Resolve one request's route params into either a rejection or the exact R2
  * key to serve. Never falls back to a different version or repo, and never

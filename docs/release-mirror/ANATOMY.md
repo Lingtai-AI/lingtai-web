@@ -4,6 +4,7 @@ related_files:
   - ANATOMY.md
   - src/lib/release-mirror.mjs
   - src/pages/dl/[owner]/[repo]/[tag]/[asset].ts
+  - src/pages/dl/[owner]/[repo]/latest.json.ts
   - scripts/sync-release-asset.sh
   - scripts/test-sync-release-asset.sh
   - scripts/test-release-mirror-route.mjs
@@ -17,10 +18,11 @@ maintenance: |
 ---
 # Release-mirror download route Anatomy
 
-This component serves a copy of GitHub release assets for download acceleration from
-two allowlisted upstream repositories. It never discovers, lists, or invents
-a release; it only re-serves bytes a publisher workflow already uploaded to
-GitHub and this component already re-verified and copied into R2.
+This component serves GitHub release assets for download acceleration from two
+allowlisted upstream repositories. It projects GitHub's authoritative latest
+release into the strict installer metadata schema, serves verified R2 copies
+when present, and routes an exact valid asset to its GitHub release URL when the
+R2 copy has not been populated yet.
 
 ## Components
 
@@ -31,13 +33,16 @@ GitHub and this component already re-verified and copied into R2.
   exactly one asset: downloads it from `github.com/<repo>/releases/download/<tag>/<asset>`,
   re-verifies size/sha256 against the caller-supplied digest, then uploads to
   R2 via `wrangler r2 object put`.
-- **Route logic** `src/lib/release-mirror.mjs:1-59` is the pure
-  allowlist/tag/asset validation and R2-key derivation, framework-free so it
-  is directly unit-testable.
-- **Route adapter** `src/pages/dl/[owner]/[repo]/[tag]/[asset].ts:1-53` is the thin
-  Astro/Cloudflare binding: `prerender = false`, reads the
-  `RELEASE_MIRROR_BUCKET` R2 binding via `cloudflare:workers`' `env`, and
-  streams the object or returns 404/503.
+- **Route logic** `src/lib/release-mirror.mjs` is the pure
+  allowlist/tag/asset validation, R2-key derivation, and exact GitHub release
+  asset URL derivation.
+- **Asset route** `src/pages/dl/[owner]/[repo]/[tag]/[asset].ts` is the thin
+  Astro/Cloudflare binding: it streams the R2 object when present and redirects
+  an exact valid miss to the same tag/asset on GitHub Releases.
+- **Latest route** `src/pages/dl/[owner]/[repo]/latest.json.ts` fetches GitHub's
+  authoritative latest release and fail-closed projects its tag, release ID,
+  asset names, sizes, and GitHub-provided SHA-256 digests into
+  `lingtai.release_mirror.latest/v1`.
 - **Bindings template** `wrangler.jsonc` declares the
   `RELEASE_MIRROR_BUCKET` R2 binding (`bucket_name: "lingtai-release-mirror"`)
   as a deployment prerequisite, not a live resource created by this repo's CI.
@@ -53,11 +58,12 @@ nothing else in this repository touches that bucket.
 
 ## Composition
 
-`repository_dispatch` → receiving workflow → `sync-release-asset.sh` (one
-call per asset) → R2 object at `releases/<owner>/<repo>/<tag>/<asset>` →
-route adapter `bucket.get(key)` → HTTP response. Each stage only ever
-consumes the exact key/digest the previous stage already verified; there is
-no independent "latest" resolution or listing at any stage.
+Asset publication remains `repository_dispatch` → receiving workflow →
+`sync-release-asset.sh` → R2. At request time, the asset route reads that exact
+object and uses the validated GitHub release URL only when the object is absent.
+Independently, `/dl/<owner>/<repo>/latest.json` reads GitHub's official latest
+release API and emits the installer metadata projection; it does not list R2 or
+invent a tag.
 
 ## State
 
@@ -69,8 +75,9 @@ verified overwrite, not a silent one — but a publisher can legitimately
 re-dispatch the same tag/asset with a genuinely different digest (e.g. a
 regenerated manifest file carrying a fresh timestamp), which changes the
 object at that key. The route's short cache lifetime exists because of this.
-There is no separate manifest, index, or "latest" pointer in this repository;
-the tag-scoped key is the sole address.
+The latest metadata response is computed from GitHub's release API and is not
+stored as mutable R2 state. Tag-scoped asset keys remain the only mirror-owned
+persistent addresses.
 
 ## Notes
 

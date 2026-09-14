@@ -13,7 +13,10 @@ import type { APIRoute } from 'astro';
 // Astro 6 + @astrojs/cloudflare removed `Astro.locals.runtime.env`; bindings
 // are read from the Workers runtime module directly.
 import { env } from 'cloudflare:workers';
-import { resolveDownloadRequest } from '../../../../../lib/release-mirror.mjs';
+import {
+  githubReleaseAssetUrl,
+  resolveDownloadRequest,
+} from '../../../../../lib/release-mirror.mjs';
 
 export const GET: APIRoute = async ({ params }) => {
   const resolved = resolveDownloadRequest(params as Record<string, string | undefined>);
@@ -21,18 +24,20 @@ export const GET: APIRoute = async ({ params }) => {
     return new Response(resolved.body, { status: resolved.status });
   }
 
-  // Deployment prerequisite: RELEASE_MIRROR_BUCKET must be bound in
-  // wrangler.jsonc (r2_buckets) with a real bucket_name before this can ever
-  // return anything but 503. That binding is a template in this PR, not a
-  // live provisioning action.
-  const bucket = (env as unknown as { RELEASE_MIRROR_BUCKET?: R2Bucket }).RELEASE_MIRROR_BUCKET;
-  if (!bucket) {
-    return new Response('Download mirror is not configured on this deployment', { status: 503 });
+  const fallbackUrl = githubReleaseAssetUrl(
+    params.owner,
+    params.repo,
+    params.tag,
+    params.asset,
+  );
+  if (!fallbackUrl) {
+    return new Response('Not found', { status: 404 });
   }
 
-  const object = await bucket.get(resolved.key);
+  const bucket = (env as unknown as { RELEASE_MIRROR_BUCKET?: R2Bucket }).RELEASE_MIRROR_BUCKET;
+  const object = bucket ? await bucket.get(resolved.key) : null;
   if (!object) {
-    return new Response('Not found', { status: 404 });
+    return Response.redirect(fallbackUrl, 302);
   }
 
   return new Response(object.body, {
