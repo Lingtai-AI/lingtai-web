@@ -260,6 +260,8 @@ the TUI and Portal binaries remain required and are installed.
   dependency state, but MUST NOT claim success or replace pre-existing state.
   A later ordinary invocation sees that state and fails closed.
 
+Python dependency-index selection is independent of TUI/kernel archive routing: an explicit `LINGTAI_PYPI_INDEX_URL` wins without probing; otherwise at most two unauthenticated public-IP country requests (3 s each) select Tsinghua only for `CN`, and official PyPI for other/unknown countries or failed detection. The country is not stored. This fixes the POSIX archive-provider coupling; native Windows has no corresponding `KERNEL_PROVIDER`-based selector and its separate build-mirror policy is unchanged.
+
 ### 4.1b `/install.sh --latest` — explicit latest-main install
 
 **Preconditions and authority**

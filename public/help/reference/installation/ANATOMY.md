@@ -97,6 +97,8 @@ every byte; nothing here edits them.
   canonical bytes land via a different open PR/branch than the other six. It is
   the fail-loud counterpart to the sync workflow's fail-loud fetch validation.
 
+- `public/install.sh` `python_dependency_index_url` / `detect_python_dependency_country` select the Python dependency index through two bounded country endpoints, independently of the archive provider; an explicit index skips detection.
+
 ## Connections
 
 `public/skill.md` routes to the help router, which routes to the installation
