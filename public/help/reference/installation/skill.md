@@ -149,3 +149,5 @@ flag before mutation. Skill prose is not a safety mechanism.
 All mutating assets independently validate exact target ownership, metadata
 provenance, authorization, and postconditions. Assets do not call `refresh`,
 merge, release, deploy, or source `install.sh`/`install.ps1`/each other.
+
+Python dependencies: the POSIX installer honors `LINGTAI_PYPI_INDEX_URL` first; otherwise detected mainland China uses Tsinghua, and other/unknown regions or detection failures use official PyPI. This is independent of the archive download mirror and uses up to two public-IP country requests (3 seconds each).
