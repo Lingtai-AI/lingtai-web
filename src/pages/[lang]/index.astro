@@ -1,10 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import BrailleBackground from '../../components/BrailleBackground.astro';
 import InstallCommand from '../../components/InstallCommand.astro';
 import NetworkCanvas from '../../components/NetworkCanvas.astro';
 import OaaSCanvas from '../../components/OaaSCanvas.astro';
-import InkMountains from '../../components/InkMountains.astro';
+import CelestialChart from '../../components/CelestialChart.astro';
+import Handscroll from '../../components/Handscroll.astro';
 import SealStamp from '../../components/SealStamp.astro';
 import { t, isValidLang, languages, type Lang } from '../../i18n/translations';
 
@@ -24,51 +24,70 @@ const poemColumns = isCJK
   : [];
 ---
 
-<BaseLayout title={tr.hero.title} lang={lang as Lang}>
-  <BrailleBackground lang={lang as Lang} />
+<BaseLayout title={tr.hero.title} lang={lang as Lang} night>
+  <header class="sky night">
+    <CelestialChart lang={lang as Lang} />
 
-  <main class="hero">
-    <InkMountains />
+    <div class="hero">
+      {isCJK ? (
+        <div class="scroll-composition">
+          <h1 class="title-v serif ink-reveal" style="animation-delay:0.5s"><span class="gilt">{tr.hero.title}</span></h1>
+          <div class="poem-cols">
+            {poemColumns.map((col, i) => (
+              <span class="poem-col serif ink-reveal" style={`animation-delay:${1.2 + i * 0.22}s`}>{col}</span>
+            ))}
+          </div>
+          <div class="colophon ink-reveal" style="animation-delay:2.3s">
+            <span class="subtitle-v">{tr.hero.subtitle}</span>
+            <SealStamp size={58} delay="2.6s" />
+          </div>
+        </div>
+      ) : (
+        <div class="latin-composition">
+          <div class="title-row">
+            <h1 class="title-en latin-display ink-reveal" style="animation-delay:0.5s"><span class="gilt">{tr.hero.title}</span></h1>
+            <SealStamp size={56} delay="2.3s" />
+          </div>
+          <p class="subtitle-en latin-display ink-reveal" style="animation-delay:1.1s">{tr.hero.subtitle}</p>
+          <div class="poem-en">
+            <p class="poem-line latin-display ink-reveal" style="animation-delay:1.5s">{tr.hero.poem1}</p>
+            <p class="poem-line latin-display ink-reveal" style="animation-delay:1.75s">{tr.hero.poem2}</p>
+          </div>
+        </div>
+      )}
 
-    {isCJK ? (
-      <div class="scroll-composition">
-        <h1 class="title-v serif ink-reveal" style="animation-delay:0.1s">{tr.hero.title}</h1>
-        <div class="poem-cols">
-          {poemColumns.map((col, i) => (
-            <span class="poem-col serif ink-reveal" style={`animation-delay:${0.7 + i * 0.22}s`}>{col}</span>
-          ))}
-        </div>
-        <div class="colophon ink-reveal" style="animation-delay:1.8s">
-          <span class="subtitle-v">{tr.hero.subtitle}</span>
-          <SealStamp size={58} delay="2.1s" />
-        </div>
+      <div class="install ink-reveal" style="animation-delay:2.8s">
+        <InstallCommand copyLabel={tr.hero.copy} showWindows />
+        <a class="repo-link" href="https://github.com/Lingtai-AI/lingtai">GitHub</a>
       </div>
-    ) : (
-      <div class="latin-composition">
-        <div class="title-row">
-          <h1 class="title-en latin-display ink-reveal" style="animation-delay:0.1s">{tr.hero.title}</h1>
-          <SealStamp size={52} delay="1.8s" />
-        </div>
-        <p class="subtitle-en ink-reveal" style="animation-delay:0.6s">{tr.hero.subtitle}</p>
-        <div class="poem-en">
-          <p class="poem-line latin-display ink-reveal" style="animation-delay:1s">{tr.hero.poem1}</p>
-          <p class="poem-line latin-display ink-reveal" style="animation-delay:1.25s">{tr.hero.poem2}</p>
-        </div>
-      </div>
-    )}
 
-    <div class="install ink-reveal" style="animation-delay:2.3s">
-      <InstallCommand copyLabel={tr.hero.copy} showWindows />
-      <div class="links">
-        <a href="https://github.com/Lingtai-AI/lingtai">GitHub</a>
-      </div>
+      <p class="sky-hint ink-reveal" style="animation-delay:4.2s">{tr.hero.hint}</p>
     </div>
+
+    <!-- 方寸山 — ridges against the stars; the nearest ridge is the paper itself -->
+    <svg class="ridges" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="horizon-gilt" x1="0" x2="1">
+          <stop offset="0" stop-color="#d8b468" stop-opacity="0" />
+          <stop offset="0.3" stop-color="#f4e2a8" stop-opacity="0.9" />
+          <stop offset="0.55" stop-color="#d8b468" stop-opacity="0.55" />
+          <stop offset="0.8" stop-color="#f4e2a8" stop-opacity="0.85" />
+          <stop offset="1" stop-color="#d8b468" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <path class="ridge far" d="M0,150 Q90,104 200,128 T430,96 Q520,70 610,110 T840,92 Q950,58 1060,104 T1290,96 Q1370,84 1440,108 L1440,300 L0,300 Z" />
+      <path class="ridge mid" d="M0,206 Q140,150 300,186 T620,170 Q760,128 900,176 T1200,168 Q1330,150 1440,180 L1440,300 L0,300 Z" />
+      <path class="ridge near" d="M0,258 Q200,214 420,244 T840,232 Q1010,204 1170,238 T1440,246 L1440,300 L0,300 Z" />
+      <path class="horizon" d="M0,258 Q200,214 420,244 T840,232 Q1010,204 1170,238 T1440,246" />
+    </svg>
 
     <div class="scroll-hint" aria-hidden="true">
-      <span class="ink-thread"></span>
-      <span class="ink-drop"></span>
+      <span class="thread"></span>
+      <span class="drop"></span>
     </div>
-  </main>
+  </header>
+
+  <Handscroll heading={tr.meanings.heading} body={tr.about.projectBio} items={tr.meanings.items} cjk={isCJK} />
 
   <NetworkCanvas line1a={tr.network.line1a} line1b={tr.network.line1b} line2={tr.network.line2} line3={tr.network.line3} quickstart="lingtai-tui" quickstartLabel={tr.network.quickstartLabel} copyLabel={tr.hero.copy} />
 
@@ -76,16 +95,68 @@ const poemColumns = isCJK
 </BaseLayout>
 
 <style>
+  /* ── 磁青 night sky ─────────────────────────────────────────────── */
+  .sky {
+    position: relative;
+    z-index: 1;
+    min-height: max(100vh, 640px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 46%, #1b2e60 0%, transparent 70%),
+      radial-gradient(ellipse 120% 90% at 50% 40%, var(--night) 0%, var(--night-deep) 100%);
+  }
+
   .hero {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: calc(100vh - 80px);
     text-align: center;
     position: relative;
-    z-index: 1;
-    padding: 0 40px;
+    z-index: 2;
+    padding: 96px 40px 20vh;
+    pointer-events: none;
+  }
+  .hero :global(a), .hero :global(button), .hero .install { pointer-events: auto; }
+
+  /* A pool of deeper night behind the title so the gold reads over the chart */
+  .hero::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: min(760px, 110vw);
+    height: min(620px, 90vh);
+    transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, rgba(6, 12, 28, 0.62), rgba(6, 12, 28, 0.25) 60%, transparent);
+    z-index: -1;
+  }
+
+  /* Gilded title: the light sweeps across the leaf once, as it is laid down */
+  .title-v .gilt,
+  .title-en .gilt {
+    display: inline-block;
+    animation: gilt-sweep 3.4s cubic-bezier(0.3, 0.1, 0.2, 1) 1.2s both;
+  }
+  .title-v,
+  .title-en {
+    filter: drop-shadow(0 0 34px rgba(216, 180, 104, 0.28));
+  }
+  .title-v.ink-reveal,
+  .title-en.ink-reveal {
+    animation-name: ink-reveal-glow;
+  }
+
+  @keyframes gilt-sweep {
+    from { background-position: 100% 0; }
+    to { background-position: 0% 0; }
+  }
+  @keyframes ink-reveal-glow {
+    from { opacity: 0; filter: blur(10px) drop-shadow(0 0 0 rgba(216, 180, 104, 0)); transform: translateY(10px); }
+    to { opacity: 1; filter: blur(0) drop-shadow(0 0 34px rgba(216, 180, 104, 0.28)); transform: translateY(0); }
   }
 
   /* ── 竖排 hanging-scroll composition (zh / wen) ─────────────────────
@@ -98,16 +169,13 @@ const poemColumns = isCJK
     flex-direction: column;
     align-items: center;
     gap: clamp(32px, 6vw, 72px);
-    position: relative;
-    z-index: 1;
   }
 
   .title-v {
-    font-size: clamp(96px, 19vh, 164px);
-    font-weight: 250;
-    letter-spacing: 0.12em;
+    font-size: clamp(96px, 19vh, 184px);
+    font-weight: 600;
+    letter-spacing: 0.1em;
     line-height: 1;
-    color: var(--title-color);
   }
 
   .poem-cols {
@@ -133,87 +201,124 @@ const poemColumns = isCJK
   }
 
   .subtitle-v {
-    font-size: 13px;
+    font-size: 14px;
     letter-spacing: 0.45em;
-    color: var(--text-faint);
-    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.8;
   }
 
   /* ── Latin composition (en) ───────────────────────────────────── */
-  .latin-composition {
-    position: relative;
-    z-index: 1;
-  }
-
   .title-row {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    gap: 26px;
+    gap: 22px;
   }
 
   .title-en {
-    font-size: clamp(78px, 13vw, 138px);
-    font-weight: 300;
-    letter-spacing: 0.04em;
-    line-height: 1;
-    color: var(--title-color);
+    font-size: clamp(84px, 15vw, 196px);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 0.95;
   }
 
   .subtitle-en {
-    margin-top: 18px;
-    font-size: 14px;
-    letter-spacing: 0.55em;
-    text-indent: 0.55em; /* re-center: tracking adds trailing space */
-    text-transform: uppercase;
-    color: var(--text-faint);
+    margin-top: 10px;
+    font-size: 22px;
+    font-style: italic;
+    letter-spacing: 0.32em;
+    text-indent: 0.32em;
+    color: var(--gold);
   }
 
   .poem-en {
-    margin-top: 34px;
+    margin-top: 26px;
   }
 
   .poem-line {
     font-style: italic;
-    font-size: 21px;
-    font-weight: 400;
-    letter-spacing: 0.06em;
+    font-size: clamp(19px, 1.7vw, 23px);
+    letter-spacing: 0.05em;
     color: var(--text-dim);
-    line-height: 1.9;
+    line-height: 1.85;
   }
 
-  /* ── Shared ───────────────────────────────────────────────────── */
+  /* ── Install, set in a gold-edged slab of night ────────────────── */
   .install {
     margin-top: clamp(36px, 6vh, 60px);
-    position: relative;
-    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
   }
+  .install :global(.install-pill) {
+    background: rgba(5, 10, 26, 0.7);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(216, 180, 104, 0.42);
+    box-shadow: 0 0 0 4px rgba(216, 180, 104, 0.06), 0 18px 50px -18px rgba(0, 0, 0, 0.8);
+    padding: 14px 24px;
+  }
+  .install :global(.prompt) { color: var(--gold); }
+  .install :global(.copy-btn) { color: var(--gold-hi); }
+  .install :global(.platform-switch) { color: var(--text-faint); }
+  .install :global(.platform-link:hover),
+  .install :global(.platform-link.active) { color: var(--gold); }
 
-  .links {
-    margin-top: 14px;
-    font-size: 12px;
+  .repo-link {
+    font-size: 13px;
     letter-spacing: 0.2em;
+    color: var(--gold);
+    padding-bottom: 2px;
+    border-bottom: 1px solid rgba(216, 180, 104, 0.35);
+  }
+  .repo-link:hover { color: var(--gold-hi); border-color: var(--gold-hi); }
+
+  .sky-hint {
+    margin-top: 22px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--text-faint);
   }
 
-  /* Scroll hint — an ink drop sliding down a hanging thread */
+  /* ── Ridges ─────────────────────────────────────────────────────── */
+  .ridges {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    width: 100%;
+    height: clamp(150px, 24vh, 260px);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .ridge.far { fill: #18264d; opacity: 0.85; }
+  .ridge.mid { fill: #0a1330; }
+  .ridge.near { fill: var(--page-bg); }
+  .horizon {
+    fill: none;
+    stroke: url(#horizon-gilt);
+    stroke-width: 1.4;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* ── Scroll hint — a gold drop sliding down a thread ───────────── */
   .scroll-hint {
     position: absolute;
-    bottom: 24px;
+    bottom: 26px;
     left: 50%;
     transform: translateX(-50%);
     width: 1px;
-    height: 44px;
-    z-index: 1;
+    height: 46px;
+    z-index: 3;
   }
-
-  .ink-thread {
+  .thread {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, transparent, var(--text-faint));
-    opacity: 0.5;
+    background: linear-gradient(to bottom, transparent, var(--gold));
+    opacity: 0.6;
   }
-
-  .ink-drop {
+  .drop {
     position: absolute;
     left: -2px;
     top: 0;
@@ -221,25 +326,27 @@ const poemColumns = isCJK
     height: 5px;
     border-radius: 50%;
     background: var(--vermilion);
-    animation: ink-fall 2.4s ease-in infinite;
+    animation: drop-fall 2.4s ease-in infinite;
   }
-
-  @keyframes ink-fall {
+  @keyframes drop-fall {
     0% { top: 0; opacity: 0; }
     25% { opacity: 0.9; }
-    78% { top: 39px; opacity: 0.9; }
-    100% { top: 39px; opacity: 0; }
+    78% { top: 41px; opacity: 0.9; }
+    100% { top: 41px; opacity: 0; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ink-drop { animation: none; opacity: 0; }
+    .drop { animation: none; opacity: 0; }
+    .title-v .gilt, .title-en .gilt { animation: none; background-position: 30% 0; }
+    .title-v.ink-reveal, .title-en.ink-reveal { animation: none; opacity: 1; }
   }
 
   @media (max-width: 720px) {
-    .hero { padding: 0 20px; }
+    .hero { padding: 150px 16px 26vh; }
     .scroll-composition { gap: 26px; }
-    .title-v { font-size: clamp(72px, 19vw, 110px); }
+    .title-v { font-size: clamp(84px, 24vw, 128px); }
     .poem-col { letter-spacing: 0.3em; }
-    .title-row { gap: 16px; }
+    .title-row { gap: 14px; }
+    .title-row :global(.seal) { --seal-size: 40px !important; }
   }
 </style>

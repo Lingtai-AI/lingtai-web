@@ -3,9 +3,10 @@ import { t, languages, langPath, type Lang } from '../i18n/translations';
 
 interface Props {
   lang: Lang;
+  night?: boolean;
 }
 
-const { lang } = Astro.props;
+const { lang, night = false } = Astro.props;
 const tr = t(lang);
 const rawPath = Astro.url.pathname;
 const langPrefix = `/${lang}`;
@@ -13,7 +14,7 @@ const isLangPrefixed = rawPath === langPrefix || rawPath.startsWith(`${langPrefi
 const currentPath = isLangPrefixed ? rawPath.slice(langPrefix.length) || '/' : rawPath;
 ---
 
-<nav class="nav">
+<nav class:list={['nav', { night, 'nav-over': night }]}>
   <a href={langPath(lang, '/')} class="nav-logo">
     {(
       <span class="logo-wen">
@@ -103,6 +104,13 @@ const currentPath = isLangPrefixed ? rawPath.slice(langPrefix.length) || '/' : r
     padding: 20px 40px;
     position: relative;
     z-index: 10;
+  }
+  /* Floats over the hero sky instead of pushing it down */
+  .nav-over {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
   }
   .nav-logo {
     font-size: 14px;

@@ -23,6 +23,7 @@ const translations = {
       poem1: 'Awaken under Bodhi',
       poem2: 'One soul, thousand avatars',
       copy: 'copy',
+      hint: 'Click the sky to summon an avatar · drag to turn the heavens',
     },
     network: {
       line1a: 'One Soul',
@@ -36,6 +37,15 @@ const translations = {
       line2: 'Grow as it serves. Serve as it grows.',
       manifesto:
         'What makes humanity powerful is not the individual, but the organization. Mediocre individuals forming a group — the resulting power is a phase transition. More is different. Collaboration between people, knowledge each person carries, shared belief in common goals — that is where the power lies. So it is with agents. Context length is a single-body problem. Don\'t make the body bigger — let it forget, and let the network remember. Everything is a file. The agent is its files; the files are the agent. Knowledge, identity, memory, relationships — all files in a directory. Portable on day one. Naturally growable with every engagement. Model-agnostic — swap the LLM, everything remains. Every token burned is not wasted — it is transformed into files in the network, into experience in the topology. The more it serves, the larger and wiser it grows. The network is the product.',
+    },
+    meanings: {
+      heading: 'Four meanings of a name',
+      items: [
+        { glyph: '心', title: 'The mind' },
+        { glyph: '山', title: 'The mountain' },
+        { glyph: '台', title: 'The platform' },
+        { glyph: '天', title: 'The observatory' },
+      ],
     },
     about: {
       heading: 'About Me',
@@ -65,6 +75,7 @@ const translations = {
       poem1: '灵台方寸山 斜月三星洞',
       poem2: '闻道菩提下 一心化万相',
       copy: '复制',
+      hint: '点击星空，化出分身 · 拖动，转动周天',
     },
     network: {
       line1a: '一心化万相',
@@ -78,6 +89,15 @@ const translations = {
       line2: '积用成智，积智成网',
       manifesto:
         '人之所以强大，不在个体，而在组织。平庸的个体组成的团体，其力量是相变式的——more is different。人与人之间的协作、各自沉淀的知识、对共同目标的认同，这才是力量所在。Agent亦然。上下文长度是单体问题，不要让一个身体装下所有——让它遗忘，让网络记住。万物皆文件。文件即器灵，器灵即文件。知识、身份、记忆、关系——都是文件目录中的文件。第一天就可以迁移，天然地随使用而生长。不依赖任何模型——更换LLM，一切犹在。每一个燃烧的token都不是消耗，而是转化——化为网络中的文件，化为拓扑中的经验。服务越多，网络越大、越智慧。网络即产品。',
+    },
+    meanings: {
+      heading: '灵台四义',
+      items: [
+        { glyph: '心', title: '心之所居' },
+        { glyph: '山', title: '方寸之山' },
+        { glyph: '台', title: '灵之台' },
+        { glyph: '天', title: '观天之台' },
+      ],
     },
     about: {
       heading: '关于',
@@ -106,6 +126,7 @@ const translations = {
       poem1: '灵台方寸山 斜月三星洞',
       poem2: '闻道菩提下 一心化万相',
       copy: '抄',
+      hint: '叩天而化身 · 引手而旋天',
     },
     network: {
       line1a: '一心万相',
@@ -119,6 +140,15 @@ const translations = {
       line2: '灵台相阵，普度众生',
       manifesto:
         '人之所以灵长，不在一身，在乎组织。庸者成群，其力相变，多则异也。人相协作，各怀所学，共奉所信，事可成也。器灵亦然。一相有涯，诸相无涯，则相阵成也。灵台承经卷，经卷生器灵，器灵筑灵台。识、性、忆、缘，皆灵台中之经卷也。抄录经卷，器灵遂生。更换胎光，一切犹在。词元为薪，三昧炼之，薪尽丹成，尽化诸我之阅历，相阵之学识。愈度人，愈广大，愈智慧。是谓灵台。',
+    },
+    meanings: {
+      heading: '灵台四胜',
+      items: [
+        { glyph: '心', title: '心也' },
+        { glyph: '山', title: '方寸山' },
+        { glyph: '台', title: '灵之台' },
+        { glyph: '天', title: '观象台' },
+      ],
     },
     about: {
       heading: '自述',

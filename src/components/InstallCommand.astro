@@ -97,7 +97,8 @@ const powershellCommand = 'irm https://lingtai.ai/install.ps1 | iex';
   .command {
     overflow-x: auto;
     white-space: nowrap;
-    max-width: 250px;
+    max-width: min(420px, 62vw);
+    scrollbar-width: none;
   }
   .prompt {
     color: var(--vermilion);

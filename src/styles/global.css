@@ -1,46 +1,88 @@
+/* 磁青泥金 — gold ink on indigo-dyed sutra paper (dark), gold leaf
+   scattered on Xuan paper (light). The night sky of the hero is always
+   磁青 indigo; the .night scope re-points the tokens to it. */
 :root {
-  /* Xuan paper (生宣) — warm, slightly aged */
-  --bg: #f2ecdf;
-  --bg-alt: #e9e1cf;
-  --ink: #1c1a17;
-  --text: #2b2723;
-  --text-dim: #5b5347;
-  --text-faint: #8d8372;
-  /* 朱砂 seal vermilion — THE accent */
-  --vermilion: #a93b2a;
-  --vermilion-deep: #8a2d1f;
-  --accent: #7dab8f;
-  --accent-warm: #c49a6c;
-  --code-bg: #221f1b;
-  --code-text: #e9e2d3;
-  --gold: #d4a853;
+  /* 洒金宣 — warm Xuan paper flecked with gold leaf */
+  --bg: #efe7d5;
+  --bg-alt: #e5dbc5;
+  --ink: #17161d;
+  --text: #27232a;
+  --text-dim: #5b5349;
+  --text-faint: #8b8171;
+  --text-muted: #8b8171;
+  /* 朱砂 seal vermilion */
+  --vermilion: #ad3824;
+  --vermilion-deep: #8a2b1b;
+  --accent: #4f8a76;
+  --accent-warm: #a07a2e;
+  --code-bg: #111a33;
+  --code-text: #ece3cc;
+  /* 泥金 gold ink — lo / mid / hi stops of the gilded gradient */
+  --gold: #a9853a;
+  --gold-lo: #7a5c22;
+  --gold-hi: #e2c682;
+  --gilt: linear-gradient(100deg, #6e521d 0%, #b18b3d 22%, #e9d496 42%, #b8913f 58%, #7a5c22 80%, #a9853a 100%);
+  --fleck-opacity: 0.55;
   --title-color: var(--ink);
   --mountain: #4a4438;
   --seal-paper: #f6efe2;
   --node-r: 43; --node-g: 39; --node-b: 35;
-  --link-r: 196; --link-g: 154; --link-b: 108;
+  --link-r: 169; --link-g: 133; --link-b: 58;
+
+  /* 磁青 — the observatory night, used by the hero in both themes */
+  --night: #0c1630;
+  --night-2: #13224a;
+  --night-deep: #060c1c;
+  /* the page's own paper, pinned here so .night cannot re-point it */
+  --page-bg: var(--bg);
 }
 
 [data-theme="dark"] {
-  /* Inkstone night (砚) */
-  --bg: #16140f;
-  --bg-alt: #1f1c15;
-  --ink: #e9e2d3;
-  --text: #e9e2d3;
-  --text-dim: #a59c89;
-  --text-faint: #6e675a;
-  --vermilion: #c8523c;
-  --vermilion-deep: #a93b2a;
-  --accent: #7dab8f;
-  --accent-warm: #d4a853;
-  --code-bg: #0e0d0a;
-  --code-text: #e9e2d3;
-  --gold: #d4a853;
+  /* 磁青纸 — indigo-dyed paper */
+  --bg: #0d1631;
+  --bg-alt: #14203f;
+  --ink: #efe6cf;
+  --text: #e7dec7;
+  --text-dim: #aba58f;
+  --text-faint: #6f7590;
+  --text-muted: #6f7590;
+  --vermilion: #d0563d;
+  --vermilion-deep: #ad3824;
+  --accent: #7db8a2;
+  --accent-warm: #e2c682;
+  --code-bg: #070d20;
+  --code-text: #ece3cc;
+  --gold: #d8b468;
+  --gold-lo: #9c7a35;
+  --gold-hi: #f4e2a8;
+  --gilt: linear-gradient(100deg, #8e6e2c 0%, #d2ac5c 22%, #fbecb8 42%, #d8b468 58%, #9c7a35 80%, #c9a24f 100%);
+  --fleck-opacity: 0.3;
+  --page-bg: var(--bg);
   --title-color: var(--gold);
-  --mountain: #8d8372;
+  --mountain: #2b3b6a;
   --seal-paper: #f6efe2;
-  --node-r: 212; --node-g: 168; --node-b: 83;
-  --link-r: 196; --link-g: 154; --link-b: 108;
+  --node-r: 216; --node-g: 180; --node-b: 104;
+  --link-r: 196; --link-g: 160; --link-b: 92;
+}
+
+/* Night scope — any element that sits on the 磁青 sky */
+.night {
+  --bg: var(--night);
+  --bg-alt: var(--night-2);
+  --ink: #efe6cf;
+  --text: #e7dec7;
+  --text-dim: #b1ab96;
+  --text-faint: #767c98;
+  --text-muted: #767c98;
+  --vermilion: #d0563d;
+  --accent-warm: #f4e2a8;
+  --code-bg: rgba(5, 10, 26, 0.72);
+  --gold: #d8b468;
+  --gold-lo: #9c7a35;
+  --gold-hi: #f4e2a8;
+  --gilt: linear-gradient(100deg, #8e6e2c 0%, #d2ac5c 22%, #fbecb8 42%, #d8b468 58%, #9c7a35 80%, #c9a24f 100%);
+  --title-color: var(--gold);
+  color: var(--text);
 }
 
 * {
@@ -58,6 +100,21 @@ html {
 
 body {
   min-height: 100vh;
+  position: relative;
+}
+
+/* 洒金 — gold leaf scattered through the paper; scrolls with the page */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--fleck-opacity);
+  /* two tiles of coprime-ish sizes so the repeat never lines up */
+  background-image: url("/sajin.svg"), url("/sajin-fine.svg");
+  background-size: 610px 610px, 433px 433px;
+  background-position: 0 0, 157px 89px;
 }
 
 /* Paper grain — fixed feTurbulence noise over everything, never intercepts */
@@ -100,6 +157,17 @@ a:hover {
 
 .brush {
   font-family: "Ma Shan Zheng", "Kaiti SC", "KaiTi", cursive;
+}
+
+/* 泥金 gilded type — metallic gradient clipped to the glyphs */
+.gilt {
+  background-image: var(--gilt);
+  background-size: 220% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--gold);
 }
 
 .mono {

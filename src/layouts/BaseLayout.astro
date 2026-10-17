@@ -6,9 +6,11 @@ import type { Lang } from '../i18n/translations';
 interface Props {
   title: string;
   lang: Lang;
+  /** The page opens on the 磁青 night sky; the nav floats over it. */
+  night?: boolean;
 }
 
-const { title, lang } = Astro.props;
+const { title, lang, night = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -35,7 +37,7 @@ const { title, lang } = Astro.props;
     </script>
   </head>
   <body>
-    <Nav lang={lang} />
+    <Nav lang={lang} night={night} />
     <slot />
     <script>
       // Soft magnetic scroll — gently pulls to nearest [data-snap] section

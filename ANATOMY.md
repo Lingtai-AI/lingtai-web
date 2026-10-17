@@ -99,8 +99,12 @@ registry or create empty documents solely for filename symmetry.
 
 ## Components
 
-- **Route composition** `src/pages/[lang]/index.astro:1-245` assembles the localized
-  home experience. Release archive/detail routes are thin adapters at
+- **Route composition** `src/pages/[lang]/index.astro:1-352` assembles the localized
+  home experience: the 磁青 night-sky hero (interactive star chart
+  `src/components/CelestialChart.astro:1-620`), the four-meanings handscroll
+  `src/components/Handscroll.astro:1-262`, then the network and OaaS sections.
+  Palette tokens, the `.night` scope and the 洒金 texture (`public/sajin*.svg`)
+  live in `src/styles/global.css`. Release archive/detail routes are thin adapters at
   `src/pages/[lang]/releases/index.astro:1-13` and
   `src/pages/[lang]/releases/[id].astro:1-15`.
 - **Presentation components** `src/components/ReleaseIndex.astro` and
@@ -108,7 +112,7 @@ registry or create empty documents solely for filename symmetry.
   archive itself.
 - **Product data and content** `src/data/releases.ts:1-3828` is the canonical release
   archive; `src/lib/posts.ts:1-74` loads public blog content.
-- **Localization** `src/i18n/translations.ts:1-142` owns shared locale vocabulary used
+- **Localization** `src/i18n/translations.ts:1-172` owns shared locale vocabulary used
   by routes and components.
 - **Public agent/help surface** `public/skill.md:1-17` routes into
   `public/help/skill.md:1-20` and progressively disclosed references.

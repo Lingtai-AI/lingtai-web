@@ -1,0 +1,262 @@
+---
+// 手卷 — the four meanings of the name, mounted as a handscroll that unrolls
+// sideways while the page scrolls down. Each panel carries one gilded glyph
+// (心 山 台 天) that catches the light as it passes the centre. Below 860px,
+// or under reduced motion, the panels simply stack.
+interface Props {
+  heading: string;
+  body: string; // intro + four paragraphs, separated by blank lines
+  items: readonly { glyph: string; title: string }[];
+  cjk: boolean;
+}
+
+const { heading, body, items, cjk } = Astro.props;
+const [intro, ...paras] = body.split('\n\n');
+---
+
+<section class:list={['scroll-mount', { cjk }]} data-handscroll>
+  <div class="scroll-stage">
+    <div class="mount-band top" aria-hidden="true"></div>
+    <div class="scroll-track">
+      <div class="panel panel-intro">
+        <h2 class="intro-heading serif">{heading}</h2>
+        <p class="intro-text serif">{intro}</p>
+        <span class="unroll-hint" aria-hidden="true"></span>
+      </div>
+      {items.map((item, i) => (
+        <article class="panel panel-meaning" style={`--focus:0`}>
+          <span class="glyph gilt serif" aria-hidden="true">{item.glyph}</span>
+          <div class="panel-copy">
+            <h3 class="panel-title serif">{item.title}</h3>
+            <p class="panel-text serif">{paras[i]}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+    <div class="mount-band bottom" aria-hidden="true"></div>
+  </div>
+</section>
+
+<script>
+  const mount = document.querySelector<HTMLElement>('[data-handscroll]');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (mount && !reduced) {
+    const track = mount.querySelector<HTMLElement>('.scroll-track')!;
+    const panels = [...mount.querySelectorAll<HTMLElement>('.panel-meaning')];
+    const wide = window.matchMedia('(min-width: 861px)');
+    let ticking = false;
+
+    const sizeMount = () => {
+      if (!wide.matches) {
+        mount.style.height = '';
+        track.style.transform = '';
+        panels.forEach((p) => p.style.setProperty('--focus', '1'));
+        return;
+      }
+      // vertical runway = horizontal distance to travel + one screen
+      const travel = track.scrollWidth - window.innerWidth;
+      mount.style.height = `${travel + window.innerHeight}px`;
+      update();
+    };
+
+    const update = () => {
+      ticking = false;
+      if (!wide.matches) return;
+      const rect = mount.getBoundingClientRect();
+      const travel = track.scrollWidth - window.innerWidth;
+      const p = Math.min(1, Math.max(0, -rect.top / (rect.height - window.innerHeight)));
+      track.style.transform = `translate3d(${-p * travel}px,0,0)`;
+      const mid = window.innerWidth / 2;
+      for (const panel of panels) {
+        const r = panel.getBoundingClientRect();
+        const d = Math.abs(r.left + r.width / 2 - mid) / window.innerWidth;
+        panel.style.setProperty('--focus', Math.max(0, 1 - d * 1.6).toFixed(3));
+      }
+    };
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    window.addEventListener('resize', sizeMount);
+    wide.addEventListener('change', sizeMount);
+    document.fonts.ready.then(sizeMount);
+    sizeMount();
+  }
+</script>
+
+<style>
+  .scroll-mount {
+    position: relative;
+    z-index: 1;
+  }
+
+  .scroll-stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 天头 / 地头 — the silk mount above and below the painting */
+  .mount-band {
+    flex: none;
+    height: clamp(28px, 5vh, 48px);
+    background: color-mix(in srgb, var(--bg-alt) 80%, var(--gold) 6%);
+    border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+    border-style: solid;
+    border-width: 0;
+  }
+  .mount-band.top { border-bottom-width: 1px; box-shadow: 0 1px 0 color-mix(in srgb, var(--gold) 22%, transparent), 0 4px 0 -2px color-mix(in srgb, var(--gold) 30%, transparent); }
+  .mount-band.bottom { border-top-width: 1px; box-shadow: 0 -1px 0 color-mix(in srgb, var(--gold) 22%, transparent), 0 -4px 0 -2px color-mix(in srgb, var(--gold) 30%, transparent); }
+
+  .scroll-track {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    width: max-content;
+    will-change: transform;
+  }
+
+  .panel {
+    width: min(68vw, 980px);
+    padding: clamp(32px, 6vh, 72px) clamp(40px, 5vw, 88px);
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  /* seams between the joined sheets of the scroll */
+  .panel + .panel::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12%;
+    bottom: 12%;
+    width: 3px;
+    border-left: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    border-right: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
+  }
+
+  .panel-intro {
+    width: min(60vw, 880px);
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding-left: max(40px, 8vw);
+  }
+
+  .intro-heading {
+    font-size: clamp(40px, 4.6vw, 66px);
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    color: var(--title-color);
+  }
+  .cjk .intro-heading {
+    font-weight: 400;
+    letter-spacing: 0.24em;
+  }
+
+  .intro-text {
+    margin-top: 22px;
+    max-width: 26em;
+    font-size: clamp(17px, 1.5vw, 21px);
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--text-dim);
+  }
+
+  /* a thread of gold drawn rightward: the scroll is meant to unroll */
+  .unroll-hint {
+    margin-top: 40px;
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(to right, var(--gold), transparent);
+    position: relative;
+  }
+  .unroll-hint::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--vermilion);
+    animation: unroll 2.6s ease-in-out infinite;
+  }
+  @keyframes unroll {
+    0% { left: 0; opacity: 0; }
+    20% { opacity: 1; }
+    80% { left: 115px; opacity: 1; }
+    100% { left: 115px; opacity: 0; }
+  }
+
+  .panel-meaning {
+    gap: clamp(28px, 4vw, 64px);
+  }
+
+  .glyph {
+    flex: none;
+    font-size: clamp(150px, 34vh, 340px);
+    font-weight: 700;
+    line-height: 1;
+    /* the light slides across the leaf as the panel reaches the centre */
+    background-position: calc(100% - var(--focus) * 100%) 0;
+    opacity: calc(0.35 + var(--focus) * 0.65);
+    filter: drop-shadow(0 0 calc(var(--focus) * 28px) color-mix(in srgb, var(--gold) 35%, transparent));
+  }
+
+  .panel-copy {
+    max-width: 30em;
+  }
+
+  .panel-title {
+    font-size: clamp(22px, 2vw, 30px);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--title-color);
+  }
+  .cjk .panel-title { letter-spacing: 0.3em; }
+
+  .panel-title::after {
+    content: "";
+    display: block;
+    width: 34px;
+    height: 2px;
+    margin: 14px 0 18px;
+    background: var(--vermilion);
+  }
+
+  .panel-text {
+    font-size: clamp(15px, 1.15vw, 17px);
+    font-weight: 400;
+    line-height: 1.95;
+    color: var(--text-dim);
+  }
+  .cjk .panel-text {
+    line-height: 2.1;
+    letter-spacing: 0.04em;
+  }
+
+  /* Stacked: phones, tablets and reduced motion */
+  @media (max-width: 860px) {
+    .scroll-stage { position: static; height: auto; overflow: visible; }
+    .scroll-track { width: auto; flex-direction: column; transform: none !important; }
+    .panel, .panel-intro { width: auto; padding: 48px 20px; }
+    .panel-meaning { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .panel + .panel::before { top: 0; bottom: auto; left: 20px; right: 20px; width: auto; height: 3px; border: 0; border-top: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--gold) 20%, transparent); }
+    .glyph { font-size: 120px; opacity: 1; background-position: 30% 0; filter: none; }
+    .unroll-hint { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-stage { position: static; height: auto; overflow: visible; }
+    .scroll-track { width: auto; flex-direction: column; transform: none !important; }
+    .panel, .panel-intro { width: auto; max-width: 980px; margin: 0 auto; }
+    .glyph { opacity: 1; background-position: 30% 0; }
+    .unroll-hint { display: none; }
+  }
+</style>

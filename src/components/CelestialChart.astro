@@ -1,0 +1,620 @@
+---
+// 灵台观星 — the hero sky. A slowly turning star chart in the manner of the
+// Suzhou stone planisphere: inner circle, equator, offset ecliptic and the
+// twenty-eight lunar mansions at their true (uneven) ancient widths. On it a
+// single star — the agent — ignites at the pole and divides into avatars that
+// fly out on gold threads and settle into a constellation (一心化万相). Old
+// leaves fade as new ones are born, so the network never stops growing.
+// Interactive: click the sky to summon an avatar from the nearest star, drag
+// sideways to turn the heavens, hover a star to light its lineage back to the
+// pole. Pauses offscreen; one static frame under reduced motion.
+import type { Lang } from '../i18n/translations';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+---
+
+<canvas class="celestial" aria-hidden="true" data-lang={lang}></canvas>
+
+<script>
+  // 二十八宿 with their widths in 古度 (365¼ to the circle)
+  const MANSIONS: [string, number][] = [
+    ['角', 12], ['亢', 9], ['氐', 15], ['房', 5], ['心', 5], ['尾', 18], ['箕', 11],
+    ['斗', 26], ['牛', 8], ['女', 12], ['虚', 10], ['危', 17], ['室', 16], ['壁', 9],
+    ['奎', 16], ['娄', 12], ['胃', 14], ['昴', 11], ['毕', 16], ['觜', 2], ['参', 9],
+    ['井', 33], ['鬼', 4], ['柳', 15], ['星', 7], ['张', 18], ['翼', 18], ['轸', 17],
+  ];
+  const TOTAL_DU = MANSIONS.reduce((s, [, w]) => s + w, 0);
+
+  const GOLD = [216, 180, 104];
+  const GOLD_HI = [248, 232, 182];
+  const VERMILION = [214, 88, 62];
+  const JADE = [125, 190, 166];
+
+  const ROTATION_PERIOD = 720_000; // ms per turn of the heavens
+  const SPAWN_BURST = 260;          // ms between births while the first avatars divide
+  const SPAWN_STEADY = 1500;
+  const BURST_COUNT = 14;
+  const FLIGHT_MS = 1500;
+  const FADE_MS = 2600;
+
+  interface Agent {
+    id: number;                    // birth order; 0 is the root
+    x: number; y: number;          // chart space, unrotated, relative to the pole
+    px: number; py: number;        // where it was born from
+    parent: number;                // index into agents, -1 for the root
+    born: number;
+    dying: number;                 // 0 = alive, else time fading began
+    children: number;
+  }
+  interface Thread { a: Agent; b: Agent; mail: boolean; }
+  interface Pulse { t: Thread; born: number; dir: 1 | -1; }
+
+  const rgba = (c: number[], a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  function mulberry(seed: number) {
+    return () => {
+      seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const canvas = document.querySelector<HTMLCanvasElement>('canvas.celestial')!;
+  const ctx = canvas.getContext('2d')!;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let W = 0, H = 0, R = 0, CX = 0, CY = 0, dpr = 1, unit = 1;
+  let stars: { x: number; y: number; r: number; tw: number; ph: number; warm: boolean }[] = [];
+  let agents: Agent[] = [];
+  let threads: Thread[] = [];
+  let pulses: Pulse[] = [];
+  let maxAgents = 56;
+  let lastSpawn = 0, lastPulse = 0, t0 = 0;
+  let pointer = { x: -1e4, y: -1e4, ox: 0, oy: 0 };
+  let nextId = 1;
+  // turning the heavens by hand: offset added to the clock rotation, plus inertia
+  let spin = 0, spinVel = 0;
+  let drag: { id: number; x: number; y: number; ang: number; moved: boolean } | null = null;
+  let ripples: { x: number; y: number; born: number }[] = [];
+  let hovered: Agent | null = null;
+  const lang = canvas.dataset.lang || 'en';
+  let running = false, raf = 0;
+
+  function layout() {
+    const rect = canvas.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    const narrow = W < 720;
+    R = narrow ? Math.max(W, H * 0.62) * 0.62 : Math.max(W * 0.5, H * 0.62);
+    CX = W * 0.5;
+    CY = H * (narrow ? 0.42 : 0.5);
+    unit = Math.min(1.15, Math.max(0.62, R / 560));
+    maxAgents = narrow ? 30 : 56;
+
+    const rnd = mulberry(1046);
+    const n = Math.round((W * H) / (narrow ? 2600 : 3200));
+    stars = Array.from({ length: n }, () => {
+      const a = rnd() * Math.PI * 2;
+      const d = Math.sqrt(rnd()) * Math.hypot(W, H) * 0.62;
+      return {
+        x: Math.cos(a) * d, y: Math.sin(a) * d,
+        r: rnd() < 0.06 ? 1.1 + rnd() * 0.9 : 0.35 + rnd() * 0.6,
+        tw: 0.4 + rnd() * 1.6, ph: rnd() * 6.28, warm: rnd() < 0.35,
+      };
+    });
+  }
+
+  function reset(now: number) {
+    agents = [{ id: 0, x: 0, y: 0, px: 0, py: 0, parent: -1, born: now, dying: 0, children: 0 }];
+    nextId = 1;
+    threads = []; pulses = [];
+    lastSpawn = now + 900; // the pole star holds its breath before dividing
+  }
+
+  function spawn(now: number) {
+    const living = agents.filter((a) => !a.dying);
+    if (living.length >= maxAgents) {
+      // forget: the oldest leaf fades, the network remembers the rest
+      const leaf = living
+        .filter((a) => a.parent !== -1 && a.children === 0 && now - a.born > FLIGHT_MS)
+        .sort((p, q) => p.born - q.born)[0];
+      if (leaf && leaf !== hovered) leaf.dying = now;
+      return;
+    }
+    // parents: favour the young and the childless, the root always eligible
+    const weights = living.map((a) => (a.parent === -1 ? 2.2 : 1) / (1 + a.children * 1.4));
+    let pick = Math.random() * weights.reduce((s, w) => s + w, 0);
+    let parent = living[0];
+    for (let i = 0; i < living.length; i++) { pick -= weights[i]; if (pick <= 0) { parent = living[i]; break; } }
+
+    const base = parent.parent === -1 ? Math.random() * Math.PI * 2 : Math.atan2(parent.y, parent.x);
+    for (let tries = 0; tries < 14; tries++) {
+      const ang = base + (Math.random() - 0.5) * 1.9;
+      const dist = (52 + Math.random() * 70) * unit;
+      const x = parent.x + Math.cos(ang) * dist;
+      const y = parent.y + Math.sin(ang) * dist;
+      if (Math.hypot(x, y) > R * 0.9) continue;
+      if (Math.hypot(x, y) < 70 * unit) continue;
+      if (agents.some((a) => !a.dying && Math.hypot(a.x - x, a.y - y) < 30 * unit)) continue;
+      const child: Agent = { id: nextId++, x, y, px: parent.x, py: parent.y, parent: agents.indexOf(parent), born: now, dying: 0, children: 0 };
+      parent.children++;
+      agents.push(child);
+      threads.push({ a: parent, b: child, mail: false });
+      // sometimes a newborn writes to a stranger nearby — a mail thread
+      if (Math.random() < 0.38) {
+        const near = agents
+          .filter((a) => a !== child && a !== parent && !a.dying && Math.hypot(a.x - x, a.y - y) < 120 * unit)
+          .sort((p, q) => Math.hypot(p.x - x, p.y - y) - Math.hypot(q.x - x, q.y - y))[0];
+        if (near) threads.push({ a: child, b: near, mail: true });
+      }
+      return;
+    }
+  }
+
+  function forgetOldestLeaf(now: number) {
+    const leaf = agents
+      .filter((a) => !a.dying && a.parent !== -1 && a.children === 0 && a !== hovered && now - a.born > FLIGHT_MS)
+      .sort((p, q) => p.born - q.born)[0];
+    if (leaf) leaf.dying = now;
+  }
+
+  // a summoned avatar flies from the nearest living star to the point clicked
+  function summon(sx: number, sy: number, now: number) {
+    const rot = currentRotation(now);
+    const dx = sx - CX - pointer.ox, dy = sy - CY - pointer.oy;
+    let x = dx * Math.cos(-rot) - dy * Math.sin(-rot);
+    let y = dx * Math.sin(-rot) + dy * Math.cos(-rot);
+    const d = Math.hypot(x, y);
+    if (d > R * 0.92) { x *= (R * 0.92) / d; y *= (R * 0.92) / d; }
+    const living = agents.filter((a) => !a.dying);
+    let parent = living[0];
+    for (const a of living) {
+      if (Math.hypot(a.x - x, a.y - y) < Math.hypot(parent.x - x, parent.y - y)) parent = a;
+    }
+    if (Math.hypot(parent.x - x, parent.y - y) < 6) return;
+    if (living.length >= maxAgents) forgetOldestLeaf(now);
+    const child: Agent = { id: nextId++, x, y, px: parent.x, py: parent.y, parent: agents.indexOf(parent), born: now, dying: 0, children: 0 };
+    parent.children++;
+    agents.push(child);
+    threads.push({ a: parent, b: child, mail: false });
+    ripples.push({ x: sx, y: sy, born: now });
+    lastSpawn = now; // the sky pauses its own births for a beat after yours
+  }
+
+  function mansionOf(a: Agent) {
+    let ang = Math.atan2(a.y, a.x);
+    if (ang < 0) ang += Math.PI * 2;
+    const du = (ang / (Math.PI * 2)) * TOTAL_DU;
+    let acc = 0;
+    for (const [name, w] of MANSIONS) { acc += w; if (du < acc) return name; }
+    return MANSIONS[MANSIONS.length - 1][0];
+  }
+
+  function label(a: Agent) {
+    const kids = a.children;
+    if (a.parent === -1) {
+      return lang === 'en'
+        ? [`The self`, `${agents.length - 1} avatars in the sky`]
+        : [lang === 'wen' ? '本体' : '本体', lang === 'wen' ? `化身${agents.length - 1}` : `已化出 ${agents.length - 1} 个分身`];
+    }
+    const m = mansionOf(a);
+    const parent = agents[a.parent];
+    const from = parent.parent === -1 ? (lang === 'en' ? 'the self' : '本体') : (lang === 'en' ? `avatar ${parent.id}` : `分身${parent.id}`);
+    if (lang === 'en') return [`Avatar ${a.id} · ${m} lodge`, `born of ${from}${kids ? ` · ${kids} of its own` : ''}`];
+    if (lang === 'wen') return [`分身${a.id} · 居${m}宿`, `出于${from}${kids ? `，自化${kids}` : ''}`];
+    return [`分身 ${a.id} · ${m}宿`, `由${from}化出${kids ? ` · 自化 ${kids} 个` : ''}`];
+  }
+
+  function prune(now: number) {
+    const gone = new Set(agents.filter((a) => a.dying && now - a.dying > FADE_MS));
+    if (hovered && gone.has(hovered)) hovered = null;
+    if (!gone.size) return;
+    for (const g of gone) if (g.parent >= 0) agents[g.parent].children--;
+    const keep = agents.filter((a) => !gone.has(a));
+    // re-index parents (a fading agent is always a leaf, so parents survive)
+    for (const a of keep) {
+      if (a.parent >= 0) a.parent = keep.indexOf(agents[a.parent]);
+    }
+    agents = keep;
+    threads = threads.filter((t) => !gone.has(t.a) && !gone.has(t.b));
+    pulses = pulses.filter((p) => threads.includes(p.t));
+  }
+
+  function life(a: Agent, now: number) {
+    const arrive = Math.min(1, (now - a.born) / FLIGHT_MS);
+    const fade = a.dying ? Math.max(0, 1 - (now - a.dying) / FADE_MS) : 1;
+    return { arrive, fade };
+  }
+
+  function pos(a: Agent, now: number) {
+    const { arrive } = life(a, now);
+    if (arrive >= 1) return [a.x, a.y];
+    // fly out on a slight curve, like a thrown thread
+    const e = ease(arrive);
+    const mx = (a.px + a.x) / 2 - (a.y - a.py) * 0.22;
+    const my = (a.py + a.y) / 2 + (a.x - a.px) * 0.22;
+    const u = 1 - e;
+    return [u * u * a.px + 2 * u * e * mx + e * e * a.x, u * u * a.py + 2 * u * e * my + e * e * a.y];
+  }
+
+  function drawChart(rot: number) {
+    ctx.save();
+    ctx.rotate(rot);
+    ctx.lineWidth = 0.8;
+
+    const ring = (r: number, a: number, dash?: number[]) => {
+      ctx.beginPath();
+      ctx.setLineDash(dash || []);
+      ctx.strokeStyle = rgba(GOLD, a);
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.stroke();
+    };
+    const rIn = R * 0.2, rEq = R * 0.58, rOut = R * 0.94, rRim = R;
+
+    ring(rIn, 0.22);
+    ring(rEq, 0.2);
+    ring(rOut, 0.3);
+    ring(rRim, 0.3);
+    ring(rRim + 6 * unit, 0.12);
+    // 黄道 — ecliptic, offset from the pole
+    ctx.save();
+    ctx.translate(Math.cos(0.9) * R * 0.16, Math.sin(0.9) * R * 0.16);
+    ring(rEq, 0.16, [3, 6]);
+    ctx.restore();
+    ctx.setLineDash([]);
+
+    // mansion boundaries and names
+    let acc = 0;
+    ctx.font = `${Math.round(13 * Math.max(unit, 0.85))}px "Noto Serif SC", "Songti SC", serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const [name, w] of MANSIONS) {
+      const a0 = (acc / TOTAL_DU) * Math.PI * 2;
+      const amid = ((acc + w / 2) / TOTAL_DU) * Math.PI * 2;
+      acc += w;
+      ctx.beginPath();
+      ctx.strokeStyle = rgba(GOLD, 0.13);
+      ctx.moveTo(Math.cos(a0) * rIn, Math.sin(a0) * rIn);
+      ctx.lineTo(Math.cos(a0) * rRim, Math.sin(a0) * rRim);
+      ctx.stroke();
+      const rl = (rOut + rRim) / 2;
+      ctx.save();
+      ctx.translate(Math.cos(amid) * rl, Math.sin(amid) * rl);
+      ctx.rotate(amid + Math.PI / 2);
+      ctx.fillStyle = rgba(GOLD, 0.62);
+      ctx.fillText(name, 0, 0);
+      ctx.restore();
+    }
+    // degree ticks on the rim, every fifth longer
+    ctx.beginPath();
+    ctx.strokeStyle = rgba(GOLD, 0.2);
+    for (let d = 0; d < 365; d++) {
+      const a = (d / 365.25) * Math.PI * 2;
+      const len = (d % 5 === 0 ? 7 : 3.5) * unit;
+      ctx.moveTo(Math.cos(a) * rRim, Math.sin(a) * rRim);
+      ctx.lineTo(Math.cos(a) * (rRim - len), Math.sin(a) * (rRim - len));
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawStars(rot: number, now: number) {
+    ctx.save();
+    ctx.rotate(rot);
+    for (const s of stars) {
+      const tw = reduced ? 0.75 : 0.55 + 0.45 * Math.sin(now * 0.001 * s.tw + s.ph);
+      ctx.fillStyle = s.warm ? rgba(GOLD_HI, 0.55 * tw) : `rgba(214,222,246,${0.5 * tw})`;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function glow(x: number, y: number, r: number, c: number[], a: number) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, rgba(c, a));
+    g.addColorStop(1, rgba(c, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawNetwork(rot: number, now: number) {
+    const cos = Math.cos(rot), sin = Math.sin(rot);
+    const screen = (x: number, y: number) => [CX + pointer.ox + x * cos - y * sin, CY + pointer.oy + x * sin + y * cos];
+    const near = (sx: number, sy: number) => Math.max(0, 1 - Math.hypot(sx - pointer.x, sy - pointer.y) / (170 * unit));
+
+    // the hovered star's lineage, back to the pole
+    const lineage = new Set<Agent>();
+    for (let a = hovered; a; a = a.parent >= 0 ? agents[a.parent] : null) lineage.add(a);
+
+    ctx.save();
+    ctx.rotate(rot);
+    ctx.lineCap = 'round';
+
+    for (const t of threads) {
+      const la = life(t.a, now), lb = life(t.b, now);
+      const fade = Math.min(la.fade, lb.fade);
+      const [ax, ay] = pos(t.a, now);
+      const [bx, by] = pos(t.b, now);
+      const [sx, sy] = screen((ax + bx) / 2, (ay + by) / 2);
+      const lit = !t.mail && lineage.has(t.a) && lineage.has(t.b);
+      const hl = lit ? 1.4 : near(sx, sy) * (hovered ? 0.4 : 1);
+      ctx.beginPath();
+      ctx.setLineDash(t.mail ? [2, 5] : []);
+      ctx.strokeStyle = t.mail ? rgba(JADE, (0.22 + hl * 0.4) * fade) : rgba(GOLD, (0.34 + hl * 0.5) * fade * Math.min(1, lb.arrive * 1.4));
+      ctx.lineWidth = t.mail ? 0.8 : 1 + hl * 0.6;
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // mail pulses travelling the threads
+    for (const p of pulses) {
+      const k = (now - p.born) / 1300;
+      if (k > 1) continue;
+      const [ax, ay] = pos(p.t.a, now);
+      const [bx, by] = pos(p.t.b, now);
+      const u = p.dir === 1 ? k : 1 - k;
+      const x = ax + (bx - ax) * u, y = ay + (by - ay) * u;
+      glow(x, y, 7 * unit, p.t.mail ? JADE : GOLD_HI, 0.85 * Math.sin(k * Math.PI));
+    }
+
+    for (const a of agents) {
+      const { arrive, fade } = life(a, now);
+      const [x, y] = pos(a, now);
+      const [sx, sy] = screen(x, y);
+      const hl = lineage.has(a) ? 1 : near(sx, sy) * (hovered ? 0.4 : 1);
+      if (a.parent === -1) {
+        // 本体 — the pole star: a vermilion seal-ring around a white-gold core
+        const breath = reduced ? 1 : 0.85 + 0.15 * Math.sin(now * 0.0016);
+        const ignite = Math.min(1, (now - a.born) / 900);
+        glow(x, y, 70 * unit * breath * ignite, GOLD, 0.32);
+        glow(x, y, 22 * unit * ignite, GOLD_HI, 0.9);
+        ctx.beginPath();
+        ctx.strokeStyle = rgba(VERMILION, 0.75 * ignite);
+        ctx.lineWidth = 1.2;
+        ctx.arc(x, y, 11 * unit * breath, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = rgba([255, 248, 228], ignite);
+        ctx.beginPath();
+        ctx.arc(x, y, 3.4 * unit, 0, Math.PI * 2);
+        ctx.fill();
+        continue;
+      }
+      if (arrive < 1) {
+        // the avatar in flight: a comet with a short tail
+        glow(x, y, 16 * unit, GOLD_HI, 0.7);
+      } else {
+        const since = now - a.born - FLIGHT_MS;
+        if (since < 900) {
+          const k = since / 900;
+          ctx.beginPath();
+          ctx.strokeStyle = rgba(GOLD_HI, (1 - k) * 0.7);
+          ctx.lineWidth = 1;
+          ctx.arc(x, y, (4 + k * 22) * unit, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      glow(x, y, (9 + hl * 10) * unit, GOLD, (0.35 + hl * 0.4) * fade);
+      ctx.fillStyle = rgba(GOLD_HI, (0.85 + hl * 0.15) * fade);
+      ctx.beginPath();
+      ctx.arc(x, y, (1.9 + hl * 1.1) * unit, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function screenOf(a: Agent, now: number, rot: number) {
+    const [x, y] = pos(a, now);
+    const c = Math.cos(rot), s = Math.sin(rot);
+    return [CX + pointer.ox + x * c - y * s, CY + pointer.oy + x * s + y * c];
+  }
+
+  function findHover(now: number, rot: number) {
+    if (drag?.moved || pointer.x < -1e3) return null;
+    let best: Agent | null = null, bd = 16;
+    for (const a of agents) {
+      if (a.dying || life(a, now).arrive < 1) continue;
+      const [sx, sy] = screenOf(a, now, rot);
+      const d = Math.hypot(sx - pointer.x, sy - pointer.y);
+      if (d < bd) { bd = d; best = a; }
+    }
+    return best;
+  }
+
+  function drawOverlay(now: number, rot: number) {
+    ripples = ripples.filter((r) => now - r.born < 1100);
+    for (const r of ripples) {
+      const k = (now - r.born) / 1100;
+      ctx.beginPath();
+      ctx.strokeStyle = rgba(GOLD_HI, 0.6 * (1 - k));
+      ctx.lineWidth = 1;
+      ctx.arc(r.x, r.y, 6 + ease(k) * 38, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (!hovered) return;
+    const [sx, sy] = screenOf(hovered, now, rot);
+    const [l1, l2] = label(hovered);
+    ctx.font = `500 14px "Noto Serif SC", "Songti SC", serif`;
+    const w1 = ctx.measureText(l1).width;
+    ctx.font = `12px "Noto Serif SC", "Songti SC", serif`;
+    const w = Math.max(w1, ctx.measureText(l2).width) + 28;
+    const h = 52;
+    let bx = sx + 16, by = sy - h - 12;
+    if (bx + w > W - 12) bx = sx - w - 16;
+    if (by < 12) by = sy + 16;
+    ctx.fillStyle = 'rgba(6,12,28,0.86)';
+    ctx.strokeStyle = rgba(GOLD, 0.55);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.rect(bx + 0.5, by + 0.5, w, h);
+    ctx.fill();
+    ctx.stroke();
+    // a vermilion tab on the leading edge, like a seal on a label slip
+    ctx.fillStyle = rgba(VERMILION, 0.9);
+    ctx.fillRect(bx + 0.5, by + 0.5, 3, h);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = `500 14px "Noto Serif SC", "Songti SC", serif`;
+    ctx.fillStyle = rgba(GOLD_HI, 1);
+    ctx.fillText(l1, bx + 16, by + 22);
+    ctx.font = `12px "Noto Serif SC", "Songti SC", serif`;
+    ctx.fillStyle = 'rgba(190,186,166,0.95)';
+    ctx.fillText(l2, bx + 16, by + 41);
+  }
+
+  function currentRotation(now: number) {
+    return (t0 ? ((now - t0) / ROTATION_PERIOD) * Math.PI * 2 : 0) + spin;
+  }
+
+  function frame(now: number) {
+    if (!t0) { t0 = now; reset(now); }
+    if (!drag) { spin += spinVel; spinVel *= 0.95; if (Math.abs(spinVel) < 1e-5) spinVel = 0; }
+    const rot = currentRotation(now);
+    hovered = findHover(now, rot);
+    canvas.style.cursor = drag?.moved ? 'grabbing' : hovered ? 'pointer' : 'crosshair';
+
+    if (now - lastSpawn > (agents.length < BURST_COUNT ? SPAWN_BURST : SPAWN_STEADY)) {
+      spawn(now);
+      lastSpawn = now;
+    }
+    if (now - lastPulse > 520 && threads.length) {
+      const t = threads[Math.floor(Math.random() * threads.length)];
+      if (life(t.b, now).arrive >= 1) pulses.push({ t, born: now, dir: Math.random() < 0.6 ? 1 : -1 });
+      pulses = pulses.filter((p) => now - p.born < 1300);
+      lastPulse = now;
+    }
+    prune(now);
+
+    // the sky leans gently away from the pointer
+    const tx = pointer.x > -1e3 ? (CX - pointer.x) * 0.02 : 0;
+    const ty = pointer.y > -1e3 ? (CY - pointer.y) * 0.02 : 0;
+    pointer.ox += (tx - pointer.ox) * 0.05;
+    pointer.oy += (ty - pointer.oy) * 0.05;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.translate(CX + pointer.ox * 0.5, CY + pointer.oy * 0.5);
+    drawStars(rot * 0.6, now);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.translate(CX + pointer.ox, CY + pointer.oy);
+    drawChart(rot);
+    drawNetwork(rot, now);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawOverlay(now, rot);
+
+    if (running) raf = requestAnimationFrame(frame);
+  }
+
+  function staticFrame() {
+    // grow a settled constellation instantly and paint it once
+    t0 = 1;
+    reset(-1e6);
+    for (let i = 0; i < maxAgents * 0.8; i++) spawn(-1e6 + i);
+    pulses = [];
+    lastSpawn = Infinity; lastPulse = Infinity;
+    frame(1);
+  }
+
+  function start() {
+    if (running || reduced) return;
+    running = true;
+    raf = requestAnimationFrame(frame);
+  }
+  function stop() {
+    running = false;
+    cancelAnimationFrame(raf);
+  }
+
+  layout();
+  if (reduced) {
+    document.fonts.ready.then(staticFrame);
+  } else {
+    let visible = true;
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      visible && !document.hidden ? start() : stop();
+    }).observe(canvas);
+    document.addEventListener('visibilitychange', () => (document.hidden || !visible ? stop() : start()));
+    start();
+  }
+
+  let resizeTimer = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => {
+      const keep = R;
+      layout();
+      const k = R / keep;
+      for (const a of agents) { a.x *= k; a.y *= k; a.px *= k; a.py *= k; }
+      if (reduced) staticFrame();
+    }, 120);
+  });
+
+  const host = canvas.parentElement!;
+  const local = (e: PointerEvent) => {
+    const r = canvas.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  };
+  const angleAt = (x: number, y: number) => Math.atan2(y - CY - pointer.oy, x - CX - pointer.ox);
+
+  host.addEventListener('pointermove', (e) => {
+    [pointer.x, pointer.y] = local(e);
+    if (reduced && !drag) frame(performance.now());
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.moved && Math.hypot(pointer.x - drag.x, pointer.y - drag.y) > 6) drag.moved = true;
+    if (drag.moved) {
+      let da = angleAt(pointer.x, pointer.y) - drag.ang;
+      if (da > Math.PI) da -= Math.PI * 2;
+      if (da < -Math.PI) da += Math.PI * 2;
+      spin += da;
+      spinVel = da * 0.6;
+      drag.ang = angleAt(pointer.x, pointer.y);
+      if (reduced) frame(performance.now());
+    }
+  });
+  host.addEventListener('pointerleave', () => { pointer.x = pointer.y = -1e4; });
+
+  canvas.addEventListener('pointerdown', (e) => {
+    const [x, y] = local(e);
+    drag = { id: e.pointerId, x, y, ang: angleAt(x, y), moved: false };
+    spinVel = 0;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  const release = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const wasClick = !drag.moved && e.type === 'pointerup';
+    drag = null;
+    if (wasClick) {
+      const [x, y] = local(e);
+      summon(x, y, performance.now());
+      if (reduced) { pulses = []; agents.forEach((a) => (a.born = -1e6)); frame(performance.now()); }
+    }
+  };
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', release);
+</script>
+
+<style>
+  .celestial {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    /* vertical swipes still scroll the page; sideways ones turn the sky */
+    touch-action: pan-y;
+  }
+</style>
